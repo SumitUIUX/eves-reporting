@@ -1,0 +1,300 @@
+.shell:global(.eves-shell) {
+  --sidebar-width: 240px !important;
+}
+
+.sidebar {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--card);
+}
+
+.brandArea {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  min-height: 118px;
+}
+
+.brand:global(.eves-brand) {
+  width: 100%;
+  justify-content: center;
+  padding: 0 20px;
+}
+
+.sidebarContent {
+  gap: 0;
+  padding: 8px 12px;
+}
+
+.categoryMenu {
+  gap: 6px;
+}
+
+.categoryLink {
+  height: auto;
+  min-height: 48px;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.categoryLink > svg,
+.utilityLink > svg {
+  width: 20px;
+  height: 20px;
+}
+
+.categoryLink > span {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.categoryLink:hover {
+  background: var(--sidebar-accent);
+  color: var(--primary);
+}
+
+.categoryLink[data-active="true"],
+.categoryLink[data-active="true"]:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 500;
+}
+
+.categoryLink:focus-visible,
+.account:focus-visible,
+.closeSidebar:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.sidebarFooter {
+  gap: 0;
+  padding: 0;
+}
+
+.utilityMenu {
+  gap: 4px;
+  padding: 12px 16px 24px;
+}
+
+.utilityLink {
+  min-height: 44px;
+  height: auto;
+  gap: 14px;
+  padding: 10px 14px;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.utilityLink:disabled {
+  opacity: 0.75;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 102px;
+  padding: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.avatar {
+  display: grid;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sidebar-accent);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.account p {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.account small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+
+.workspace {
+  flex: 1;
+  min-width: 0;
+  gap: 0;
+}
+
+.tabBar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-shrink: 0;
+  align-items: stretch;
+  min-height: 68px;
+  padding-left: 8px;
+  background: var(--primary);
+}
+
+.tabScroll {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.tabScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.tabList {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 2px;
+  width: max-content;
+  height: 100%;
+  min-height: 68px;
+  padding: 14px 8px 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.tab {
+  flex: 0 0 auto;
+  gap: 10px;
+  min-height: 54px;
+  height: auto;
+  padding: 14px 22px;
+  border: 0;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: var(--primary-foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-transform: uppercase;
+  box-shadow: none;
+  transition: background-color 150ms, color 150ms;
+}
+
+.tab > svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tab:hover {
+  background: rgb(255 255 255 / 10%);
+  color: var(--primary-foreground);
+}
+
+.tab[data-state="active"],
+.tab[data-state="active"]:hover {
+  background: var(--card);
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: 0 -2px 5px rgb(0 0 0 / 5%);
+}
+
+.tab:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -5px;
+  box-shadow: none;
+}
+
+.tab::after {
+  display: none;
+}
+
+.tabPanel {
+  min-width: 0;
+}
+
+.mobileTrigger,
+.closeSidebar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .brandArea {
+    min-height: 102px;
+  }
+
+  .brand:global(.eves-brand) {
+    justify-content: flex-start;
+    padding-left: 24px;
+  }
+
+  .closeSidebar {
+    position: absolute;
+    top: 30px;
+    right: 14px;
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    border-radius: 6px;
+    color: var(--muted-foreground);
+  }
+
+  .tabBar {
+    min-height: 64px;
+    padding-left: 4px;
+  }
+
+  .mobileTrigger {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-self: center;
+    width: 44px;
+    height: 44px;
+    margin-right: 2px;
+    color: var(--primary-foreground);
+  }
+
+  .mobileTrigger:hover,
+  .mobileTrigger:focus-visible {
+    background: rgb(255 255 255 / 15%);
+    color: var(--primary-foreground);
+  }
+
+  .tabList {
+    min-height: 64px;
+    padding-top: 12px;
+    padding-left: 2px;
+  }
+
+  .tab {
+    min-height: 52px;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+
+  .account {
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+}
