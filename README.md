@@ -24,7 +24,9 @@ A React 19 / TypeScript dashboard using Next.js App Router conventions. Sites ru
 
 Report records were read from the user-provided original UI on September 7, 2026. They are explicitly labeled reference data; there is no live charger, OCPP, billing, email or agency-submission integration. The original sample values are preserved even when internally inconsistent. Summary metrics in the new UI are recomputed from the included rows and describe their calculation.
 
-Snapshot sizes: 25 charging sessions, 42 intervals, 48 infrastructure rows, 48 uptime rows, and 21 downtime events. The three original tags and their mapped site capacities are initial reference records. Tag changes persist in D1; report snapshots are immutable. Mapping charger numbers are selection labels, not inferred live OCPP IDs.
+Snapshot sizes: 25 charging sessions, 42 intervals, 48 infrastructure rows, 48 uptime rows, and 21 downtime events. The three original tags and their mapped site capacities are initial reference records. Workspace tag changes persist in D1; report snapshots are immutable. Mapping charger numbers are selection labels, not inferred live OCPP IDs.
+
+Project Tagging also offers a separate, clearly labeled sample workspace with 12 fictional tags. It opens automatically if the tag service is unavailable, or can be selected from the data source menu. Sample CRUD and mappings persist only in browser local storage; they never write to the workspace API or feed Generate Reports. Sample CSV exports include a data-source column and a sample filename. Switching back to Workspace data retries the existing API. The compact toolbar combines search and tag type with a popover for agency and mapped/unmapped status; applied filters can be removed individually or cleared together.
 
 The original interval column labeled `Energy Delivered (kW)` is displayed as `Energy delivered (kWh)`, with a visible disclosure. No numeric conversion is performed. Operational summary snapshots are included in regulatory exports only when the complete September 1–7, 2026 period is selected. Events missing a year are interpreted within the captured 2026 reference year. Site/chart averages are explicitly labeled as unweighted where applicable.
 
@@ -38,7 +40,7 @@ Validation commands: `npm run typecheck`, `npm run build` (Sites), `npm run buil
 
 ## Deploy to Vercel
 
-Import this source as a Next.js project. `vercel.json` chooses the Next.js build. Supply the three server-only values listed in `.env.example` to connect an existing Cloudflare D1 database over HTTPS, then apply the generated schema migrations to that database. Use a narrowly scoped D1 token. Without a configured database, tag operations show an unavailable state rather than silently discarding changes.
+Import this source as a Next.js project. `vercel.json` chooses the Next.js build. Supply the three server-only values listed in `.env.example` to connect an existing Cloudflare D1 database over HTTPS, then apply the generated schema migrations to that database. Use a narrowly scoped D1 token. Without a configured database, Project Tagging opens its labeled sample workspace. Selecting Workspace data still shows the service error and retry control; other reporting integrations retain their existing behavior.
 
 The Sites deployment is owner-private. When deploying elsewhere, configure deployment access protection or replace it with your organization's authentication before exposing stored records. This project does not implement user accounts or multi-tenant authorization.
 

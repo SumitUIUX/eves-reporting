@@ -30,11 +30,17 @@ import {
   type TagInput,
 } from "@/lib/eves/types";
 interface EditorProps {
+  isSample?: boolean;
   tag?: ProjectTag;
   onClose: () => void;
   onSave: (input: TagInput, tag?: ProjectTag) => Promise<ProjectTag>;
 }
-export function TagEditor({ tag, onClose, onSave }: EditorProps) {
+export function TagEditor({
+  tag,
+  onClose,
+  onSave,
+  isSample = false,
+}: EditorProps) {
   const [form, setForm] = useState<TagInput>(
       tag ?? {
         name: "",
@@ -95,7 +101,9 @@ export function TagEditor({ tag, onClose, onSave }: EditorProps) {
               {tag ? "Edit project tag" : "Create a project tag"}
             </DialogTitle>
             <DialogDescription>
-              Group your charging infrastructure by funding agency or zone.
+              {isSample
+                ? "Sample workspace. Changes are saved in this browser only."
+                : "Group your charging infrastructure by funding agency or zone."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={submit} className="dialog-body">
@@ -222,6 +230,7 @@ export function MappingEditor({
   tag,
   onClose,
   onSave,
+  isSample = false,
 }: EditorProps & { tag: ProjectTag }) {
   const [mappings, setMappings] = useState(tag.mappings),
     [saving, setSaving] = useState(false),
@@ -268,7 +277,10 @@ export function MappingEditor({
       <DialogContent className="sm:max-w-[620px]">
         <DialogHeader>
           <DialogTitle>Map sites & chargers</DialogTitle>
-          <DialogDescription>{tag.name}</DialogDescription>
+          <DialogDescription>
+            {tag.name}
+            {isSample && " · Sample workspace; changes stay in this browser."}
+          </DialogDescription>
         </DialogHeader>
         <div className="dialog-body">
           <p className="text-[13px] text-muted-foreground">

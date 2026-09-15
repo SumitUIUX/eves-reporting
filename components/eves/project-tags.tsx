@@ -6,7 +6,6 @@ import {
   MapPin,
   Building2,
   Plus,
-  Download,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -16,7 +15,9 @@ import {
   Landmark,
   Tag,
   ArrowDownUp,
-  RefreshCw,
+  ChevronDown,
+  FlaskConical,
+  Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,13 +28,14 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -45,14 +47,20 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { useTags } from "@/lib/eves/use-tags";
+import {
+  useProjectTags,
+  type TagDataSource,
+} from "@/lib/eves/use-project-tags";
+import {
+  emptyTagFilters,
+  filterTags,
+  type TagFilters,
+} from "@/lib/eves/tag-filters";
 import type { ProjectTag, TagInput } from "@/lib/eves/types";
 import { downloadCsv } from "@/lib/eves/export";
 import {
   PageHeading,
   Metric,
-  Choice,
-  SearchInput,
   TablePagination,
   DataEmpty,
   DataLoading,
@@ -61,12 +69,22 @@ import {
   Saving,
 } from "./shared";
 import { TagEditor, MappingEditor } from "./tag-editor";
+import { ProjectTagToolbar } from "./project-tag-toolbar";
 export function ProjectTags() {
-  const { tags, loading, error, reload, save, remove } = useTags();
-  const [tab, setTab] = useState("all"),
-    [search, setSearch] = useState(""),
-    [agency, setAgency] = useState("all"),
-    [page, setPage] = useState(1),
+  const {
+    tags,
+    loading,
+    error,
+    reload,
+    save,
+    remove,
+    source,
+    selectSource,
+    workspaceUnavailable,
+  } = useProjectTags();
+  const isSample = source === "sample";
+  const [filters, setFilters] = useState<TagFilters>(emptyTagFilters);
+  const [page, setPage] = useState(1),
     [size, setSize] = useState(10),
     [sort, setSort] = useState(false),
     [editor, setEditor] = useState<ProjectTag | "new" | null>(null),
@@ -74,29 +92,36 @@ export function ProjectTags() {
     [deleting, setDeleting] = useState<ProjectTag | null>(null),
     [busy, setBusy] = useState(false),
     [deleteError, setDeleteError] = useState("");
-  const filtered = tags
-    .filter(
-      (t) =>
-        (tab === "all" || t.type === tab) &&
-        (agency === "all" || t.agency === agency) &&
-        [t.name, t.awardId, t.agency, t.createdBy]
-          .join(" ")
-          .toLowerCase()
-          .includes(search.toLowerCase()),
-    )
-    .sort((a, b) =>
-      sort
-        ? a.name.localeCompare(b.name)
-        : a.createdAt.localeCompare(b.createdAt),
-    );
+  const filtered = filterTags(tags, filters).sort((a, b) =>
+    sort
+      ? a.name.localeCompare(b.name)
+      : a.createdAt.localeCompare(b.createdAt),
+  );
   const pages = Math.max(1, Math.ceil(filtered.length / size));
   const current = Math.min(page, pages);
   const rows = filtered.slice((current - 1) * size, current * size);
   const funding = tags.filter((t) => t.type === "Funding Agency").length;
   const sites = new Set(tags.flatMap((t) => Object.keys(t.mappings))).size;
+  function changeFilters(next: TagFilters) {
+    setFilters(next);
+    setPage(1);
+  }
+  function changeSource(next: TagDataSource) {
+    selectSource(next);
+    changeFilters(emptyTagFilters);
+    setEditor(null);
+    setMapping(null);
+    setDeleting(null);
+  }
   async function persist(input: TagInput, tag?: ProjectTag) {
     const result = await save(input, tag);
-    toast.success(tag ? "Changes saved" : "Project tag created");
+    toast.success(
+      isSample
+        ? "Sample tag saved in this browser"
+        : tag
+          ? "Changes saved"
+          : "Project tag created",
+    );
     return result;
   }
   async function deleteTag() {
@@ -105,7 +130,11 @@ export function ProjectTags() {
     setDeleteError("");
     try {
       await remove(deleting);
-      toast.success("Project tag deleted");
+      toast.success(
+        isSample
+          ? "Sample tag deleted from this browser"
+          : "Project tag deleted",
+      );
       setDeleting(null);
     } catch (e) {
       setDeleteError(e instanceof Error ? e.message : "Could not delete tag.");
@@ -117,6 +146,7 @@ export function ProjectTags() {
     downloadCsv(
       {
         headers: [
+          ...(isSample ? ["Data source"] : []),
           "Type",
           "Agency Name",
           "Award ID",
@@ -128,6 +158,7 @@ export function ProjectTags() {
           "Created Date",
         ],
         rows: filtered.map((t) => [
+          ...(isSample ? ["Fictional sample data"] : []),
           t.type,
           t.agency,
           t.awardId,
@@ -139,18 +170,55 @@ export function ProjectTags() {
           t.createdAt,
         ]),
       },
-      "eves-project-tags",
+      isSample ? "eves-sample-project-tags" : "eves-project-tags",
     );
-    toast.success("Project tags exported");
+    toast.success(
+      isSample ? "Sample project tags exported" : "Project tags exported",
+    );
   }
   return (
     <>
       <PageHeading
         eyebrow="REGULATORY REPORTS"
         title="Project tagging"
-        description="Organize your charging infrastructure. Simplify your reporting."
+        description={
+          isSample
+            ? "Explore sample projects. Changes are saved in this browser only."
+            : "Organize your charging infrastructure. Simplify your reporting."
+        }
       >
-        <Button onClick={() => setEditor("new")}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              aria-label={`Data source: ${isSample ? "Sample data" : "Workspace data"}`}
+            >
+              {isSample ? <FlaskConical size={16} /> : <Database size={16} />}
+              {isSample ? "Sample data" : "Workspace data"}
+              <ChevronDown size={14} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-72">
+            <DropdownMenuRadioGroup
+              value={source}
+              onValueChange={(value) => changeSource(value as TagDataSource)}
+            >
+              <DropdownMenuRadioItem value="workspace">
+                Workspace data
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="sample">
+                Sample data
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <p className="px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+              {workspaceUnavailable && "The workspace service is unavailable. "}
+              Sample tags stay in this browser and are not included in Generate
+              Reports.
+            </p>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button onClick={() => setEditor("new")} disabled={loading || !!error}>
           <Plus size={16} />
           Create project tag
         </Button>
@@ -183,74 +251,15 @@ export function ProjectTags() {
         />
       </div>
       <section className="panel" aria-label="Project tags">
-        <div className="panel-tabs">
-          <Tabs
-            value={tab}
-            onValueChange={(v) => {
-              setTab(v);
-              setPage(1);
-            }}
-          >
-            <TabsList>
-              <TabsTrigger value="all">
-                All tags <span className="count-pill">{tags.length}</span>
-              </TabsTrigger>
-              <TabsTrigger value="Funding Agency">
-                Funding agency <span className="count-pill">{funding}</span>
-              </TabsTrigger>
-              <TabsTrigger value="Zone">
-                Zones{" "}
-                <span className="count-pill">{tags.length - funding}</span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-        <div className="table-toolbar">
-          <div className="toolbar-left">
-            <SearchInput
-              value={search}
-              onChange={(v) => {
-                setSearch(v);
-                setPage(1);
-              }}
-              placeholder="Search project name or award ID…"
-            />
-            <Choice
-              value={agency}
-              onChange={(v) => {
-                setAgency(v);
-                setPage(1);
-              }}
-              label="Filter by agency"
-              options={[
-                { value: "all", label: "All agencies" },
-                "CEC",
-                "CIC",
-                "Cal-EvIP",
-                "NEVI",
-              ]}
-            />
-          </div>
-          <div className="toolbar-right">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Refresh project tags"
-              onClick={() => void reload()}
-              disabled={loading}
-            >
-              <RefreshCw size={15} />
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!filtered.length || loading}
-              onClick={exportTags}
-            >
-              <Download size={15} />
-              Export
-            </Button>
-          </div>
-        </div>
+        <ProjectTagToolbar
+          tags={tags}
+          filters={filters}
+          onChange={changeFilters}
+          resultCount={filtered.length}
+          loading={loading}
+          onReload={() => void reload()}
+          onExport={exportTags}
+        />
         {loading ? (
           <DataLoading />
         ) : error ? (
@@ -262,18 +271,14 @@ export function ProjectTags() {
             }
             description={
               tags.length
-                ? "Try another search or clear your agency filter."
+                ? "Try another search or clear your filters."
                 : "Group sites by funding agency or zone to prepare your reports."
             }
           >
             {tags.length ? (
               <Button
                 variant="outline"
-                onClick={() => {
-                  setSearch("");
-                  setAgency("all");
-                  setTab("all");
-                }}
+                onClick={() => changeFilters(emptyTagFilters)}
               >
                 Clear filters
               </Button>
@@ -465,6 +470,7 @@ export function ProjectTags() {
       </div>
       {editor && (
         <TagEditor
+          isSample={isSample}
           tag={editor === "new" ? undefined : editor}
           onClose={() => setEditor(null)}
           onSave={persist}
@@ -472,6 +478,7 @@ export function ProjectTags() {
       )}
       {mapping && (
         <MappingEditor
+          isSample={isSample}
           tag={mapping}
           onClose={() => setMapping(null)}
           onSave={persist}
