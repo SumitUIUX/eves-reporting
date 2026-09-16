@@ -32,6 +32,14 @@ The original interval column labeled `Energy Delivered (kW)` is displayed as `En
 
 Regulatory files are working exports, not certified agency submissions. Contact records and official agency templates were not provided. Excel files contain a Read me sheet with scope and limitations. Multiple CSVs include the same metadata in a ZIP. No email is sent or simulated.
 
+### Generate Reports delivery rules
+
+The horizontal report builder uses searchable multi-selects for reports, funding IDs, months and quarters, plus calendar date pickers. The supplied reporting reference table retains its agency names, report labels, frequency, format and submission mechanism. Existing exported column order, sheet names, snapshot filtering, CSV encoding, XLSX packaging and ZIP metadata remain unchanged.
+
+Calendar days are counted inclusively in UTC. Downloads are available for at most 31 days within one calendar month. Any selection crossing a calendar-month boundary, or any quarterly selection, requires email delivery. The complete span from the earliest selected start through the latest end cannot exceed 93 days, including gaps. Overlapping selections are counted once. Q3 has 92 days; 93 is the maximum permitted span, not a fixed quarter length.
+
+**Email integration is still required.** This repository has no authenticated user profile, registered email source or email/report-job service. The Email Delivery dialog therefore shows an unavailable, read-only recipient and disables Send. It never substitutes an arbitrary address, sends mail, claims that a job was queued or falls back to downloading an email-only range. To activate delivery, connect the EVES authenticated profile and server-side report-job API; resolve the recipient from the authenticated account, enforce the same period limits on the server, and show success only after the service accepts the job. No new email configuration values or API contracts are assumed.
+
 ## Local development
 
 Install dependencies with `npm ci`. Configure the local DB binding and apply generated migrations to the local D1 database before exercising saved tag operations. Use `npm run dev` in a standard development environment. In ChatGPT Work use the supported Sites preview workflow.
