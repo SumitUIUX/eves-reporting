@@ -68,7 +68,8 @@ import {
   ReferenceNote,
   Saving,
 } from "./shared";
-import { TagEditor, MappingEditor } from "./tag-editor";
+import { TagEditor } from "./tag-editor";
+import { MappingEditor } from "./mapping-editor";
 import { ProjectTagToolbar } from "./project-tag-toolbar";
 export function ProjectTags() {
   const {

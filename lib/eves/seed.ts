@@ -41,9 +41,19 @@ export const referenceTags: ProjectTag[] = [
     version: 1,
   },
 ];
-// Original mapped site capacities. Numbers are selection labels, not inferred charger IDs.
-export const referenceSites = [
+export interface ReferenceSite {
+  name: string;
+  area?: string;
+  chargers: string[];
+}
+
+// Site names, areas and capacities from the supplied mapping references.
+// Numbers remain selection labels, not inferred live charger IDs.
+export const referenceSites: ReferenceSite[] = [
   { name: "Downtown Transit Hub", chargers: ["1", "2", "3", "4"] },
   { name: "Airport Fast Charge Plaza", chargers: ["1", "2", "3", "4", "5"] },
-  { name: "Central Mall Parking", chargers: ["1", "2", "3"] },
+  { name: "Central Mall Parking", area: "East", chargers: ["1", "2", "3"] },
+  { name: "Harbor Ride & Charge", area: "South", chargers: ["1", "2"] },
+  { name: "University Garage C", area: "Central", chargers: ["1", "2", "3"] },
+  { name: "City Library Annex", area: "North", chargers: ["1", "2"] },
 ];
