@@ -20,8 +20,16 @@
 
 .brand:global(.eves-brand) {
   width: 100%;
+  height: auto;
   justify-content: center;
-  padding: 0 20px;
+  padding: 14px 20px;
+}
+
+.logo {
+  display: block;
+  width: auto;
+  height: 88px;
+  object-fit: contain;
 }
 
 .sidebarContent {
@@ -193,7 +201,9 @@
   line-height: 1.4;
   text-transform: uppercase;
   box-shadow: none;
-  transition: background-color 150ms, color 150ms;
+  transition:
+    background-color 150ms,
+    color 150ms;
 }
 
 .tab > svg {
@@ -241,6 +251,10 @@
   .brand:global(.eves-brand) {
     justify-content: flex-start;
     padding-left: 24px;
+  }
+
+  .logo {
+    height: 74px;
   }
 
   .closeSidebar {

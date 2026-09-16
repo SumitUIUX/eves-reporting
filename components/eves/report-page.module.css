@@ -1,0 +1,12 @@
+/* Keep the compact filter and export controls together without squeezing titles. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .header :global(.page-heading) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .header :global(.page-actions) {
+    justify-content: flex-end;
+  }
+}

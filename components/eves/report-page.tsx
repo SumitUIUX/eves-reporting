@@ -2,7 +2,6 @@
 import { useState, useMemo } from "react";
 import {
   Download,
-  SlidersHorizontal,
   ChevronDown,
   ArrowDownUp,
   Columns3,
@@ -11,11 +10,8 @@ import {
   Zap,
   Clock3,
   Building2,
-  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableHeader,
@@ -42,20 +38,15 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   PageHeading,
   Metric,
-  Choice,
   SearchInput,
   DataEmpty,
   TablePagination,
   ReferenceNote,
 } from "./shared";
 import { ReportChart } from "./report-chart";
+import { ReportFilterControl } from "./report-filter-control";
 import {
   reportConfig,
   emptyFilters,
@@ -70,6 +61,7 @@ import { downloadCsv } from "@/lib/eves/export";
 import { downloadExcel } from "@/lib/eves/xlsx";
 import datasets from "@/lib/eves/reference-data.json";
 import { toast } from "sonner";
+import styles from "./report-page.module.css";
 export function ReportPage({ kind: initialKind }: { kind: ReportKind }) {
   const [view, setView] = useState("summary");
   const kind =
@@ -97,16 +89,12 @@ function ReportView({
 }) {
   const data = datasets[kind] as ReportDataset;
   const config = reportConfig[kind];
-  const [draft, setDraft] = useState<ReportFilters>(emptyFilters),
-    [applied, setApplied] = useState<ReportFilters>(emptyFilters),
+  const [applied, setApplied] = useState<ReportFilters>(emptyFilters),
     [search, setSearch] = useState(""),
     [columns, setColumns] = useState(config.defaultColumns),
     [page, setPage] = useState(1),
     [size, setSize] = useState(10),
     [sort, setSort] = useState<{ column: number; asc: boolean } | null>(null),
-    [filterOpen, setFilterOpen] = useState(false),
-    [mobileFilter, setMobileFilter] = useState(false),
-    [error, setError] = useState(""),
     [detail, setDetail] = useState<string[] | null>(null);
   const rows = useMemo(() => {
     const filtered = filterRows(data, config, applied, search);
@@ -129,26 +117,12 @@ function ReportView({
   }, [data, config, applied, search, sort]);
   const stats = metricsFor(kind, rows);
   const current = Math.min(page, Math.max(1, Math.ceil(rows.length / size)));
-  const activeCount =
-    Object.values(applied.values).filter((v) => v !== "all").length +
-    Number(!!applied.from) +
-    Number(!!applied.to) +
-    Number(applied.errors);
-  function apply() {
-    if (draft.from && draft.to && draft.from > draft.to) {
-      setError("The end date must be on or after the start date.");
-      return;
-    }
-    setError("");
-    setApplied(draft);
+  function apply(filters: ReportFilters) {
+    setApplied(filters);
     setPage(1);
-    setMobileFilter(false);
   }
   function reset() {
-    setDraft(emptyFilters);
-    setApplied(emptyFilters);
-    setPage(1);
-    setError("");
+    apply(emptyFilters);
   }
   function exportReport(format: "csv" | "xlsx") {
     const d = { headers: data.headers, rows };
@@ -160,159 +134,43 @@ function ReportView({
       );
     toast.success(`${rows.length} reference records exported`);
   }
-  const filters = (
-    <>
-      <div className="filter-grid">
-        {config.filters.map((f) => (
-          <div className="form-field" key={f.column}>
-            <label htmlFor={`filter-${f.column}`}>{f.label}</label>
-            <Choice
-              id={`filter-${f.column}`}
-              label={f.label}
-              value={draft.values[f.column] ?? "all"}
-              onChange={(v) =>
-                setDraft((p) => ({
-                  ...p,
-                  values: { ...p.values, [f.column]: v },
-                }))
-              }
-              options={[
-                {
-                  value: "all",
-                  label: `All ${f.label.toLowerCase()}${f.label.endsWith("s") ? "" : "s"}`,
-                },
-                ...[...new Set(data.rows.map((r) => r[f.column]))]
-                  .filter((v) => v && v !== "-" && v !== "—")
-                  .sort(),
-              ]}
-              className="w-full"
-            />
-          </div>
-        ))}
-        {config.dateColumn !== undefined && (
-          <>
-            <div className="form-field">
-              <label htmlFor="date-from">From date</label>
-              <Input
-                id="date-from"
-                type="date"
-                value={draft.from}
-                onChange={(e) =>
-                  setDraft((p) => ({ ...p, from: e.target.value }))
-                }
-              />
-            </div>
-            <div className="form-field">
-              <label htmlFor="date-to">To date</label>
-              <Input
-                id="date-to"
-                type="date"
-                value={draft.to}
-                min={draft.from || undefined}
-                onChange={(e) =>
-                  setDraft((p) => ({ ...p, to: e.target.value }))
-                }
-              />
-            </div>
-          </>
-        )}
-        {kind === "sessions" && (
-          <label className="flex items-center gap-3 text-sm">
-            <Switch
-              checked={draft.errors}
-              onCheckedChange={(v) => setDraft((p) => ({ ...p, errors: v }))}
-              aria-label="Only sessions with errors"
-            />
-            Only sessions with errors
-          </label>
-        )}
-      </div>
-      {error && (
-        <p className="form-error mx-5 mb-4" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="filter-actions">
-        <Button variant="outline" onClick={reset}>
-          <RotateCcw size={14} />
-          Reset filters
-        </Button>
-        <Button onClick={apply}>Apply filters</Button>
-      </div>
-    </>
-  );
   return (
     <>
-      <PageHeading
-        eyebrow="MASTER REPORTS"
-        title={config.title}
-        description={config.description}
-      >
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button disabled={!rows.length}>
-              <Download size={15} />
-              Export report
-              <ChevronDown size={13} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>
-              Export all {rows.length} matching rows
-            </DropdownMenuLabel>
-            <DropdownMenuItem onSelect={() => exportReport("csv")}>
-              CSV spreadsheet
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => exportReport("xlsx")}>
-              Excel workbook (.xlsx)
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </PageHeading>
-      <Collapsible
-        open={filterOpen}
-        onOpenChange={setFilterOpen}
-        className="panel desktop-filter mb-6"
-      >
-        <div className="panel-header">
-          <div className="flex items-center gap-3">
-            <SlidersHorizontal size={17} className="text-muted-foreground" />
-            <h2 className="text-sm!">Report filters</h2>
-            {activeCount > 0 && (
-              <span className="filter-pill">{activeCount} applied</span>
-            )}
-          </div>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="h-7! text-muted-foreground">
-              {filterOpen ? "Hide filters" : "Refine report"}
-              <ChevronDown
-                size={14}
-                className={filterOpen ? "rotate-180" : ""}
-              />
-            </Button>
-          </CollapsibleTrigger>
-        </div>
-        <CollapsibleContent>{filters}</CollapsibleContent>
-      </Collapsible>
-      <Button
-        variant="outline"
-        className="mobile-filter-trigger mb-5"
-        onClick={() => setMobileFilter(true)}
-      >
-        <SlidersHorizontal size={16} />
-        Filters {activeCount > 0 ? `(${activeCount})` : ""}
-      </Button>
-      <Sheet open={mobileFilter} onOpenChange={setMobileFilter}>
-        <SheetContent className="p-6 overflow-auto">
-          <SheetHeader className="p-0 mb-5">
-            <SheetTitle>Report filters</SheetTitle>
-            <SheetDescription>
-              Choose a scope, then apply your filters.
-            </SheetDescription>
-          </SheetHeader>
-          {mobileFilter && filters}
-        </SheetContent>
-      </Sheet>
+      <div className={styles.header}>
+        <PageHeading
+          eyebrow="MASTER REPORTS"
+          title={config.title}
+          description={config.description}
+        >
+          <ReportFilterControl
+            kind={kind}
+            config={config}
+            data={data}
+            applied={applied}
+            onApply={apply}
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button disabled={!rows.length}>
+                <Download size={15} />
+                Export report
+                <ChevronDown size={13} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>
+                Export all {rows.length} matching rows
+              </DropdownMenuLabel>
+              <DropdownMenuItem onSelect={() => exportReport("csv")}>
+                CSV spreadsheet
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => exportReport("xlsx")}>
+                Excel workbook (.xlsx)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </PageHeading>
+      </div>
       <div className="metrics report-metrics">
         {stats.map((s, i) => (
           <Metric

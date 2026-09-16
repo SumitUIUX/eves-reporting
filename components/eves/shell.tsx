@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import {
-  Zap,
   FileText,
   Tags,
   Activity,
@@ -100,10 +100,14 @@ function Navigation({ category }: { category: ReportCategory }) {
             aria-label="EVES reporting home"
             onClick={() => setOpenMobile(false)}
           >
-            <span className="brand-mark">
-              <Zap fill="currentColor" aria-hidden="true" />
-            </span>
-            <span>EVES</span>
+            <Image
+              src="/eves-logo.svg"
+              alt="EVES"
+              width={295}
+              height={330}
+              className={styles.logo}
+              unoptimized
+            />
           </Link>
           <button
             type="button"
@@ -127,7 +131,9 @@ function Navigation({ category }: { category: ReportCategory }) {
                     <Link
                       href={item.href}
                       onClick={() => setOpenMobile(false)}
-                      aria-current={category === item.label ? "true" : undefined}
+                      aria-current={
+                        category === item.label ? "true" : undefined
+                      }
                     >
                       <item.icon aria-hidden="true" />
                       <span>{item.label}</span>
@@ -187,7 +193,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Keep the active page visible when its tab starts outside a narrow screen.
-    activeTabRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    activeTabRef.current?.scrollIntoView({
+      block: "nearest",
+      inline: "nearest",
+    });
   }, [path]);
 
   return (

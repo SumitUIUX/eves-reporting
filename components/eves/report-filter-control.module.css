@@ -1,0 +1,142 @@
+.trigger[data-active="true"] {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--sidebar-accent);
+}
+
+.count {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 4px;
+  color: var(--primary-foreground);
+  background: var(--primary);
+  font-size: 0.75rem;
+}
+
+.popover {
+  display: flex;
+  flex-direction: column;
+  width: min(480px, calc(100vw - 24px));
+  max-height: min(640px, var(--radix-popover-content-available-height));
+  padding: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--card);
+}
+
+.heading,
+.header {
+  flex-shrink: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.heading h2 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.heading .close {
+  width: 32px;
+  height: 32px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 18px 16px;
+  min-height: 0;
+  padding: 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.field label,
+.errorToggle {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.field .select {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.field input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  font-size: 0.875rem;
+}
+
+.errorToggle {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-block: 4px;
+}
+
+.error {
+  flex-shrink: 0;
+  padding: 0 20px 14px;
+  color: var(--destructive);
+  font-size: 0.8125rem;
+}
+
+.footer {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.mobile {
+  width: 100%;
+  max-width: 420px;
+  height: 100dvh;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.mobile .header {
+  padding: 24px 44px 20px 20px;
+}
+
+.mobile .fields {
+  grid-template-columns: minmax(0, 1fr);
+  flex: 1;
+}
+
+.mobile .footer {
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+}
