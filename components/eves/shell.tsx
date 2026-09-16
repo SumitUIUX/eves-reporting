@@ -10,26 +10,18 @@ import {
   ChartNoAxesCombined,
   Building2,
   Clock3,
-  Settings,
-  CircleHelp,
   X,
 } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import styles from "./navigation.module.css";
@@ -144,42 +136,6 @@ function Navigation({ category }: { category: ReportCategory }) {
             </SidebarMenu>
           </nav>
         </SidebarContent>
-        <SidebarFooter className={styles.sidebarFooter}>
-          <SidebarMenu className={styles.utilityMenu}>
-            {[
-              { label: "Settings", icon: Settings },
-              { label: "Help & Support", icon: CircleHelp },
-            ].map((item) => (
-              <SidebarMenuItem
-                key={item.label}
-                title={`${item.label} is not available in this workspace`}
-              >
-                <SidebarMenuButton disabled className={styles.utilityLink}>
-                  <item.icon aria-hidden="true" />
-                  <span>{item.label}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className={styles.account} tabIndex={0}>
-                <span className={styles.avatar} aria-hidden="true">
-                  EV
-                </span>
-                <div>
-                  <p>EVES workspace</p>
-                  <small>Operator</small>
-                </div>
-                <span className="sr-only">Reference data</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="max-w-64">
-              Report examples are copied from the original dashboard. No live
-              charger connection is configured.
-            </TooltipContent>
-          </Tooltip>
-        </SidebarFooter>
       </div>
     </Sidebar>
   );

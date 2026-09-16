@@ -65,7 +65,6 @@ import {
   DataEmpty,
   DataLoading,
   DataError,
-  ReferenceNote,
   Saving,
 } from "./shared";
 import { TagEditor } from "./tag-editor";
@@ -451,10 +450,6 @@ export function ProjectTags() {
           />
         )}
       </section>
-      <ReferenceNote>
-        Tags can map to multiple sites and chargers. Editing a tag does not
-        change your charging infrastructure.
-      </ReferenceNote>
       <div className="workflow-callout">
         <div className="workflow-copy">
           <span>

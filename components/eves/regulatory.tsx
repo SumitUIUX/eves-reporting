@@ -9,7 +9,7 @@ import {
   LoaderCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageHeading, Choice, ReferenceNote } from "./shared";
+import { PageHeading, Choice } from "./shared";
 import { ReportMultiSelect } from "./report-multi-select";
 import { ReportDatePicker } from "./report-date-picker";
 import { ReportEmailDialog } from "./report-email-dialog";
@@ -432,19 +432,6 @@ export function Regulatory() {
       <ReportingReference />
       <div className={styles.notes}>
         <div>
-          <h3>About these exports</h3>
-          <p>
-            These are working exports of reference data. Agency submission
-            templates, contact records and live charger sync are not connected.
-            Verify required formats with the receiving agency before submission.
-          </p>
-          <p>
-            Download up to 31 days within one calendar month. Cross-month and
-            quarterly reports require email delivery, up to a 93-day span.
-            Registered-account email delivery is not connected yet.
-          </p>
-        </div>
-        <div>
           <h3>Keep your reporting organized</h3>
           <p>
             Funding filters match tag names and mapped sites. Individual charger
@@ -455,10 +442,6 @@ export function Regulatory() {
           </a>
         </div>
       </div>
-      <ReferenceNote>
-        Summary reports retain the original snapshot period. Session and
-        interval exports are filtered by their recorded dates.
-      </ReferenceNote>
       {emailOpen && (
         <ReportEmailDialog
           onClose={() => setEmailOpen(false)}

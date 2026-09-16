@@ -263,17 +263,6 @@ export function TablePagination({
     </div>
   );
 }
-export function ReferenceNote({ children }: { children?: React.ReactNode }) {
-  return (
-    <div className="under-table">
-      <Info />
-      <span>
-        {children ??
-          "Reference records from the original EVES dashboard. Live charger data is not connected."}
-      </span>
-    </div>
-  );
-}
 export function Definition({ label, text }: { label: string; text: string }) {
   return (
     <Tooltip>

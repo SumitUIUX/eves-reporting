@@ -43,7 +43,6 @@ import {
   SearchInput,
   DataEmpty,
   TablePagination,
-  ReferenceNote,
 } from "./shared";
 import { ReportChart } from "./report-chart";
 import { ReportFilterControl } from "./report-filter-control";
@@ -355,13 +354,6 @@ function ReportView({
           setSize={setSize}
         />
       </section>
-      <ReferenceNote>
-        {kind === "intervals"
-          ? "Reference snapshot from the original dashboard. Energy is labeled kWh; the original column was labeled kW. Values are preserved."
-          : kind === "throughput"
-            ? "Infrastructure performance is a fixed Sep 1–7, 2026 snapshot. Zero values are preserved from the source."
-            : "Reference snapshot from the original dashboard. Filters, charts, and metrics use only the records in this snapshot."}
-      </ReferenceNote>
       <Sheet
         open={!!detail}
         onOpenChange={(v) => {

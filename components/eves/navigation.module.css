@@ -53,8 +53,7 @@
   line-height: 1.4;
 }
 
-.categoryLink > svg,
-.utilityLink > svg {
+.categoryLink > svg {
   width: 20px;
   height: 20px;
 }
@@ -78,69 +77,9 @@
 }
 
 .categoryLink:focus-visible,
-.account:focus-visible,
 .closeSidebar:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 3px;
-}
-
-.sidebarFooter {
-  gap: 0;
-  padding: 0;
-}
-
-.utilityMenu {
-  gap: 4px;
-  padding: 12px 16px 24px;
-}
-
-.utilityLink {
-  min-height: 44px;
-  height: auto;
-  gap: 14px;
-  padding: 10px 14px;
-  color: var(--muted-foreground);
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
-.utilityLink:disabled {
-  opacity: 0.75;
-}
-
-.account {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 102px;
-  padding: 20px;
-  border-top: 1px solid var(--border);
-  color: var(--foreground);
-}
-
-.avatar {
-  display: grid;
-  flex-shrink: 0;
-  width: 46px;
-  height: 46px;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--sidebar-accent);
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.account p {
-  margin: 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.account small {
-  display: block;
-  margin-top: 3px;
-  color: var(--muted-foreground);
-  font-size: 0.8125rem;
 }
 
 .workspace {
@@ -302,9 +241,6 @@
     padding: 12px 16px;
   }
 
-  .account {
-    padding-bottom: max(20px, env(safe-area-inset-bottom));
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

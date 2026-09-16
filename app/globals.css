@@ -637,22 +637,6 @@ svg {
   width: 29px;
   height: 29px;
 }
-.under-table {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  color: #888e9f;
-  font-size: 12px;
-  line-height: 1.8;
-  margin-top: 19px;
-  padding: 0 2px;
-}
-.under-table svg {
-  width: 15px;
-  height: 15px;
-  margin-top: 3px;
-  flex-shrink: 0;
-}
 .workflow-callout {
   display: flex;
   align-items: center;
@@ -1134,9 +1118,6 @@ svg {
   }
   .eves-table td {
     padding-block: 18px;
-  }
-  .under-table {
-    font-size: 12px;
   }
   .chart-box {
     padding: 17px;
