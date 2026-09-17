@@ -70,6 +70,19 @@ import {
 import { TagEditor } from "./tag-editor";
 import { MappingEditor } from "./mapping-editor";
 import { ProjectTagToolbar } from "./project-tag-toolbar";
+import { ProjectTagFilterControl } from "./project-tag-filter-control";
+import { ColumnVisibilityControl } from "./column-visibility-control";
+import headerStyles from "./report-page.module.css";
+
+const tagColumnLabels = [
+  "Project / zone name",
+  "Tag type",
+  "Agency",
+  "Mapped infrastructure",
+  "Created by",
+  "Created on",
+];
+
 export function ProjectTags() {
   const {
     tags,
@@ -83,6 +96,9 @@ export function ProjectTags() {
     workspaceUnavailable,
   } = useProjectTags();
   const isSample = source === "sample";
+  const [columns, setColumns] = useState<number[]>(() =>
+    tagColumnLabels.map((_, index) => index),
+  );
   const [filters, setFilters] = useState<TagFilters>(emptyTagFilters);
   const [page, setPage] = useState(1),
     [size, setSize] = useState(10),
@@ -178,58 +194,68 @@ export function ProjectTags() {
   }
   return (
     <>
-      <PageHeading
-        eyebrow="REGULATORY REPORTS"
-        title="Project tagging"
-        description={
-          isSample
-            ? "Explore sample projects. Changes are saved in this browser only."
-            : "Organize your charging infrastructure. Simplify your reporting."
-        }
-      >
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              aria-label={`Data source: ${isSample ? "Sample data" : "Workspace data"}`}
-            >
-              {isSample ? <FlaskConical size={16} /> : <Database size={16} />}
-              {isSample ? "Sample data" : "Workspace data"}
-              <ChevronDown size={14} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-72">
-            <DropdownMenuRadioGroup
-              value={source}
-              onValueChange={(value) => changeSource(value as TagDataSource)}
-            >
-              <DropdownMenuRadioItem value="workspace">
-                Workspace data
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="sample">
-                Sample data
-              </DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
-            <DropdownMenuSeparator />
-            <p className="px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-              {workspaceUnavailable && "The workspace service is unavailable. "}
-              Sample tags stay in this browser and are not included in Generate
-              Reports.
-            </p>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button onClick={() => setEditor("new")} disabled={loading || !!error}>
-          <Plus size={16} />
-          Create project tag
-        </Button>
-      </PageHeading>
+      <div className={headerStyles.header}>
+        <PageHeading
+          eyebrow="REGULATORY REPORTS"
+          title="Project tagging"
+          description={
+            isSample
+              ? "Explore sample projects. Changes are saved in this browser only."
+              : "Organize your charging infrastructure. Simplify your reporting."
+          }
+        >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                aria-label={`Data source: ${isSample ? "Sample data" : "Workspace data"}`}
+              >
+                {isSample ? <FlaskConical size={16} /> : <Database size={16} />}
+                {isSample ? "Sample data" : "Workspace data"}
+                <ChevronDown size={14} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              <DropdownMenuRadioGroup
+                value={source}
+                onValueChange={(value) => changeSource(value as TagDataSource)}
+              >
+                <DropdownMenuRadioItem value="workspace">
+                  Workspace data
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="sample">
+                  Sample data
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <p className="px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+                {workspaceUnavailable &&
+                  "The workspace service is unavailable. "}
+                Sample tags stay in this browser and are not included in
+                Generate Reports.
+              </p>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <ProjectTagFilterControl
+            tags={tags}
+            applied={filters}
+            onApply={changeFilters}
+          />
+          <Button
+            onClick={() => setEditor("new")}
+            disabled={loading || !!error}
+          >
+            <Plus size={16} />
+            Create project tag
+          </Button>
+        </PageHeading>
+      </div>
       <div className="metrics">
         <Metric
           label="Total project tags"
           value={loading || error ? "—" : tags.length}
           note="Across your workspace"
           icon={Tags}
-          accent
         />
         <Metric
           label="Funding agency tags"
@@ -259,6 +285,14 @@ export function ProjectTags() {
           loading={loading}
           onReload={() => void reload()}
           onExport={exportTags}
+          columnControl={
+            <ColumnVisibilityControl
+              labels={tagColumnLabels}
+              columns={columns}
+              onChange={setColumns}
+              compactOnMobile
+            />
+          }
         />
         {loading ? (
           <DataLoading />
@@ -293,19 +327,20 @@ export function ProjectTags() {
           <Table className="eves-table">
             <TableHeader>
               <TableRow>
-                <TableHead>
-                  <button
-                    className="flex items-center gap-2"
-                    onClick={() => setSort(!sort)}
-                  >
-                    Project / zone name <ArrowDownUp size={12} />
-                  </button>
-                </TableHead>
-                <TableHead>Tag type</TableHead>
-                <TableHead>Agency</TableHead>
-                <TableHead>Mapped infrastructure</TableHead>
-                <TableHead>Created by</TableHead>
-                <TableHead>Created on</TableHead>
+                {columns.map((column) => (
+                  <TableHead key={column}>
+                    {column === 0 ? (
+                      <button
+                        className="flex items-center gap-2"
+                        onClick={() => setSort(!sort)}
+                      >
+                        {tagColumnLabels[column]} <ArrowDownUp size={12} />
+                      </button>
+                    ) : (
+                      tagColumnLabels[column]
+                    )}
+                  </TableHead>
+                ))}
                 <TableHead className="w-10">
                   <span className="sr-only">Actions</span>
                 </TableHead>
@@ -314,92 +349,105 @@ export function ProjectTags() {
             <TableBody>
               {rows.map((t) => (
                 <TableRow key={t.id}>
-                  <TableCell>
-                    <div className="project-cell">
-                      <span
-                        className={`project-icon ${t.type === "Zone" ? "zone" : ""}`}
-                      >
-                        {t.type === "Zone" ? (
-                          <MapPin size={18} />
-                        ) : (
-                          <Tag size={18} />
-                        )}
-                      </span>
-                      <div>
-                        <button
-                          className="project-name hover:text-primary text-left"
-                          onClick={() => setEditor(t)}
+                  {columns.includes(0) && (
+                    <TableCell>
+                      <div className="project-cell">
+                        <span
+                          className={`project-icon ${t.type === "Zone" ? "zone" : ""}`}
                         >
-                          {t.name}
-                        </button>
-                        <div className="project-id">
-                          {t.type === "Zone"
-                            ? "Geographic zone"
-                            : t.awardId || "No award ID"}
+                          {t.type === "Zone" ? (
+                            <MapPin size={18} />
+                          ) : (
+                            <Tag size={18} />
+                          )}
+                        </span>
+                        <div>
+                          <button
+                            className="project-name hover:text-primary text-left"
+                            onClick={() => setEditor(t)}
+                          >
+                            {t.name}
+                          </button>
+                          <div className="project-id">
+                            {t.type === "Zone"
+                              ? "Geographic zone"
+                              : t.awardId || "No award ID"}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`type-badge ${t.type === "Zone" ? "zone" : ""}`}
-                    >
-                      {t.type === "Zone" ? (
-                        <MapPin size={11} />
+                    </TableCell>
+                  )}
+                  {columns.includes(1) && (
+                    <TableCell>
+                      <span
+                        className={`type-badge ${t.type === "Zone" ? "zone" : ""}`}
+                      >
+                        {t.type === "Zone" ? (
+                          <MapPin size={11} />
+                        ) : (
+                          <Landmark size={11} />
+                        )}{" "}
+                        {t.type}
+                      </span>
+                    </TableCell>
+                  )}
+                  {columns.includes(2) && (
+                    <TableCell>
+                      {t.agency ? (
+                        <span className="agency">{t.agency}</span>
                       ) : (
-                        <Landmark size={11} />
-                      )}{" "}
-                      {t.type}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {t.agency ? (
-                      <span className="agency">{t.agency}</span>
-                    ) : (
-                      <span className="text-[#b1b5c0]">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <button
-                      className="flex flex-col gap-2 hover:text-primary"
-                      onClick={() => setMapping(t)}
-                      aria-label={`Map sites for ${t.name}`}
-                    >
-                      <span className="mapping-count">
-                        <Building2 />
-                        <strong>{Object.keys(t.mappings).length}</strong> sites
+                        <span className="text-[#b1b5c0]">—</span>
+                      )}
+                    </TableCell>
+                  )}
+                  {columns.includes(3) && (
+                    <TableCell>
+                      <button
+                        className="flex flex-col gap-2 hover:text-primary"
+                        onClick={() => setMapping(t)}
+                        aria-label={`Map sites for ${t.name}`}
+                      >
+                        <span className="mapping-count">
+                          <Building2 />
+                          <strong>{Object.keys(t.mappings).length}</strong>{" "}
+                          sites
+                        </span>
+                        <span className="mapping-count">
+                          <Link2 />
+                          <strong>
+                            {Object.values(t.mappings).flat().length}
+                          </strong>{" "}
+                          chargers
+                        </span>
+                      </button>
+                    </TableCell>
+                  )}
+                  {columns.includes(4) && (
+                    <TableCell>
+                      <div className="table-person">
+                        <span className="avatar">
+                          {t.createdBy
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)}
+                        </span>
+                        {t.createdBy}
+                      </div>
+                    </TableCell>
+                  )}
+                  {columns.includes(5) && (
+                    <TableCell>
+                      <span className="date-cell">
+                        {new Date(t.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "2-digit",
+                          year: "numeric",
+                          timeZone: "UTC",
+                        })}
                       </span>
-                      <span className="mapping-count">
-                        <Link2 />
-                        <strong>
-                          {Object.values(t.mappings).flat().length}
-                        </strong>{" "}
-                        chargers
-                      </span>
-                    </button>
-                  </TableCell>
-                  <TableCell>
-                    <div className="table-person">
-                      <span className="avatar">
-                        {t.createdBy
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .slice(0, 2)}
-                      </span>
-                      {t.createdBy}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="date-cell">
-                      {new Date(t.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "2-digit",
-                        year: "numeric",
-                        timeZone: "UTC",
-                      })}
-                    </span>
-                  </TableCell>
+                    </TableCell>
+                  )}
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

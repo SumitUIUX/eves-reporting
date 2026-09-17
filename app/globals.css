@@ -384,13 +384,6 @@ svg {
   font-size: 12px;
   margin-top: 8px;
 }
-.metric.accent {
-  background: #f0effc;
-  border-color: #e0def8;
-}
-.metric.accent .metric-value {
-  color: #4842c4;
-}
 .panel {
   border: 1px solid var(--border);
   background: white;

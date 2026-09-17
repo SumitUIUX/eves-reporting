@@ -63,16 +63,14 @@ export function Metric({
   value,
   note,
   icon: Icon,
-  accent = false,
 }: {
   label: string;
   value: string | number;
   note: string;
   icon: LucideIcon;
-  accent?: boolean;
 }) {
   return (
-    <div className={`metric ${accent ? "accent" : ""}`}>
+    <div className="metric">
       <div className="metric-top">
         <span>{label}</span>
         <span className="metric-icon">

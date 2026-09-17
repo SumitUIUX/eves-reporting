@@ -43,24 +43,6 @@
   margin-right: 4px;
 }
 
-.filterActive {
-  border-color: var(--primary);
-  color: var(--primary);
-  background: var(--sidebar-accent);
-}
-
-.count {
-  display: grid;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  place-items: center;
-  border-radius: 4px;
-  background: var(--primary);
-  color: var(--primary-foreground);
-  font-size: 0.75rem;
-}
-
 .applied {
   flex-wrap: wrap;
 }
@@ -96,61 +78,6 @@
 .clear:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
-}
-
-.popover {
-  width: min(320px, calc(100vw - 32px));
-  padding: 16px;
-  border-radius: 10px;
-}
-
-.popoverHeading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.popoverHeading h2 {
-  font-size: 0.9375rem;
-  font-weight: 600;
-}
-
-.popoverHeading > button {
-  width: 32px;
-  height: 32px;
-}
-
-.field {
-  display: grid;
-  gap: 8px;
-  margin: 0 0 18px;
-  padding: 0;
-  border: 0;
-}
-
-.field label {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.field:disabled {
-  opacity: 0.6;
-}
-
-.field small,
-.popoverFooter > span {
-  font-size: 0.8125rem;
-  color: var(--muted-foreground);
-}
-
-.popoverFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
 }
 
 @media (max-width: 767px) {

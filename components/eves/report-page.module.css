@@ -1,4 +1,8 @@
 /* Keep the compact filter and export controls together without squeezing titles. */
+.header :global(.page-actions) {
+  flex-wrap: wrap;
+}
+
 @media (min-width: 768px) and (max-width: 1023px) {
   .header :global(.page-heading) {
     flex-direction: column;

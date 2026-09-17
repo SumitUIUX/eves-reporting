@@ -4,7 +4,6 @@ import {
   Download,
   ChevronDown,
   ArrowDownUp,
-  Columns3,
   ArrowUpRight,
   Activity,
   Zap,
@@ -25,9 +24,7 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuCheckboxItem,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -44,6 +41,7 @@ import {
   DataEmpty,
   TablePagination,
 } from "./shared";
+import { ColumnVisibilityControl } from "./column-visibility-control";
 import { ReportChart } from "./report-chart";
 import { ReportFilterControl } from "./report-filter-control";
 import {
@@ -90,7 +88,9 @@ function ReportView({
   const config = reportConfig[kind];
   const [applied, setApplied] = useState<ReportFilters>(emptyFilters),
     [search, setSearch] = useState(""),
-    [columns, setColumns] = useState(config.defaultColumns),
+    [columns, setColumns] = useState<number[]>(() =>
+      data.headers.map((_, index) => index),
+    ),
     [page, setPage] = useState(1),
     [size, setSize] = useState(10),
     [sort, setSort] = useState<{ column: number; asc: boolean } | null>(null),
@@ -176,7 +176,6 @@ function ReportView({
             key={s.label}
             {...s}
             icon={[Activity, Zap, Clock3, Building2][i]}
-            accent={i === 0}
           />
         ))}
       </div>
@@ -204,48 +203,12 @@ function ReportView({
             />
           </div>
           <div className="toolbar-right">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <Columns3 size={15} />
-                  Columns<span className="count-pill">{columns.length}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="max-h-[60vh] overflow-auto w-64"
-              >
-                <DropdownMenuLabel>Visible columns</DropdownMenuLabel>
-                <DropdownMenuItem
-                  onSelect={() => setColumns(config.defaultColumns)}
-                >
-                  Restore default columns
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => setColumns(data.headers.map((_, i) => i))}
-                >
-                  Show all columns
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {data.headers.map((h, i) => (
-                  <DropdownMenuCheckboxItem
-                    key={i}
-                    checked={columns.includes(i)}
-                    disabled={columns.length === 1 && columns[0] === i}
-                    onSelect={(e) => e.preventDefault()}
-                    onCheckedChange={(v) =>
-                      setColumns((prev) =>
-                        v
-                          ? [...prev, i].sort((a, b) => a - b)
-                          : prev.filter((c) => c !== i),
-                      )
-                    }
-                  >
-                    {h}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ColumnVisibilityControl
+              labels={data.headers}
+              columns={columns}
+              onChange={setColumns}
+              compactColumns={config.defaultColumns}
+            />
           </div>
         </div>
         {rows.length ? (

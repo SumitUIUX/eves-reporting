@@ -11,6 +11,7 @@ import {
   Building2,
   Clock3,
   X,
+  UserRound,
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -194,6 +195,16 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 ))}
             </TabsList>
           </nav>
+          {/* Workspace display role; authenticated roles are not connected yet. */}
+          <div
+            className={styles.profile}
+            aria-label="Workspace role: Super Admin"
+          >
+            <span className={styles.profileAvatar} aria-hidden="true">
+              <UserRound size={19} />
+            </span>
+            <span>Super Admin</span>
+          </div>
         </header>
         <TabsContent value={path} className={styles.tabPanel}>
           <main id="main-content" className="page-content">

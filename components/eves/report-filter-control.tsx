@@ -1,24 +1,11 @@
 "use client";
 
 import { useId, useState } from "react";
-import { RotateCcw, SlidersHorizontal, X } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { FilterPanel } from "./filter-panel";
 import {
   emptyFilters,
   type ReportConfig,
@@ -46,7 +33,6 @@ export function ReportFilterControl({
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(applied);
   const [error, setError] = useState("");
-  const isMobile = useIsMobile();
   const id = useId();
   const activeCount =
     Object.values(applied.values).filter((value) => value !== "all").length +
@@ -79,23 +65,6 @@ export function ReportFilterControl({
     setError("");
     onApply(emptyFilters);
   }
-
-  const trigger = (
-    <Button
-      variant="outline"
-      className={styles.trigger}
-      data-active={activeCount > 0}
-      aria-label={activeCount ? `Filters (${activeCount} applied)` : "Filters"}
-    >
-      <SlidersHorizontal size={16} />
-      Filters
-      {activeCount > 0 && (
-        <span className={styles.count} aria-hidden="true">
-          {activeCount}
-        </span>
-      )}
-    </Button>
-  );
 
   const form = (
     <form className={styles.form} onSubmit={apply} noValidate>
@@ -193,45 +162,14 @@ export function ReportFilterControl({
     </form>
   );
 
-  if (isMobile) {
-    return (
-      <Sheet open={open} onOpenChange={changeOpen}>
-        <SheetTrigger asChild>{trigger}</SheetTrigger>
-        <SheetContent className={styles.mobile}>
-          <SheetHeader className={styles.header}>
-            <SheetTitle>Report filters</SheetTitle>
-            <SheetDescription>Choose your scope, then apply.</SheetDescription>
-          </SheetHeader>
-          {form}
-        </SheetContent>
-      </Sheet>
-    );
-  }
-
   return (
-    <Popover open={open} onOpenChange={changeOpen}>
-      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={8}
-        collisionPadding={12}
-        className={styles.popover}
-        aria-label="Report filters"
-      >
-        <div className={styles.heading}>
-          <h2>Report filters</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={styles.close}
-            aria-label="Close filters"
-            onClick={() => changeOpen(false)}
-          >
-            <X size={16} />
-          </Button>
-        </div>
-        {form}
-      </PopoverContent>
-    </Popover>
+    <FilterPanel
+      title="Report filters"
+      open={open}
+      onOpenChange={changeOpen}
+      activeCount={activeCount}
+    >
+      {form}
+    </FilterPanel>
   );
 }
