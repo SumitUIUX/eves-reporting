@@ -46,7 +46,11 @@ Empty tables and record pickers share the message â€œNo records have been foundâ
 
 ## Local development
 
-Install dependencies with `npm ci`. Configure the local DB binding and apply generated migrations to the local D1 database before exercising saved tag operations. Use `npm run dev` in a standard development environment. In ChatGPT Work use the supported Sites preview workflow.
+## Local development
+
+Install dependencies with `npm ci`. Configure the local DB binding and apply generated migrations to the local D1 database before exercising saved tag operations. Use `npm run dev` in a standard development environment.
+
+Validation commands: `npm run typecheck`, `npm run build` (Sites), `npm run build:vercel` (Vercel).
 
 Validation commands: `npm run typecheck`, `npm run build` (Sites), `npm run build:vercel` (Vercel).
 
