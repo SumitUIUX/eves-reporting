@@ -11,6 +11,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import styles from "./regulatory.module.css";
+import { DataEmpty } from "./shared";
 
 export interface ReportOption {
   value: string;
@@ -25,7 +26,6 @@ export function ReportMultiSelect({
   onChange,
   placeholder,
   searchPlaceholder,
-  emptyMessage,
   disabled = false,
 }: {
   id: string;
@@ -35,7 +35,6 @@ export function ReportMultiSelect({
   onChange: (selected: string[]) => void;
   placeholder: string;
   searchPlaceholder: string;
-  emptyMessage?: string;
   disabled?: boolean;
 }) {
   const [search, setSearch] = useState("");
@@ -134,13 +133,7 @@ export function ReportMultiSelect({
               <span>{option.label}</span>
             </label>
           ))}
-          {!visible.length && (
-            <p className={styles.emptyOptions}>
-              {options.length
-                ? "No matches found."
-                : (emptyMessage ?? "No options available.")}
-            </p>
-          )}
+          {!visible.length && <DataEmpty compact />}
         </div>
       </PopoverContent>
     </Popover>

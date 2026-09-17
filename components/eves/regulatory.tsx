@@ -23,6 +23,7 @@ import {
 } from "@/lib/eves/report-period";
 import styles from "./regulatory.module.css";
 import { useTags } from "@/lib/eves/use-tags";
+import { resolveFundingTags } from "@/lib/eves/funding-tags";
 import { reportConfig, isoDate } from "@/lib/eves/report-config";
 import type { ReportDataset, ReportKind } from "@/lib/eves/types";
 import datasets from "@/lib/eves/reference-data.json";
@@ -66,7 +67,9 @@ export function Regulatory() {
     [emailOpen, setEmailOpen] = useState(false),
     [error, setError] = useState(""),
     [lastExport, setLastExport] = useState("");
-  const { tags, loading, error: tagError, reload } = useTags();
+  const tagState = useTags();
+  const { loading, reload } = tagState;
+  const { tags, error: tagError } = resolveFundingTags(tagState);
   const reports = definitions[agency];
   const eligibleTags = tags.filter((t) => t.agency === agency);
   const ranges = useMemo(
@@ -274,7 +277,6 @@ export function Regulatory() {
               onChange={(value) => changed(() => setFunding(value))}
               placeholder="All funding IDs"
               searchPlaceholder="Search funding IDs…"
-              emptyMessage="No funding tags for this agency."
               disabled={loading || !!tagError}
             />
             {tagError && (

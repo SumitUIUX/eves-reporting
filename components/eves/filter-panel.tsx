@@ -24,12 +24,14 @@ export function FilterPanel({
   open,
   onOpenChange,
   activeCount,
+  presentation = "responsive",
   children,
 }: {
   title: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   activeCount: number;
+  presentation?: "responsive" | "drawer";
   children: ReactNode;
 }) {
   const isMobile = useIsMobile();
@@ -49,11 +51,11 @@ export function FilterPanel({
       )}
     </Button>
   );
-  if (isMobile) {
+  if (presentation === "drawer" || isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>
-        <SheetContent className={styles.mobile}>
+        <SheetContent side="right" className={styles.mobile}>
           <SheetHeader className={styles.header}>
             <SheetTitle>{title}</SheetTitle>
             <SheetDescription>Choose your scope, then apply.</SheetDescription>

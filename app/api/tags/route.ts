@@ -1,4 +1,4 @@
-import { query, batch } from "@/lib/eves/database";
+import { query, batch, DatabaseNotConfiguredError } from "@/lib/eves/database";
 import { referenceTags, referenceSites } from "@/lib/eves/seed";
 import { tagInputSchema, type ProjectTag } from "@/lib/eves/types";
 import { z } from "zod";
@@ -49,6 +49,11 @@ export async function GET() {
       })),
     );
   } catch (error) {
+    if (error instanceof DatabaseNotConfiguredError)
+      return reply({
+        error: "Workspace tag storage is not connected.",
+        code: "TAG_STORAGE_NOT_CONFIGURED",
+      }, 503);
     console.error("Tags load failed", error);
     return reply({ error: "Tags could not be loaded. Please try again." }, 503);
   }

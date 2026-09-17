@@ -1,6 +1,11 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { ProjectTag, TagInput } from "./types";
+class TagRequestError extends Error {
+  constructor(message: string, readonly code = "") {
+    super(message);
+  }
+}
 export async function tagRequest<T>(
   method: string,
   body?: unknown,
@@ -13,13 +18,15 @@ export async function tagRequest<T>(
     signal,
   });
   const payload = await res.json();
-  if (!res.ok) throw new Error(payload.error ?? "The request failed.");
+  if (!res.ok)
+    throw new TagRequestError(payload.error ?? "The request failed.", payload.code);
   return payload as T;
 }
 export function useTags() {
   const [tags, setTags] = useState<ProjectTag[]>([]),
     [loading, setLoading] = useState(true),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [errorCode, setErrorCode] = useState("");
   const pendingRequest = useRef<AbortController | null>(null);
   const load = useCallback(() => {
     pendingRequest.current?.abort();
@@ -27,13 +34,19 @@ export function useTags() {
     pendingRequest.current = controller;
     return tagRequest<ProjectTag[]>("GET", undefined, controller.signal)
       .then((result) => {
-        if (!controller.signal.aborted) setTags(result);
+        if (!controller.signal.aborted) {
+          setTags(result);
+          setError("");
+          setErrorCode("");
+        }
       })
       .catch((e: unknown) => {
-        if (!controller.signal.aborted)
+        if (!controller.signal.aborted) {
           setError(
             e instanceof Error ? e.message : "Tags could not be loaded.",
           );
+          setErrorCode(e instanceof TagRequestError ? e.code : "");
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -42,6 +55,7 @@ export function useTags() {
   const reload = useCallback(async () => {
     setLoading(true);
     setError("");
+    setErrorCode("");
     await load();
   }, [load]);
   useEffect(() => {
@@ -62,5 +76,5 @@ export function useTags() {
     await tagRequest("DELETE", { id: tag.id, version: tag.version });
     setTags((prev) => prev.filter((t) => t.id !== tag.id));
   };
-  return { tags, loading, error, reload, save, remove };
+  return { tags, loading, error, errorCode, reload, save, remove };
 }

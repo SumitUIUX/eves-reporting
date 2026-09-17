@@ -299,16 +299,7 @@ export function ProjectTags() {
         ) : error ? (
           <DataError message={error} retry={() => void reload()} />
         ) : !filtered.length ? (
-          <DataEmpty
-            title={
-              tags.length ? "No matching tags" : "Create your first project tag"
-            }
-            description={
-              tags.length
-                ? "Try another search or clear your filters."
-                : "Group sites by funding agency or zone to prepare your reports."
-            }
-          >
+          <DataEmpty>
             {tags.length ? (
               <Button
                 variant="outline"

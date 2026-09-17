@@ -165,6 +165,7 @@ export function ReportFilterControl({
   return (
     <FilterPanel
       title="Report filters"
+      presentation={kind === "intervals" ? "drawer" : "responsive"}
       open={open}
       onOpenChange={changeOpen}
       activeCount={activeCount}

@@ -38,6 +38,10 @@ The horizontal report builder uses searchable multi-selects for reports, funding
 
 Calendar days are counted inclusively in UTC. Downloads are available for at most 31 days within one calendar month. Any selection crossing a calendar-month boundary, or any quarterly selection, requires email delivery. The complete span from the earliest selected start through the latest end cannot exceed 93 days, including gaps. Overlapping selections are counted once. Q3 has 92 days; 93 is the maximum permitted span, not a fixed quarter length.
 
+Funding IDs use saved workspace funding tags when the database is connected. If no database is configured, Generate Reports uses the two original funding tags bundled with the report snapshot (CEC-FND-110 and CIC-FND-204). This does not include fictional sample tags, enable workspace writes, replace an empty connected workspace, or conceal a configured database failure. Agencies without funding tags keep the optional All funding IDs selection and show the shared empty state in the picker.
+
+Empty tables and record pickers share the message “No records have been found” and a small inbox illustration. Loading and error states remain separate. Interval Load Profile uses a full-height right filter drawer at every screen size; other report and project filters retain their desktop popovers and mobile drawers.
+
 **Email integration is still required.** This repository has no authenticated user profile, registered email source or email/report-job service. The Email Delivery dialog therefore shows an unavailable, read-only recipient and disables Send. It never substitutes an arbitrary address, sends mail, claims that a job was queued or falls back to downloading an email-only range. To activate delivery, connect the EVES authenticated profile and server-side report-job API; resolve the recipient from the authenticated account, enforce the same period limits on the server, and show success only after the service accepts the job. No new email configuration values or API contracts are assumed.
 
 ## Local development
@@ -48,7 +52,7 @@ Validation commands: `npm run typecheck`, `npm run build` (Sites), `npm run buil
 
 ## Deploy to Vercel
 
-Import this source as a Next.js project. `vercel.json` chooses the Next.js build. Supply the three server-only values listed in `.env.example` to connect an existing Cloudflare D1 database over HTTPS, then apply the generated schema migrations to that database. Use a narrowly scoped D1 token. Without a configured database, Project Tagging opens its labeled sample workspace. Selecting Workspace data still shows the service error and retry control; other reporting integrations retain their existing behavior.
+Import this source as a Next.js project. `vercel.json` chooses the Next.js build. Supply the three server-only values listed in `.env.example` to connect an existing Cloudflare D1 database over HTTPS, then apply the generated schema migrations to that database. Use a narrowly scoped D1 token. The HTTPS adapter sends the documented `{ batch: [{ sql, params }] }` request envelope and checks each statement result. Without a configured database, Project Tagging opens its labeled sample workspace and Generate Reports uses its original reference funding IDs. Selecting Workspace data still shows the storage connection error and retry control.
 
 The Sites deployment is owner-private. When deploying elsewhere, configure deployment access protection or replace it with your organization's authentication before exposing stored records. This project does not implement user accounts or multi-tenant authorization. The top-right Super Admin profile is the requested workspace display label; it is not an authenticated role and grants no permissions. Replace it with the signed-in user’s role when authentication is integrated.
 

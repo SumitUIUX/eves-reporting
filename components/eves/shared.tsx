@@ -22,7 +22,6 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-  EmptyDescription,
 } from "@/components/ui/empty";
 import {
   Pagination,
@@ -141,22 +140,30 @@ export function SearchInput({
   );
 }
 export function DataEmpty({
-  title = "No results found",
-  description = "Try adjusting your search or filters.",
   children,
+  compact = false,
 }: {
-  title?: string;
-  description?: string;
   children?: React.ReactNode;
+  compact?: boolean;
 }) {
   return (
-    <Empty className="py-16">
+    <Empty
+      className={compact ? "gap-3 px-3 py-6 md:p-6" : "py-16"}
+      role="status"
+    >
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <Inbox />
+        <EmptyMedia
+          variant="icon"
+          className="relative mb-3 size-14 rounded-2xl bg-primary/5 text-primary/60 ring-1 ring-primary/10 before:absolute before:-inset-2 before:rounded-[22px] before:border before:border-primary/5"
+          aria-hidden="true"
+        >
+          <Inbox className="size-7" strokeWidth={1.4} />
         </EmptyMedia>
-        <EmptyTitle className="text-base">{title}</EmptyTitle>
-        <EmptyDescription>{description}</EmptyDescription>
+        <EmptyTitle
+          className={compact ? "text-sm font-normal" : "text-base font-normal"}
+        >
+          No records have been found
+        </EmptyTitle>
       </EmptyHeader>
       {children}
     </Empty>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Building2, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { referenceSites, type ReferenceSite } from "@/lib/eves/seed";
 import type { ProjectTag, TagInput } from "@/lib/eves/types";
-import { Saving } from "./shared";
+import { DataEmpty, Saving } from "./shared";
 import styles from "./mapping-editor.module.css";
 
 type Mappings = TagInput["mappings"];
@@ -154,7 +154,7 @@ function ChargerPicker({
             </label>
           ))}
           {!visible.length && (
-            <p className={styles.noResults}>No chargers match your search.</p>
+            <DataEmpty compact />
           )}
         </div>
         {!draft.length && (
@@ -280,7 +280,7 @@ function SitePicker({
             </div>
           ))}
           {!visible.length && (
-            <p className={styles.noResults}>No sites match your search.</p>
+            <DataEmpty compact />
           )}
         </div>
         <div className={styles.pickerFooter}>
@@ -426,11 +426,7 @@ export function MappingEditor({
                 </tbody>
               </table>
             ) : (
-              <div className={styles.empty}>
-                <Building2 size={26} aria-hidden="true" />
-                <h3>No sites mapped</h3>
-                <p>Use Map Sites to add sites and choose their chargers.</p>
-              </div>
+              <DataEmpty />
             )}
           </div>
           <p className={styles.inventoryNote}>
