@@ -41,21 +41,88 @@
   gap: 6px;
 }
 
+.reportingToggle {
+  min-height: 48px;
+  padding: 12px 14px;
+  gap: 12px;
+  border-radius: 8px;
+  background: var(--sidebar-accent);
+  color: var(--primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.reportingToggle > svg {
+  width: 20px;
+  height: 20px;
+}
+
+.reportingToggle > .chevron {
+  margin-left: auto;
+  width: 18px;
+  height: 18px;
+}
+
+.reportingToggle:hover {
+  background: var(--sidebar-accent);
+  color: var(--primary);
+}
+
+.reportingToggle[data-active="true"],
+.reportingToggle[data-active="true"]:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.submenu {
+  margin: 0 0 0 24px;
+  padding: 12px 0 0 14px;
+  list-style: none;
+}
+
+.submenuItem {
+  position: relative;
+  padding: 3px 0;
+}
+
+.submenuItem::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: -15px;
+  bottom: 50%;
+  width: 10px;
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+  pointer-events: none;
+}
+
+.submenuItem:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 0;
+  bottom: -3px;
+  border-left: 1px solid var(--border);
+  pointer-events: none;
+}
+
 .categoryLink {
   height: auto;
-  min-height: 48px;
-  gap: 12px;
-  padding: 12px 16px;
+  min-height: 44px;
+  gap: 9px;
+  padding: 10px 6px;
   border-radius: 6px;
   color: var(--foreground);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.8125rem;
+  font-weight: 400;
   line-height: 1.4;
 }
 
 .categoryLink > svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .categoryLink > span {
@@ -69,13 +136,17 @@
   color: var(--primary);
 }
 
-.categoryLink[data-active="true"],
-.categoryLink[data-active="true"]:hover {
-  background: var(--primary);
-  color: var(--primary-foreground);
-  font-weight: 500;
+.categoryLink[data-active="true"] {
+  background: transparent;
+  color: var(--primary);
+  font-weight: 600;
 }
 
+.categoryLink[data-active="true"]:hover {
+  background: var(--sidebar-accent);
+}
+
+.reportingToggle:focus-visible,
 .categoryLink:focus-visible,
 .closeSidebar:focus-visible {
   outline: 2px solid var(--primary);

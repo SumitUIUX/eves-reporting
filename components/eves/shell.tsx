@@ -2,9 +2,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FileText,
+  ChartNoAxesColumnIncreasing,
+  ChevronRight,
+  ChevronDown,
   Tags,
   Activity,
   ChartNoAxesCombined,
@@ -36,7 +39,7 @@ const categories = [
   {
     label: "Master Reports",
     href: "/reports/charging-sessions",
-    icon: ChartNoAxesCombined,
+    icon: ChartNoAxesColumnIncreasing,
   },
 ] as const;
 
@@ -83,6 +86,7 @@ export const navigation = [
 
 function Navigation({ category }: { category: ReportCategory }) {
   const { setOpenMobile } = useSidebar();
+  const [reportingOpen, setReportingOpen] = useState(true);
   return (
     <Sidebar collapsible="offcanvas">
       <div className={styles.sidebar}>
@@ -114,26 +118,47 @@ function Navigation({ category }: { category: ReportCategory }) {
         <SidebarContent className={styles.sidebarContent}>
           <nav aria-label="Report categories">
             <SidebarMenu className={styles.categoryMenu}>
-              {categories.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={category === item.label}
-                    className={styles.categoryLink}
-                  >
-                    <Link
-                      href={item.href}
-                      onClick={() => setOpenMobile(false)}
-                      aria-current={
-                        category === item.label ? "true" : undefined
-                      }
-                    >
-                      <item.icon aria-hidden="true" />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  className={styles.reportingToggle}
+                  isActive={reportingOpen}
+                  aria-expanded={reportingOpen}
+                  aria-controls="reporting-submenu"
+                  onClick={() => setReportingOpen((open) => !open)}
+                >
+                  <ChartNoAxesColumnIncreasing aria-hidden="true" />
+                  <span>Reporting</span>
+                  {reportingOpen ? (
+                    <ChevronDown className={styles.chevron} aria-hidden="true" />
+                  ) : (
+                    <ChevronRight className={styles.chevron} aria-hidden="true" />
+                  )}
+                </SidebarMenuButton>
+                <ul
+                  id="reporting-submenu"
+                  className={styles.submenu}
+                  hidden={!reportingOpen}
+                >
+                  {categories.map((item) => (
+                    <SidebarMenuItem key={item.label} className={styles.submenuItem}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={category === item.label}
+                        className={styles.categoryLink}
+                      >
+                        <Link
+                          href={item.href}
+                          onClick={() => setOpenMobile(false)}
+                          aria-current={category === item.label ? "true" : undefined}
+                        >
+                          <item.icon aria-hidden="true" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </ul>
+              </SidebarMenuItem>
             </SidebarMenu>
           </nav>
         </SidebarContent>
