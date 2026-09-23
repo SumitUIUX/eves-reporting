@@ -1,0 +1,19 @@
+.toolbar { display:flex; align-items:center; gap:20px; padding:20px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.toolbar input { max-width:320px; }
+.toolbar > span { margin-left:auto; color:var(--muted-foreground); font-size:13px; }
+.tableScroll { overflow-x:auto; }
+.table { width:100%; border-collapse:collapse; text-align:left; white-space:nowrap; font-size:13px; }
+.table th { background:var(--muted); color:var(--muted-foreground); font-size:12px; font-weight:500; }
+.table th,.table td { padding:20px; border-bottom:1px solid var(--border); }
+.table tr:last-child td { border-bottom:0; }
+.name,.actions { display:flex; align-items:center; gap:10px; }
+.name { font-weight:600; }
+.name svg { color:var(--primary); }
+.dialog { max-width:620px!important; max-height:90dvh; overflow-y:auto; }
+.configuration { padding:20px; border:1px solid var(--border); border-radius:8px; background:var(--card); }
+.configuration h2 { font-size:15px; font-weight:600; margin-bottom:24px; }
+.type { display:grid; gap:8px; font-size:13px; }
+.options { display:grid; gap:18px; margin-top:24px; }
+.options legend { margin-bottom:16px; font-size:13px; color:var(--muted-foreground); }
+.options label { display:flex; align-items:center; gap:10px; font-size:14px; }
+.options input { accent-color:var(--primary); width:16px; height:16px; }

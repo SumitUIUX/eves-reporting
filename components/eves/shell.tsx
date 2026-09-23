@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TenantProvider, useTenant } from "./tenant-context";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
 import styles from "./navigation.module.css";
 
 const categories = [
@@ -86,13 +88,16 @@ export const navigation = [
 
 function Navigation({ category }: { category: ReportCategory }) {
   const { setOpenMobile } = useSidebar();
+  const { tenantView, active } = useTenant();
+  const path = usePathname();
+  const visibleCategories = categories.filter(item => !tenantView || (item.label === "Regulatory Reports" ? active.regulatory : active.master));
   const [reportingOpen, setReportingOpen] = useState(true);
   return (
     <Sidebar collapsible="offcanvas">
       <div className={styles.sidebar}>
         <div className={styles.brandArea}>
           <Link
-            href="/reports/project-tags"
+            href={tenantView ? "/tenants" : "/reports/project-tags"}
             className={`eves-brand ${styles.brand}`}
             aria-label="EVES reporting home"
             onClick={() => setOpenMobile(false)}
@@ -118,7 +123,8 @@ function Navigation({ category }: { category: ReportCategory }) {
         <SidebarContent className={styles.sidebarContent}>
           <nav aria-label="Report categories">
             <SidebarMenu className={styles.categoryMenu}>
-              <SidebarMenuItem>
+              {tenantView && <SidebarMenuItem><SidebarMenuButton asChild className={styles.tenantLink} isActive={path === "/tenants"}><Link href="/tenants" onClick={() => setOpenMobile(false)} aria-current={path === "/tenants" ? "page" : undefined}><Building2 aria-hidden="true" /><span>Tenant</span></Link></SidebarMenuButton></SidebarMenuItem>}
+              {visibleCategories.length > 0 && <SidebarMenuItem>
                 <SidebarMenuButton
                   className={styles.reportingToggle}
                   isActive={reportingOpen}
@@ -139,7 +145,7 @@ function Navigation({ category }: { category: ReportCategory }) {
                   className={styles.submenu}
                   hidden={!reportingOpen}
                 >
-                  {categories.map((item) => (
+                  {visibleCategories.map((item) => (
                     <SidebarMenuItem key={item.label} className={styles.submenuItem}>
                       <SidebarMenuButton
                         asChild
@@ -158,7 +164,7 @@ function Navigation({ category }: { category: ReportCategory }) {
                     </SidebarMenuItem>
                   ))}
                 </ul>
-              </SidebarMenuItem>
+              </SidebarMenuItem>}
             </SidebarMenu>
           </nav>
         </SidebarContent>
@@ -167,10 +173,20 @@ function Navigation({ category }: { category: ReportCategory }) {
   );
 }
 export function Shell({ children }: { children: React.ReactNode }) {
+  return <TenantProvider><ShellContent>{children}</ShellContent></TenantProvider>;
+}
+function ShellContent({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
+  const { tenantView, setTenantView, active } = useTenant();
   const current = navigation.find((n) => n.href === path);
   const category = current?.group ?? categories[0].label;
+  const allowed = tenantView ? path === "/tenants" || (current?.group === "Regulatory Reports" ? active.regulatory : current?.group === "Master Reports" ? active.master : false) : path !== "/tenants";
+  useEffect(() => { if (!allowed) router.replace(tenantView ? "/tenants" : "/reports/project-tags"); }, [allowed, tenantView, router]);
+  function switchView(value: string) {
+    setTenantView(value === "tenant");
+    router.push(value === "tenant" ? "/tenants" : "/reports/project-tags");
+  }
   const activeTabRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
@@ -192,8 +208,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <SidebarTrigger className={styles.mobileTrigger} />
           <nav className={styles.tabScroll} aria-label="Report sub-navigation">
             <TabsList className={styles.tabList} aria-label="Report pages">
-              {navigation
-                .filter((item) => item.group === category)
+              {(tenantView && path === "/tenants" ? [{ href: "/tenants", label: "Tenant", icon: Building2, group: "Tenant" }] : navigation)
+                .filter((item) => allowed && (path === "/tenants" || item.group === category))
                 .map((item) => (
                   <TabsTrigger
                     asChild
@@ -220,20 +236,25 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 ))}
             </TabsList>
           </nav>
-          {/* Workspace display role; authenticated roles are not connected yet. */}
-          <div
-            className={styles.profile}
-            aria-label="Workspace role: Super Admin"
-          >
-            <span className={styles.profileAvatar} aria-hidden="true">
-              <UserRound size={19} />
-            </span>
-            <span>Super Admin</span>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className={styles.profile} aria-label="Select view">
+                <span className={styles.profileAvatar} aria-hidden="true"><UserRound size={19} /></span>
+                <span>{tenantView ? "Tenant View" : "Super Admin"}</span><ChevronDown size={14} aria-hidden="true" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuRadioGroup value={tenantView ? "tenant" : "admin"} onValueChange={switchView}>
+                <DropdownMenuRadioItem value="admin">Super Admin</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="tenant">Tenant View</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
         <TabsContent value={path} className={styles.tabPanel}>
           <main id="main-content" className="page-content">
-            {children}
+            {tenantView && <div className={styles.tenantContext}>Tenant: {active.name}</div>}
+            {allowed ? children : null}
             <footer className="page-foot">
               <span>© 2026 EVES. All rights reserved.</span>
             </footer>

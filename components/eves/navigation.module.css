@@ -357,3 +357,8 @@
     transition: none;
   }
 }
+
+.tenantLink { min-height:48px; padding:12px 14px; gap:12px; border-radius:8px; font-size:0.9375rem; }
+.tenantLink[data-active="true"] { background:var(--primary); color:var(--primary-foreground); }
+.tenantContext { margin-bottom:20px; color:var(--muted-foreground); font-size:13px; }
+.profile:focus-visible { outline:2px solid white; outline-offset:-3px; border-radius:6px; }
