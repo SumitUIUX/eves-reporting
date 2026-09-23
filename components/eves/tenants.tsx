@@ -7,12 +7,19 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DataEmpty } from "./shared";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { ColumnVisibilityControl } from "./column-visibility-control";
+import toolbarStyles from "./project-tag-toolbar.module.css";
+import { DataEmpty, SearchInput, TablePagination } from "./shared";
 import { analyticsOptions, reportOptions, tenantReports, componentNames, blankTenant, useTenant, type Tenant } from "./tenant-context";
 import styles from "./tenants.module.css";
+const tenantColumns = ["Action(s)", "Logo", "ID", "Subdomain", "Name", "Email", "Created On", "Created By", "Changed On", "Changed By"];
 export function Tenants() {
   const { tenants, setTenantView, selectTenant, saveTenant, refreshTenants, deleteTenant, restoreTenant } = useTenant();
   const router = useRouter();
+  const [columns, setColumns] = useState(tenantColumns.map((_, i) => i));
+  const [page, setPage] = useState(1);
+  const [size, setSize] = useState(10);
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState<Tenant | null>(null);
   const [removing, setRemoving] = useState<Tenant | null>(null);
@@ -21,6 +28,8 @@ export function Tenants() {
   const [expanded, setExpanded] = useState<string[]>(["Reports/Analytics"]);
   const [ascending, setAscending] = useState(true);
   const rows = tenants.filter(t => `${t.id} ${t.name} ${t.subdomain} ${t.email}`.toLowerCase().includes(query.toLowerCase())).sort((a,b) => a.subdomain.localeCompare(b.subdomain) * (ascending ? 1 : -1));
+  const currentPage = Math.min(page, Math.max(1, Math.ceil(rows.length / size)));
+  const pageRows = rows.slice((currentPage - 1) * size, currentPage * size);
   function edit(t: Tenant) { setDraft(structuredClone(t)); setTab("tenant"); setType("Analytics"); setExpanded(["Reports/Analytics"]); }
   function save(event: React.FormEvent) {
     event.preventDefault(); if (!draft) return;
@@ -35,16 +44,25 @@ export function Tenants() {
   }
   const address = draft ? [draft.address1, draft.address2, draft.city, draft.region, draft.postalCode, draft.country].filter(Boolean).join(", ") : "";
   return <>
-    <section className={styles.screen} aria-label="Tenants">
-      <div className={styles.toolbar}><Button size="sm" onClick={() => edit(blankTenant())}><Plus size={16} />Create</Button><button className={styles.refresh} aria-label="Refresh tenants" title="Refresh" onClick={() => { refreshTenants(); toast.success("Tenant records refreshed"); }}><RefreshCw size={17} /></button></div>
-      <label className={styles.search}>Search<input aria-label="Search tenants" value={query} onChange={e => setQuery(e.target.value)} />{query && <button aria-label="Clear search" onClick={() => setQuery("")}><X size={14} /></button>}</label>
-      {rows.length ? <div className={styles.tableScroll}><table className={styles.table}>
-        <thead><tr><th>Action(s)</th><th>Logo</th><th>ID</th><th aria-sort={ascending ? "ascending" : "descending"}><button onClick={() => setAscending(!ascending)}>Subdomain {ascending ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</button></th><th>Name</th><th>Email</th><th>Created On</th><th>Created By</th><th>Changed On</th><th>Changed By</th></tr></thead>
-        <tbody>{rows.map(t => <tr key={t.id}>
-          <td><div className={styles.actions}><button title="Edit" aria-label={`Edit ${t.name}`} onClick={() => edit(t)}><Pencil size={18} /></button><button title="Open tenant" aria-label={`Open ${t.name}`} onClick={() => { selectTenant(t.id); setTenantView(true); router.push(tenantReports(t)[0]?.href ?? "/tenant-home"); toast.success(`Tenant: ${t.name}`); }}><ExternalLink size={18} /></button><button className={styles.delete} title="Delete" aria-label={`Delete ${t.name}`} onClick={() => setRemoving(t)}><Trash2 size={18} /></button></div></td>
-          <td><Image src="/eves-logo.svg" alt="EVES" width={40} height={45} unoptimized /></td><td>{t.id}</td><td>{t.subdomain}</td><td>{t.name}</td><td>{t.email}</td><td>{t.createdOn}</td><td>{t.createdBy}</td><td>{t.changedOn}</td><td>{t.changedBy}</td>
-        </tr>)}</tbody>
-      </table></div> : <DataEmpty />}
+    <div className={styles.pageActions}><Button onClick={() => edit(blankTenant())}><Plus size={16} />Create tenant</Button></div>
+    <section className="panel" aria-label="Tenants">
+      <div className={toolbarStyles.toolbar}>
+        <div className={toolbarStyles.search}><SearchInput value={query} onChange={value => { setQuery(value); setPage(1); }} placeholder="Search tenants…" /></div>
+        <div className={toolbarStyles.actions}>
+          <ColumnVisibilityControl labels={tenantColumns} columns={columns} onChange={setColumns} compactOnMobile />
+          <span className={toolbarStyles.resultCount}>{rows.length} tenants</span>
+          <Button variant="ghost" size="icon" aria-label="Refresh tenants" title="Refresh" onClick={() => { refreshTenants(); toast.success("Tenant records refreshed"); }}><RefreshCw size={16} /></Button>
+        </div>
+      </div>
+      {rows.length ? <Table className="eves-table">
+        <TableHeader><TableRow>{columns.map(column => <TableHead key={column} aria-sort={column === 3 ? ascending ? "ascending" : "descending" : undefined}>{column === 3 ? <button className="flex items-center gap-2" onClick={() => setAscending(!ascending)}>Subdomain {ascending ? <ChevronUp size={12} /> : <ChevronDown size={12} />}</button> : tenantColumns[column]}</TableHead>)}</TableRow></TableHeader>
+        <TableBody>{pageRows.map(t => <TableRow key={t.id}>{columns.map(column => <TableCell key={column}>{[
+          <div key="actions" className={styles.actions}><Button variant="ghost" size="icon" title="Edit" aria-label={`Edit ${t.name}`} onClick={() => edit(t)}><Pencil size={18} /></Button><Button variant="ghost" size="icon" title="Open tenant" aria-label={`Open ${t.name}`} onClick={() => { selectTenant(t.id); setTenantView(true); router.push(tenantReports(t)[0]?.href ?? "/tenant-home"); toast.success(`Tenant: ${t.name}`); }}><ExternalLink size={18} /></Button><Button variant="ghost" size="icon" className={styles.delete} title="Delete" aria-label={`Delete ${t.name}`} onClick={() => setRemoving(t)}><Trash2 size={18} /></Button></div>,
+          <Image key="logo" src="/eves-logo.svg" alt="EVES" width={40} height={45} unoptimized />,
+          t.id, t.subdomain, t.name, t.email, t.createdOn, t.createdBy, t.changedOn, t.changedBy
+        ][column]}</TableCell>)}</TableRow>)}</TableBody>
+      </Table> : <DataEmpty />}
+      <TablePagination total={rows.length} page={currentPage} size={size} setPage={setPage} setSize={setSize} />
     </section>
     <Dialog open={draft !== null} onOpenChange={open => { if (!open) setDraft(null); }}>
       <DialogContent className={styles.dialog} showCloseButton={false}>

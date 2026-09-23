@@ -1,21 +1,8 @@
-.screen { background:white; min-height:400px; padding:0 0 24px; }
-.toolbar { display:flex; justify-content:space-between; padding:0 0 12px; }
-.refresh { display:grid; place-items:center; background:var(--primary); color:white; border-radius:3px; width:34px; height:32px; }
-.search { position:relative; display:block; font-size:12px; color:#555; margin-bottom:14px; }
-.search input { width:100%; display:block; border:0; border-bottom:1px solid #999; outline:none; padding:5px 24px 6px 0; }
-.search input:focus { border-color:var(--primary); }
-.search button { position:absolute; right:6px; bottom:8px; }
-.tableScroll { overflow-x:auto; }
-.table { width:100%; border-collapse:collapse; text-align:left; white-space:nowrap; font-size:13px; color:#353535; }
-.table th { font-weight:600; color:#202020; background:#fafafa; }
-.table th,.table td { padding:3px 16px; height:48px; border-bottom:1px solid #d9d9d9; }
-.table th { height:44px; }
-.table th button { display:flex; gap:6px; align-items:center; }
-.table tbody tr:nth-child(even) { background:#fafafa; }
-.table td img { height:44px; width:40px; object-fit:contain; }
-.actions { display:flex; align-items:center; gap:10px; }
-.actions button { color:#1681df; display:grid; place-items:center; width:20px; height:30px; }
-.actions .delete { color:#df2525; }
+.pageActions { display:flex; justify-content:flex-end; margin-bottom:24px; }
+.actions { display:flex; align-items:center; gap:4px; }
+.actions button { color:var(--muted-foreground); }
+.actions button:hover { color:var(--primary); }
+.actions .delete { color:var(--destructive); }
 .dialog { padding:0!important; gap:0!important; width:calc(100vw - 64px)!important; max-width:1140px!important; border:0!important; border-radius:22px!important; overflow:hidden; background:#fff; }
 .modalHeader { display:flex; align-items:stretch; background:var(--primary); height:64px; padding:8px 14px 0 20px; gap:8px; }
 .tabs { padding:0; gap:4px; height:56px; background:transparent; justify-content:flex-start; min-width:0; flex:1; }
