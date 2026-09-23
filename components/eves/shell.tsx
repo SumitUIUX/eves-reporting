@@ -252,6 +252,7 @@ function Navigation({ category }: { category: ReportCategory }) {
                           <span>{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
+                      {tenantView && <ul className={styles.reportPages}>{enabledReports.filter(r => r.group === item.label).map(report => <li key={report.key}><Link href={report.href} onClick={() => setOpenMobile(false)} aria-current={path === report.href ? "page" : undefined}>{report.label}</Link></li>)}</ul>}
                     </SidebarMenuItem>
                   ))}
                 </ul>
@@ -383,7 +384,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
                       aria-current={path === item.href ? "page" : undefined}
                     >
                       <item.icon aria-hidden="true" />
-                      <span>{item.label}</span>
+                      <span>{tenantView ? reportOptions.find(r => r.href === item.href)?.label ?? item.label : item.label}</span>
                     </Link>
                   </TabsTrigger>
                 ))}

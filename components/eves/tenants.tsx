@@ -128,6 +128,9 @@ export function Tenants() {
   } = useTenant();
   const isSample = source === "sample";
   const router = useRouter();
+  const [columns, setColumns] = useState(tenantColumns.map((_, i) => i));
+  const [page, setPage] = useState(1);
+  const [size, setSize] = useState(10);
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState<Tenant | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<TenantField, string>>>({});
