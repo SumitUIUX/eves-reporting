@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { TenantProvider, useTenant } from "./tenant-context";
+import { TenantProvider, useTenant, tenantReports, reportOptions } from "./tenant-context";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
 import styles from "./navigation.module.css";
 
@@ -90,14 +90,15 @@ function Navigation({ category }: { category: ReportCategory }) {
   const { setOpenMobile } = useSidebar();
   const { tenantView, active } = useTenant();
   const path = usePathname();
-  const visibleCategories = categories.filter(item => !tenantView || (active.components["Reports/Analytics"] && (item.label === "Regulatory Reports" ? active.regulatory : active.master)));
+  const enabledReports = tenantReports(active);
+  const visibleCategories = categories.filter(item => !tenantView || enabledReports.some(r => r.group === item.label));
   const [reportingOpen, setReportingOpen] = useState(true);
   return (
     <Sidebar collapsible="offcanvas">
       <div className={styles.sidebar}>
         <div className={styles.brandArea}>
           <Link
-            href={tenantView ? "/tenants" : "/reports/project-tags"}
+            href={tenantView ? enabledReports[0]?.href ?? "/tenant-home" : "/tenants"}
             className={`eves-brand ${styles.brand}`}
             aria-label="EVES reporting home"
             onClick={() => setOpenMobile(false)}
@@ -123,7 +124,7 @@ function Navigation({ category }: { category: ReportCategory }) {
         <SidebarContent className={styles.sidebarContent}>
           <nav aria-label="Report categories">
             <SidebarMenu className={styles.categoryMenu}>
-              {tenantView && <SidebarMenuItem><SidebarMenuButton asChild className={styles.tenantLink} isActive={path === "/tenants"}><Link href="/tenants" onClick={() => setOpenMobile(false)} aria-current={path === "/tenants" ? "page" : undefined}><Building2 aria-hidden="true" /><span>Tenant</span></Link></SidebarMenuButton></SidebarMenuItem>}
+              {!tenantView && <SidebarMenuItem><SidebarMenuButton asChild className={styles.tenantLink} isActive={path === "/tenants"}><Link href="/tenants" onClick={() => setOpenMobile(false)} aria-current={path === "/tenants" ? "page" : undefined}><Building2 aria-hidden="true" /><span>Tenant</span></Link></SidebarMenuButton></SidebarMenuItem>}
               {visibleCategories.length > 0 && <SidebarMenuItem>
                 <SidebarMenuButton
                   className={styles.reportingToggle}
@@ -153,7 +154,7 @@ function Navigation({ category }: { category: ReportCategory }) {
                         className={styles.categoryLink}
                       >
                         <Link
-                          href={item.href}
+                          href={tenantView ? enabledReports.find(r => r.group === item.label)!.href : item.href}
                           onClick={() => setOpenMobile(false)}
                           aria-current={path !== "/tenants" && category === item.label ? "true" : undefined}
                         >
@@ -161,6 +162,7 @@ function Navigation({ category }: { category: ReportCategory }) {
                           <span>{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
+                      {tenantView && <ul className={styles.reportPages}>{enabledReports.filter(r => r.group === item.label).map(report => <li key={report.key}><Link href={report.href} onClick={() => setOpenMobile(false)} aria-current={path === report.href ? "page" : undefined}>{report.label}</Link></li>)}</ul>}
                     </SidebarMenuItem>
                   ))}
                 </ul>
@@ -181,11 +183,13 @@ function ShellContent({ children }: { children: React.ReactNode }) {
   const { tenantView, setTenantView, active } = useTenant();
   const current = navigation.find((n) => n.href === path);
   const category = current?.group ?? categories[0].label;
-  const allowed = tenantView ? path === "/tenants" || (active.components["Reports/Analytics"] && (current?.group === "Regulatory Reports" ? active.regulatory : current?.group === "Master Reports" ? active.master : false)) : path !== "/tenants";
-  useEffect(() => { if (!allowed) router.replace(tenantView ? "/tenants" : "/reports/project-tags"); }, [allowed, tenantView, router]);
+  const enabledReports = tenantReports(active);
+  const tenantHome = enabledReports[0]?.href ?? "/tenant-home";
+  const allowed = tenantView ? (path === "/tenant-home" || enabledReports.some(r => r.href === path)) : path !== "/tenant-home";
+  useEffect(() => { if (!allowed) router.replace(tenantView ? tenantHome : "/tenants"); }, [allowed, tenantView, tenantHome, router]);
   function switchView(value: string) {
     setTenantView(value === "tenant");
-    router.push(value === "tenant" ? "/tenants" : "/reports/project-tags");
+    router.push(value === "tenant" ? tenantHome : "/tenants");
   }
   const activeTabRef = useRef<HTMLAnchorElement>(null);
 
@@ -208,8 +212,8 @@ function ShellContent({ children }: { children: React.ReactNode }) {
           <SidebarTrigger className={styles.mobileTrigger} />
           <nav className={styles.tabScroll} aria-label="Report sub-navigation">
             <TabsList className={styles.tabList} aria-label="Report pages">
-              {(tenantView && path === "/tenants" ? [{ href: "/tenants", label: "Tenant", icon: Building2, group: "Tenant" }] : navigation)
-                .filter((item) => allowed && (path === "/tenants" || item.group === category))
+              {(!tenantView && path === "/tenants" ? [{ href: "/tenants", label: "Tenant", icon: Building2, group: "Tenant" }] : navigation)
+                .filter((item) => allowed && path !== "/tenant-home" && (path === "/tenants" || item.group === category) && (!tenantView || enabledReports.some(r => r.href === item.href)))
                 .map((item) => (
                   <TabsTrigger
                     asChild
@@ -230,7 +234,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
                       aria-current={path === item.href ? "page" : undefined}
                     >
                       <item.icon aria-hidden="true" />
-                      <span>{item.label}</span>
+                      <span>{tenantView ? reportOptions.find(r => r.href === item.href)?.label ?? item.label : item.label}</span>
                     </Link>
                   </TabsTrigger>
                 ))}

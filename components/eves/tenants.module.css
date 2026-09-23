@@ -57,3 +57,7 @@
 @media(max-width:700px) { .dialog { width:calc(100vw - 24px)!important; } .modalHeader { padding-left:8px; gap:0; } .tab { font-size:11px; padding:0 8px; gap:5px; } .tab svg { width:17px; } .modalBody { padding:20px 16px; } .identity { grid-template-columns:1fr; gap:18px; } .identity > img { width:85px; height:95px; } .addressGrid { grid-template-columns:1fr; } .components { padding:10px; } .componentHead { font-size:13px; padding:8px; } .reporting { padding:8px 14px 22px; } .options { margin-left:8px; } }
 
 .tab > svg { width:22px; height:22px; }
+
+.reportGroup { display:grid; gap:18px; }
+.reportGroup h3 { font-size:14px; font-weight:600; margin:0 0 2px; }
+.reportGroup label { padding-left:12px; }

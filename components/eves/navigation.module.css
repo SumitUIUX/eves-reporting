@@ -362,3 +362,8 @@
 .tenantLink[data-active="true"] { background:var(--primary); color:var(--primary-foreground); }
 .tenantContext { margin-bottom:20px; color:var(--muted-foreground); font-size:13px; }
 .profile:focus-visible { outline:2px solid white; outline-offset:-3px; border-radius:6px; }
+
+.reportPages { margin:0 0 8px 14px; padding-left:10px; border-left:1px solid var(--border); list-style:none; }
+.reportPages a { display:block; padding:9px 4px; font-size:12px; line-height:1.4; color:var(--foreground); border-radius:4px; }
+.reportPages a:hover { background:var(--sidebar-accent); }
+.reportPages a[aria-current="page"] { color:var(--primary); font-weight:600; }
