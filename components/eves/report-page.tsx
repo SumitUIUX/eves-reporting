@@ -35,7 +35,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import {
-  PageHeading,
+  PageActions,
   Metric,
   SearchInput,
   DataEmpty,
@@ -136,11 +136,7 @@ function ReportView({
   return (
     <>
       <div className={styles.header}>
-        <PageHeading
-          eyebrow="MASTER REPORTS"
-          title={config.title}
-          description={config.description}
-        >
+        <PageActions>
           <ReportFilterControl
             kind={kind}
             config={config}
@@ -168,7 +164,7 @@ function ReportView({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </PageHeading>
+        </PageActions>
       </div>
       <div className="metrics report-metrics">
         {stats.map((s, i) => (

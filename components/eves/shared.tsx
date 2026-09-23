@@ -35,27 +35,8 @@ import {
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { LucideIcon } from "lucide-react";
-export function PageHeading({
-  eyebrow,
-  title,
-  description,
-  children,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="page-heading">
-      <div>
-        <div className="eyebrow">{eyebrow}</div>
-        <h1>{title}</h1>
-        <p>{description}</p>
-      </div>
-      {children && <div className="page-actions">{children}</div>}
-    </div>
-  );
+export function PageActions({ children }: { children: React.ReactNode }) {
+  return <div className="page-actions">{children}</div>;
 }
 export function Metric({
   label,

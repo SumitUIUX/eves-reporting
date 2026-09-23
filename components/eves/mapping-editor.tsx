@@ -154,7 +154,7 @@ function ChargerPicker({
             </label>
           ))}
           {!visible.length && (
-            <DataEmpty compact />
+            <p className={styles.noResults} role="status">No chargers match your search.</p>
           )}
         </div>
         {!draft.length && (
@@ -280,7 +280,7 @@ function SitePicker({
             </div>
           ))}
           {!visible.length && (
-            <DataEmpty compact />
+            <p className={styles.noResults} role="status">No sites match your search.</p>
           )}
         </div>
         <div className={styles.pickerFooter}>

@@ -2,14 +2,13 @@
 import { useMemo, useState } from "react";
 import {
   Download,
-  ArrowUpRight,
   Check,
   Info,
   Mail,
   LoaderCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageHeading, Choice } from "./shared";
+import { Choice } from "./shared";
 import { ReportMultiSelect } from "./report-multi-select";
 import { ReportDatePicker } from "./report-date-picker";
 import { ReportEmailDialog } from "./report-email-dialog";
@@ -226,11 +225,6 @@ export function Regulatory() {
   }
   return (
     <>
-      <PageHeading
-        eyebrow="REGULATORY REPORTS"
-        title="Generate reports"
-        description="Bring the right data together for your next reporting period."
-      />
       <section className={styles.builder} aria-label="Build your report">
         <div className={styles.fields}>
           <div className={styles.field}>
@@ -432,18 +426,6 @@ export function Regulatory() {
         )}
       </section>
       <ReportingReference />
-      <div className={styles.notes}>
-        <div>
-          <h3>Keep your reporting organized</h3>
-          <p>
-            Funding filters match tag names and mapped sites. Individual charger
-            labels are not linked to these report snapshots.
-          </p>
-          <a href="/reports/project-tags">
-            Manage project tags <ArrowUpRight size={14} />
-          </a>
-        </div>
-      </div>
       {emailOpen && (
         <ReportEmailDialog
           onClose={() => setEmailOpen(false)}

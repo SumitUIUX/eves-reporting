@@ -104,5 +104,6 @@ export function useProjectTags() {
     source,
     selectSource,
     workspaceUnavailable: !!workspace.error,
+    workspaceNotConfigured: workspace.errorCode === "TAG_STORAGE_NOT_CONFIGURED",
   };
 }

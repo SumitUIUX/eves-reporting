@@ -11,7 +11,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import styles from "./regulatory.module.css";
-import { DataEmpty } from "./shared";
 
 export interface ReportOption {
   value: string;
@@ -133,7 +132,11 @@ export function ReportMultiSelect({
               <span>{option.label}</span>
             </label>
           ))}
-          {!visible.length && <DataEmpty compact />}
+          {!visible.length && (
+            <p className={styles.emptyOptions} role="status">
+              {options.length ? "No matches found." : "No options available."}
+            </p>
+          )}
         </div>
       </PopoverContent>
     </Popover>

@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
 import {
   Tags,
   MapPin,
@@ -10,8 +9,6 @@ import {
   Pencil,
   Trash2,
   Link2,
-  ArrowRight,
-  FileText,
   Landmark,
   Tag,
   ArrowDownUp,
@@ -59,7 +56,7 @@ import {
 import type { ProjectTag, TagInput } from "@/lib/eves/types";
 import { downloadCsv } from "@/lib/eves/export";
 import {
-  PageHeading,
+  PageActions,
   Metric,
   TablePagination,
   DataEmpty,
@@ -94,6 +91,7 @@ export function ProjectTags() {
     source,
     selectSource,
     workspaceUnavailable,
+    workspaceNotConfigured,
   } = useProjectTags();
   const isSample = source === "sample";
   const [columns, setColumns] = useState<number[]>(() =>
@@ -195,15 +193,7 @@ export function ProjectTags() {
   return (
     <>
       <div className={headerStyles.header}>
-        <PageHeading
-          eyebrow="REGULATORY REPORTS"
-          title="Project tagging"
-          description={
-            isSample
-              ? "Explore sample projects. Changes are saved in this browser only."
-              : "Organize your charging infrastructure. Simplify your reporting."
-          }
-        >
+        <PageActions>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -248,7 +238,7 @@ export function ProjectTags() {
             <Plus size={16} />
             Create project tag
           </Button>
-        </PageHeading>
+        </PageActions>
       </div>
       <div className="metrics">
         <Metric
@@ -296,6 +286,8 @@ export function ProjectTags() {
         />
         {loading ? (
           <DataLoading />
+        ) : source === "workspace" && workspaceNotConfigured ? (
+          <DataEmpty />
         ) : error ? (
           <DataError message={error} retry={() => void reload()} />
         ) : !filtered.length ? (
@@ -489,20 +481,6 @@ export function ProjectTags() {
           />
         )}
       </section>
-      <div className="workflow-callout">
-        <div className="workflow-copy">
-          <span>
-            <FileText size={21} />
-          </span>
-          <div>
-            <h3>Your projects, ready for reporting.</h3>
-            <p>Use funding tags to scope your next regulatory report.</p>
-          </div>
-        </div>
-        <Link href="/reports/regulatory">
-          Generate a report <ArrowRight size={15} />
-        </Link>
-      </div>
       {editor && (
         <TagEditor
           isSample={isSample}
