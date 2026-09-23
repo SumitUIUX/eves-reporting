@@ -1,71 +1,754 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Pencil, Landmark, SlidersHorizontal, ExternalLink, Trash2, RefreshCw, Plus, Minus, Save, X, MapPin, ChevronUp, ChevronDown } from "lucide-react";
+import {
+  Pencil,
+  Landmark,
+  SlidersHorizontal,
+  ExternalLink,
+  Trash2,
+  RefreshCw,
+  Plus,
+  Minus,
+  MapPin,
+  ArrowDownUp,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DataEmpty } from "./shared";
-import { analyticsOptions, componentNames, blankTenant, useTenant, type Tenant } from "./tenant-context";
-import styles from "./tenants.module.css";
+import { Choice, DataEmpty, PageActions, SearchInput, TablePagination } from "./shared";
+import {
+  analyticsOptions,
+  componentNames,
+  blankTenant,
+  reportAccess,
+  reportHierarchy,
+  reportsFromTenant,
+  useTenant,
+  type Tenant,
+} from "./tenant-context";
+import headerStyles from "./report-page.module.css";
+
+const tenantColumns = [
+  { key: "name", label: "Name" },
+  { key: "subdomain", label: "Subdomain" },
+  { key: "email", label: "Email" },
+  { key: "createdOn", label: "Created on" },
+  { key: "createdBy", label: "Created by" },
+  { key: "changedOn", label: "Changed on" },
+  { key: "changedBy", label: "Changed by" },
+] as const;
+
+type TenantColumn = (typeof tenantColumns)[number]["key"];
+type TenantField = "name" | "subdomain" | "email" | "contact";
+
+function TenantInput({
+  id,
+  label,
+  value,
+  error,
+  required = false,
+  type = "text",
+  readOnly = false,
+  className = "",
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  error?: string;
+  required?: boolean;
+  type?: string;
+  readOnly?: boolean;
+  className?: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className={`form-field ${className}`}>
+      <label htmlFor={id}>
+        {label} {required && <span className="text-primary">*</span>}
+      </label>
+      <Input
+        id={id}
+        type={type}
+        value={value}
+        readOnly={readOnly}
+        required={required}
+        aria-invalid={!!error || undefined}
+        aria-describedby={error ? `${id}-error` : undefined}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {error && (
+        <p id={`${id}-error`} role="alert" className="form-error">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function Tenants() {
-  const { tenants, selectTenant, saveTenant, refreshTenants, deleteTenant, restoreTenant } = useTenant();
+  const {
+    tenants,
+    source,
+    selectTenant,
+    setTenantView,
+    saveTenant,
+    refreshTenants,
+    deleteTenant,
+    restoreTenant,
+  } = useTenant();
+  const isSample = source === "sample";
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState<Tenant | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<TenantField, string>>>({});
   const [removing, setRemoving] = useState<Tenant | null>(null);
   const [tab, setTab] = useState("tenant");
   const [type, setType] = useState("Analytics");
   const [expanded, setExpanded] = useState<string[]>(["Reports/Analytics"]);
-  const [ascending, setAscending] = useState(true);
-  const rows = tenants.filter(t => `${t.id} ${t.name} ${t.subdomain} ${t.email}`.toLowerCase().includes(query.toLowerCase())).sort((a,b) => a.subdomain.localeCompare(b.subdomain) * (ascending ? 1 : -1));
-  function edit(t: Tenant) { setDraft(structuredClone(t)); setTab("tenant"); setType("Analytics"); setExpanded(["Reports/Analytics"]); }
+  const [sort, setSort] = useState<{ key: TenantColumn; asc: boolean }>({
+    key: "subdomain",
+    asc: true,
+  });
+  const [page, setPage] = useState(1);
+  const [size, setSize] = useState(10);
+  const filtered = tenants
+    .filter((tenant) =>
+      `${tenant.id} ${tenant.name} ${tenant.subdomain} ${tenant.email}`
+        .toLowerCase()
+        .includes(query.toLowerCase()),
+    )
+    .sort((a, b) => {
+      const result = a[sort.key].localeCompare(b[sort.key], undefined, {
+        numeric: true,
+      });
+      return result * (sort.asc ? 1 : -1);
+    });
+  const pages = Math.max(1, Math.ceil(filtered.length / size));
+  const current = Math.min(page, pages);
+  const rows = filtered.slice((current - 1) * size, current * size);
+
+  useEffect(() => {
+    setDraft(null);
+    setRemoving(null);
+    setQuery("");
+    setPage(1);
+    setFieldErrors({});
+  }, [source]);
+  function changeQuery(next: string) {
+    setQuery(next);
+    setPage(1);
+  }
+  function edit(tenant: Tenant) {
+    const reports = reportsFromTenant(tenant);
+    setDraft({ ...structuredClone(tenant), reports, ...reportAccess(reports) });
+    setFieldErrors({});
+    setTab("tenant");
+    setType("Analytics");
+    setExpanded(["Reports/Analytics"]);
+  }
+  function updateDraft(key: keyof Tenant, value: string) {
+    setDraft((current) => (current ? { ...current, [key]: value } : current));
+    if (key === "name" || key === "subdomain" || key === "email" || key === "contact") {
+      setFieldErrors((current) => ({ ...current, [key]: undefined }));
+    }
+  }
   function save(event: React.FormEvent) {
-    event.preventDefault(); if (!draft) return;
-    if (!draft.name.trim() || !draft.subdomain.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email) || (!draft.id && !draft.contact.trim())) { setTab("tenant"); toast.error("Enter name, subdomain, a valid email, and contact."); return; }
-    if (tenants.some(t => t.id !== draft.id && t.subdomain.toLowerCase() === draft.subdomain.trim().toLowerCase())) { setTab("tenant"); toast.error("This subdomain is already in use."); return; }
+    event.preventDefault();
+    if (!draft) return;
+    const next: Partial<Record<TenantField, string>> = {};
+    if (!draft.name.trim()) next.name = "Enter a name.";
+    if (!draft.subdomain.trim()) next.subdomain = "Enter a subdomain.";
+    else if (
+      tenants.some(
+        (tenant) =>
+          tenant.id !== draft.id &&
+          tenant.subdomain.toLowerCase() === draft.subdomain.trim().toLowerCase(),
+      )
+    )
+      next.subdomain = "This subdomain is already in use.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email))
+      next.email = "Enter a valid email.";
+    if (!draft.id && !draft.contact.trim()) next.contact = "Enter a contact.";
+    setFieldErrors(next);
+    if (Object.keys(next).length) {
+      setTab("tenant");
+      return;
+    }
     const now = new Date().toLocaleString("en-US");
-    if (saveTenant({ ...draft, id: draft.id || crypto.randomUUID(), name: draft.name.trim(), subdomain: draft.subdomain.trim(), createdOn: draft.createdOn || now, createdBy: draft.createdBy || "Tenant View", changedOn: now, changedBy: "Tenant View" })) { toast.success("Tenant saved"); setDraft(null); }
+    if (
+      saveTenant({
+        ...draft,
+        id: draft.id || crypto.randomUUID(),
+        name: draft.name.trim(),
+        subdomain: draft.subdomain.trim(),
+        createdOn: draft.createdOn || now,
+        createdBy: draft.createdBy || "Tenant View",
+        changedOn: now,
+        changedBy: "Tenant View",
+      })
+    ) {
+      toast.success("Tenant saved");
+      setDraft(null);
+    }
   }
-  function field(key: keyof Tenant, label: string, required = false, inputType = "text", readOnly = false) {
-    return <label className={styles.field}>{label}{required && " *"}<input aria-label={label} type={inputType} value={String(draft?.[key] ?? "")} readOnly={readOnly} onChange={e => draft && setDraft({ ...draft, [key]: e.target.value })} />{(key === "latitude" || key === "longitude") && <MapPin size={16} />}</label>;
-  }
-  const address = draft ? [draft.address1, draft.address2, draft.city, draft.region, draft.postalCode, draft.country].filter(Boolean).join(", ") : "";
-  return <>
-    <section className={styles.screen} aria-label="Tenants">
-      <div className={styles.toolbar}><Button size="sm" onClick={() => edit(blankTenant())}><Plus size={16} />Create</Button><button className={styles.refresh} aria-label="Refresh tenants" title="Refresh" onClick={() => { refreshTenants(); toast.success("Tenant records refreshed"); }}><RefreshCw size={17} /></button></div>
-      <label className={styles.search}>Search<input aria-label="Search tenants" value={query} onChange={e => setQuery(e.target.value)} />{query && <button aria-label="Clear search" onClick={() => setQuery("")}><X size={14} /></button>}</label>
-      {rows.length ? <div className={styles.tableScroll}><table className={styles.table}>
-        <thead><tr><th>Action(s)</th><th>Logo</th><th>ID</th><th aria-sort={ascending ? "ascending" : "descending"}><button onClick={() => setAscending(!ascending)}>Subdomain {ascending ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</button></th><th>Name</th><th>Email</th><th>Created On</th><th>Created By</th><th>Changed On</th><th>Changed By</th></tr></thead>
-        <tbody>{rows.map(t => <tr key={t.id}>
-          <td><div className={styles.actions}><button title="Edit" aria-label={`Edit ${t.name}`} onClick={() => edit(t)}><Pencil size={18} /></button><button title="Open tenant" aria-label={`Open ${t.name}`} onClick={() => { selectTenant(t.id); router.push(t.components["Reports/Analytics"] && t.regulatory ? "/reports/project-tags" : t.components["Reports/Analytics"] && t.master ? "/reports/charging-sessions" : "/tenants"); toast.success(`Tenant: ${t.name}`); }}><ExternalLink size={18} /></button><button className={styles.delete} title="Delete" aria-label={`Delete ${t.name}`} onClick={() => setRemoving(t)}><Trash2 size={18} /></button></div></td>
-          <td><Image src="/eves-logo.svg" alt="EVES" width={40} height={45} unoptimized /></td><td>{t.id}</td><td>{t.subdomain}</td><td>{t.name}</td><td>{t.email}</td><td>{t.createdOn}</td><td>{t.createdBy}</td><td>{t.changedOn}</td><td>{t.changedBy}</td>
-        </tr>)}</tbody>
-      </table></div> : <DataEmpty />}
-    </section>
-    <Dialog open={draft !== null} onOpenChange={open => { if (!open) setDraft(null); }}>
-      <DialogContent className={styles.dialog} showCloseButton={false}>
-        <DialogTitle className="sr-only">{draft?.id ? "Edit" : "Create"} Tenant — {draft?.name || "New tenant"}</DialogTitle><DialogDescription className="sr-only">Tenant details and component configuration. Changes are saved in this browser.</DialogDescription>
-        {draft && <form onSubmit={save} noValidate><Tabs value={tab} onValueChange={setTab}>
-          <div className={styles.modalHeader}><TabsList className={styles.tabs}><TabsTrigger value="tenant" className={styles.tab}><Landmark size={22} />TENANT - {draft.name.toUpperCase() || "NEW"}</TabsTrigger><TabsTrigger value="components" className={styles.tab}><SlidersHorizontal size={22} />COMPONENTS</TabsTrigger></TabsList><button className={styles.headerButton} type="submit" aria-label="Save tenant" title="Save"><Save size={21} /></button><button className={styles.headerButton} type="button" aria-label="Close tenant" onClick={() => setDraft(null)}><X size={24} /></button></div>
-          <div className={styles.modalBody}>
-            <TabsContent value="tenant" className={styles.tenantForm}>
-              <div className={styles.identity}><Image src="/eves-logo.svg" alt="EVES tenant logo" width={120} height={134} unoptimized /><div>{field("name", "Name", true)}{field("subdomain", "Subdomain", true, "text", Boolean(draft.id))}{field("email", "Email", true, "email")}</div></div>
-              <div className={styles.addressGrid}>{field("address1", "Address 1")}{field("address2", "Address 2")}{field("postalCode", "Postal Code")}{field("city", "City")}{field("department", "Department")}<div className={styles.pair}>{field("region", "Region")}{field("country", "Country")}</div><div className={styles.pair}>{field("latitude", "Latitude", false, "number")}{field("longitude", "Longitude", false, "number")}</div><div className={styles.pair}>{field("contact", "Contact", true, "tel")}{address ? <a className={styles.place} href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`} target="_blank" rel="noreferrer"><MapPin size={18} />View Place</a> : <button className={styles.place} type="button" disabled><MapPin size={18} />View Place</button>}</div></div>
-            </TabsContent>
-            <TabsContent value="components" className={styles.components}>
-              <h2>Components</h2>
-              {componentNames.map(name => <section className={styles.component} key={name}>
-                <div className={styles.componentHead}><button type="button" aria-label={`${expanded.includes(name) ? "Collapse" : "Expand"} ${name}`} aria-expanded={expanded.includes(name)} onClick={() => setExpanded(expanded.includes(name) ? expanded.filter(n => n !== name) : [...expanded, name])}>{expanded.includes(name) ? <Minus size={18} /> : <Plus size={18} />}</button><button type="button" role="switch" aria-checked={draft.components[name]} aria-label={`Enable ${name}`} className={styles.switch} onClick={() => setDraft({ ...draft, components: { ...draft.components, [name]: !draft.components[name] } })}><span /></button><span>{name}:1.0</span></div>
-                {expanded.includes(name) && (name === "Reports/Analytics" ? <div className={styles.reporting}><label className={styles.type}>Type*<select aria-label="Reporting Type" value={type} disabled={!draft.components[name]} onChange={e => setType(e.target.value)}><option>Analytics</option><option>Reporting</option></select></label><fieldset className={styles.options} disabled={!draft.components[name]}>{type === "Analytics" ? analyticsOptions.map(option => <label key={option}><input type="checkbox" checked={draft.analytics.includes(option)} onChange={e => setDraft({ ...draft, analytics: e.target.checked ? [...draft.analytics, option] : draft.analytics.filter(v => v !== option) })} />{option}</label>) : <><label><input type="checkbox" checked={draft.regulatory} onChange={e => setDraft({ ...draft, regulatory: e.target.checked })} />Regulatory Reports</label><label><input type="checkbox" checked={draft.master} onChange={e => setDraft({ ...draft, master: e.target.checked })} />Master Reports</label></>}</fieldset></div> : <div className={styles.componentDetail}>{name} is {draft.components[name] ? "enabled" : "disabled"} for this tenant.</div>)}
-              </section>)}
-            </TabsContent>
-          </div>
-        </Tabs></form>}
-      </DialogContent>
-    </Dialog>
-    <Dialog open={Boolean(removing)} onOpenChange={open => { if (!open) setRemoving(null); }}><DialogContent><DialogTitle>Delete {removing?.name}?</DialogTitle><DialogDescription>This removes the tenant from this browser’s table.</DialogDescription><div className={styles.confirm}><Button variant="outline" onClick={() => setRemoving(null)}>Cancel</Button><Button variant="destructive" onClick={() => { if (removing && deleteTenant(removing.id)) { const id = removing.id; toast.success("Tenant deleted", { action: { label: "Undo", onClick: () => restoreTenant(id) } }); setRemoving(null); } }}>Delete tenant</Button></div></DialogContent></Dialog>
-  </>;
+  const address = draft
+    ? [draft.address1, draft.address2, draft.city, draft.region, draft.postalCode, draft.country]
+        .filter(Boolean)
+        .join(", ")
+    : "";
+
+  return (
+    <>
+      <div className={headerStyles.header}>
+        <PageActions>
+          <Button onClick={() => edit(blankTenant())} disabled={!isSample}>
+            <Plus size={16} />
+            Create
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Refresh tenants"
+            onClick={() => {
+              refreshTenants();
+              if (isSample) toast.success("Tenant records refreshed");
+              else toast.error("Workspace tenant API is not connected.");
+            }}
+          >
+            <RefreshCw size={16} />
+          </Button>
+        </PageActions>
+      </div>
+      <section className="panel" aria-label="Tenants">
+        <div className="table-toolbar">
+          <SearchInput
+            value={query}
+            onChange={changeQuery}
+            placeholder="Search tenants…"
+          />
+        </div>
+        {rows.length ? (
+          <Table className="eves-table">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Action(s)</TableHead>
+                {tenantColumns.map((column) => (
+                  <TableHead
+                    key={column.key}
+                    aria-sort={
+                      sort.key === column.key
+                        ? sort.asc
+                          ? "ascending"
+                          : "descending"
+                        : "none"
+                    }
+                  >
+                    <button
+                      type="button"
+                      className="flex items-center gap-2"
+                      onClick={() =>
+                        setSort((current) => ({
+                          key: column.key,
+                          asc: current.key === column.key ? !current.asc : true,
+                        }))
+                      }
+                    >
+                      {column.label}
+                      <ArrowDownUp size={12} />
+                    </button>
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((tenant) => (
+                <TableRow key={tenant.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Edit ${tenant.name}`}
+                        onClick={() => edit(tenant)}
+                      >
+                        <Pencil size={16} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Open ${tenant.name}`}
+                        onClick={() => {
+                          const reportRoutes = [
+                            ["executive-overview", "/dashboard"],
+                            ["project-tagging", "/reports/project-tags"],
+                            ["generate-reports", "/reports/regulatory"],
+                            ["charging-sessions", "/reports/charging-sessions"],
+                            ["interval-load-profile", "/reports/interval-load-profile"],
+                            ["infrastructure-throughput", "/reports/throughput"],
+                            ["uptime-reliability", "/"],
+                            ["charging-performance", "/reports/charging-performance"],
+                            ["site-performance", "/reports/site-performance"],
+                            ["charger-connector-performance", "/reports/charger-performance"],
+                            ["energy-demand", "/reports/energy-demand"],
+                            ["tenant-uptime-reliability", "/reports/tenant-uptime-reliability"],
+                            ["revenue-financial", "/reports/revenue-transaction"],
+                          ] as const;
+                          const href = tenant.components["Reports/Analytics"]
+                            ? reportRoutes.find(([id]) => tenant.reports[id])?.[1]
+                            : undefined;
+                          selectTenant(tenant.id);
+                          if (href) {
+                            setTenantView(true);
+                            router.push(href);
+                          }
+                          toast.success(`Tenant: ${tenant.name}`);
+                        }}
+                      >
+                        <ExternalLink size={16} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive"
+                        aria-label={`Delete ${tenant.name}`}
+                        onClick={() => setRemoving(tenant)}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="project-cell">
+                      <span className="project-icon">
+                        <Image
+                          src="/eves-logo.svg"
+                          alt=""
+                          width={22}
+                          height={24}
+                          unoptimized
+                        />
+                      </span>
+                      <div>
+                        <button
+                          type="button"
+                          className="project-name hover:text-primary text-left"
+                          onClick={() => edit(tenant)}
+                        >
+                          {tenant.name}
+                        </button>
+                        <div className="project-id">{tenant.id}</div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{tenant.subdomain}</TableCell>
+                  <TableCell>{tenant.email}</TableCell>
+                  <TableCell>
+                    <span className="date-cell">{tenant.createdOn}</span>
+                  </TableCell>
+                  <TableCell>{tenant.createdBy}</TableCell>
+                  <TableCell>
+                    <span className="date-cell">{tenant.changedOn}</span>
+                  </TableCell>
+                  <TableCell>{tenant.changedBy}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <DataEmpty>
+            {isSample && !query && (
+              <Button onClick={() => edit(blankTenant())}>
+                <Plus size={15} />
+                Create
+              </Button>
+            )}
+          </DataEmpty>
+        )}
+        <TablePagination
+          total={filtered.length}
+          page={current}
+          size={size}
+          setPage={setPage}
+          setSize={setSize}
+        />
+      </section>
+      <Dialog
+        open={draft !== null}
+        onOpenChange={(open) => {
+          if (!open) setDraft(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[720px]">
+          <DialogHeader>
+            <DialogTitle>{draft?.id ? "Edit tenant" : "Create tenant"}</DialogTitle>
+            <DialogDescription>
+              Tenant details and component configuration. Changes are saved in this browser.
+            </DialogDescription>
+          </DialogHeader>
+          {draft && (
+            <form onSubmit={save} className="dialog-body" noValidate>
+              <Tabs value={tab} onValueChange={setTab}>
+                <div className="panel-tabs rounded-lg border">
+                  <TabsList>
+                    <TabsTrigger value="tenant">
+                      <Landmark size={16} />
+                      Tenant
+                    </TabsTrigger>
+                    <TabsTrigger value="components">
+                      <SlidersHorizontal size={16} />
+                      Components
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+                <TabsContent value="tenant" className="flex flex-col gap-5">
+                  <div className="flex items-center gap-4">
+                    <Image
+                      src="/eves-logo.svg"
+                      alt="EVES tenant logo"
+                      width={72}
+                      height={80}
+                      unoptimized
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      {draft.name || "New tenant"}
+                    </p>
+                  </div>
+                  <div className="form-grid">
+                    <TenantInput
+                      id="tenant-name"
+                      className="full"
+                      label="Name"
+                      required
+                      value={draft.name}
+                      error={fieldErrors.name}
+                      onChange={(value) => updateDraft("name", value)}
+                    />
+                    <TenantInput
+                      id="tenant-subdomain"
+                      label="Subdomain"
+                      required
+                      readOnly={Boolean(draft.id)}
+                      value={draft.subdomain}
+                      error={fieldErrors.subdomain}
+                      onChange={(value) => updateDraft("subdomain", value)}
+                    />
+                    <TenantInput
+                      id="tenant-email"
+                      label="Email"
+                      required
+                      type="email"
+                      value={draft.email}
+                      error={fieldErrors.email}
+                      onChange={(value) => updateDraft("email", value)}
+                    />
+                    <TenantInput
+                      id="tenant-address1"
+                      label="Address 1"
+                      value={draft.address1}
+                      onChange={(value) => updateDraft("address1", value)}
+                    />
+                    <TenantInput
+                      id="tenant-address2"
+                      label="Address 2"
+                      value={draft.address2}
+                      onChange={(value) => updateDraft("address2", value)}
+                    />
+                    <TenantInput
+                      id="tenant-postal"
+                      label="Postal code"
+                      value={draft.postalCode}
+                      onChange={(value) => updateDraft("postalCode", value)}
+                    />
+                    <TenantInput
+                      id="tenant-city"
+                      label="City"
+                      value={draft.city}
+                      onChange={(value) => updateDraft("city", value)}
+                    />
+                    <TenantInput
+                      id="tenant-department"
+                      label="Department"
+                      value={draft.department}
+                      onChange={(value) => updateDraft("department", value)}
+                    />
+                    <TenantInput
+                      id="tenant-region"
+                      label="Region"
+                      value={draft.region}
+                      onChange={(value) => updateDraft("region", value)}
+                    />
+                    <TenantInput
+                      id="tenant-country"
+                      label="Country"
+                      value={draft.country}
+                      onChange={(value) => updateDraft("country", value)}
+                    />
+                    <TenantInput
+                      id="tenant-latitude"
+                      label="Latitude"
+                      type="number"
+                      value={draft.latitude}
+                      onChange={(value) => updateDraft("latitude", value)}
+                    />
+                    <TenantInput
+                      id="tenant-longitude"
+                      label="Longitude"
+                      type="number"
+                      value={draft.longitude}
+                      onChange={(value) => updateDraft("longitude", value)}
+                    />
+                    <TenantInput
+                      id="tenant-contact"
+                      label="Contact"
+                      required={!draft.id}
+                      type="tel"
+                      value={draft.contact}
+                      error={fieldErrors.contact}
+                      onChange={(value) => updateDraft("contact", value)}
+                    />
+                    <div className="form-field">
+                      <span className="text-sm font-medium">Place</span>
+                      {address ? (
+                        <a
+                          className="inline-flex h-10 items-center gap-2 text-sm text-primary"
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <MapPin size={16} />
+                          View place
+                        </a>
+                      ) : (
+                        <Button type="button" variant="outline" disabled>
+                          <MapPin size={16} />
+                          View place
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="components" className="flex flex-col gap-2">
+                  {componentNames.map((name) => (
+                    <section key={name} className="rounded-md border">
+                      <div className="flex items-center gap-3 px-3 py-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`${expanded.includes(name) ? "Collapse" : "Expand"} ${name}`}
+                          aria-expanded={expanded.includes(name)}
+                          onClick={() =>
+                            setExpanded((current) =>
+                              current.includes(name)
+                                ? current.filter((item) => item !== name)
+                                : [...current, name],
+                            )
+                          }
+                        >
+                          {expanded.includes(name) ? <Minus size={16} /> : <Plus size={16} />}
+                        </Button>
+                        <Switch
+                          checked={draft.components[name]}
+                          aria-label={`Enable ${name}`}
+                          onCheckedChange={(checked) =>
+                            setDraft({
+                              ...draft,
+                              components: { ...draft.components, [name]: checked },
+                            })
+                          }
+                        />
+                        <span className="text-sm font-medium">{name}:1.0</span>
+                      </div>
+                      {expanded.includes(name) &&
+                        (name === "Reports/Analytics" ? (
+                          <div className="grid gap-4 px-4 pb-4">
+                            <div className="form-field max-w-md">
+                              <label htmlFor="tenant-reporting-type">
+                                Type <span className="text-primary">*</span>
+                              </label>
+                              <Choice
+                                id="tenant-reporting-type"
+                                label="Reporting type"
+                                value={type}
+                                className="w-full"
+                                disabled={!draft.components[name]}
+                                options={["Analytics", "Reporting"]}
+                                onChange={setType}
+                              />
+                            </div>
+                            <fieldset
+                              className="grid gap-3 disabled:opacity-50"
+                              disabled={!draft.components[name]}
+                            >
+                              {type === "Analytics" ? (
+                                analyticsOptions.map((option, index) => (
+                                  <div key={option} className="flex items-center gap-2">
+                                    <Checkbox
+                                      id={`tenant-analytics-${index}`}
+                                      checked={draft.analytics.includes(option)}
+                                      onCheckedChange={(checked) =>
+                                        setDraft({
+                                          ...draft,
+                                          analytics:
+                                            checked === true
+                                              ? [...draft.analytics, option]
+                                              : draft.analytics.filter((item) => item !== option),
+                                        })
+                                      }
+                                    />
+                                    <label htmlFor={`tenant-analytics-${index}`} className="text-sm">
+                                      {option}
+                                    </label>
+                                  </div>
+                                ))
+                              ) : (
+                                reportHierarchy.map((group) => {
+                                  const ids = group.items.map((item) => item.id);
+                                  const selected = ids.filter((id) => draft.reports[id]).length;
+                                  const checked =
+                                    selected === 0
+                                      ? false
+                                      : selected === ids.length
+                                        ? true
+                                        : "indeterminate";
+                                  return (
+                                    <div key={group.id} className="grid gap-2">
+                                      <div className="flex items-center gap-2">
+                                        <Checkbox
+                                          id={`tenant-report-${group.id}`}
+                                          checked={checked}
+                                          onCheckedChange={(value) => {
+                                            const reports = { ...draft.reports };
+                                            for (const id of ids) reports[id] = value === true;
+                                            setDraft({
+                                              ...draft,
+                                              reports,
+                                              ...reportAccess(reports),
+                                            });
+                                          }}
+                                        />
+                                        <label
+                                          htmlFor={`tenant-report-${group.id}`}
+                                          className="text-sm font-medium"
+                                        >
+                                          {group.label}
+                                        </label>
+                                      </div>
+                                      <div className="grid gap-2 pl-6">
+                                        {group.items.map((item) => (
+                                          <div key={item.id} className="flex items-center gap-2">
+                                            <Checkbox
+                                              id={`tenant-report-${item.id}`}
+                                              checked={!!draft.reports[item.id]}
+                                              onCheckedChange={(value) => {
+                                                const reports = {
+                                                  ...draft.reports,
+                                                  [item.id]: value === true,
+                                                };
+                                                setDraft({
+                                                  ...draft,
+                                                  reports,
+                                                  ...reportAccess(reports),
+                                                });
+                                              }}
+                                            />
+                                            <label
+                                              htmlFor={`tenant-report-${item.id}`}
+                                              className="text-sm"
+                                            >
+                                              {item.label}
+                                            </label>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </fieldset>
+                          </div>
+                        ) : (
+                          <p className="px-4 pb-4 text-sm text-muted-foreground">
+                            {name} is {draft.components[name] ? "enabled" : "disabled"} for this
+                            tenant.
+                          </p>
+                        ))}
+                    </section>
+                  ))}
+                </TabsContent>
+              </Tabs>
+              <div className="dialog-footer">
+                <Button type="button" variant="outline" onClick={() => setDraft(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit">{draft.id ? "Save changes" : "Create tenant"}</Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+      <AlertDialog
+        open={!!removing}
+        onOpenChange={(open) => {
+          if (!open) setRemoving(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {removing?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes the tenant from this browser’s table.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (removing && deleteTenant(removing.id)) {
+                  const id = removing.id;
+                  toast.success("Tenant deleted", {
+                    action: { label: "Undo", onClick: () => restoreTenant(id) },
+                  });
+                  setRemoving(null);
+                }
+              }}
+            >
+              Delete tenant
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
 }

@@ -8,7 +8,7 @@ import {
   LoaderCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Choice } from "./shared";
+import { Choice, DataEmpty } from "./shared";
 import { ReportMultiSelect } from "./report-multi-select";
 import { ReportDatePicker } from "./report-date-picker";
 import { ReportEmailDialog } from "./report-email-dialog";
@@ -22,10 +22,11 @@ import {
 } from "@/lib/eves/report-period";
 import styles from "./regulatory.module.css";
 import { useTags } from "@/lib/eves/use-tags";
+import { useDataSource } from "@/lib/eves/data-source";
 import { resolveFundingTags } from "@/lib/eves/funding-tags";
 import { reportConfig, isoDate } from "@/lib/eves/report-config";
 import type { ReportDataset, ReportKind } from "@/lib/eves/types";
-import datasets from "@/lib/eves/reference-data.json";
+import datasets from "@/data/reference-reports.json";
 import { downloadExcel, createZip } from "@/lib/eves/xlsx";
 import { downloadCsv, csvText, downloadBlob } from "@/lib/eves/export";
 import { toast } from "sonner";
@@ -66,9 +67,17 @@ export function Regulatory() {
     [emailOpen, setEmailOpen] = useState(false),
     [error, setError] = useState(""),
     [lastExport, setLastExport] = useState("");
+  const { source } = useDataSource();
   const tagState = useTags();
-  const { loading, reload } = tagState;
-  const { tags, error: tagError } = resolveFundingTags(tagState);
+  const loading = source === "workspace" && tagState.loading;
+  const { reload } = tagState;
+  const { tags, error: tagError } = resolveFundingTags(
+    source === "sample"
+      ? { tags: [], error: "", errorCode: "TAG_STORAGE_NOT_CONFIGURED" }
+      : tagState.error
+        ? { tags: [], error: "", errorCode: "" }
+        : tagState,
+  );
   const reports = definitions[agency];
   const eligibleTags = tags.filter((t) => t.agency === agency);
   const ranges = useMemo(
@@ -95,7 +104,10 @@ export function Regulatory() {
     setLastExport("");
   }
   function buildReport(report: (typeof reports)[number]) {
-    const data = datasets[report.kind] as ReportDataset;
+    const snapshot =
+      datasets[report.kind as keyof typeof datasets] as ReportDataset;
+    const data =
+      source === "sample" ? snapshot : { headers: snapshot.headers, rows: [] };
     const config = reportConfig[report.kind];
     const fundedSites = new Set(
       tags
@@ -144,12 +156,7 @@ export function Regulatory() {
       setError(delivery.error);
       return;
     }
-    if (!rowCount) {
-      setError(
-        "No reference records match this selection. Try Q3 2026 or remove the funding filter.",
-      );
-      return;
-    }
+    if (!rowCount) return;
     if (delivery.delivery === "email") {
       setEmailOpen(true);
       return;
@@ -391,6 +398,7 @@ export function Regulatory() {
             )}
           </span>
         </div>
+        {selected.length > 0 && !rowCount && <DataEmpty />}
         {error && (
           <p className={`form-error ${styles.exportError}`} role="alert">
             {error}

@@ -13,6 +13,7 @@ test("renders all EVES routes with product metadata and the shared navigation", 
     ["/reports/charging-sessions", "Charging sessions"],
     ["/reports/interval-load-profile", "Interval load profile"],
     ["/reports/throughput", "Infrastructure &amp; throughput"],
+    ["/dashboard", "Business Overview"],
   ]) {
     const response = await worker.fetch(
       new Request(`http://localhost${route}`, {

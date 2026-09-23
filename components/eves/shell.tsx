@@ -10,11 +10,15 @@ import {
   ChevronDown,
   Tags,
   Activity,
+  Zap,
   ChartNoAxesCombined,
   Building2,
   Clock3,
   X,
   UserRound,
+  Database,
+  FlaskConical,
+  LayoutDashboard,
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -28,8 +32,9 @@ import {
 } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { TenantProvider, useTenant } from "./tenant-context";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
+import { TenantProvider, useTenant, type Tenant } from "./tenant-context";
+import { DataSourceProvider, useDataSource, type DataSource } from "@/lib/eves/data-source";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import styles from "./navigation.module.css";
 
 const categories = [
@@ -37,11 +42,19 @@ const categories = [
     label: "Regulatory Reports",
     href: "/reports/project-tags",
     icon: FileText,
+    tenantOnly: false,
   },
   {
     label: "Master Reports",
     href: "/reports/charging-sessions",
     icon: ChartNoAxesColumnIncreasing,
+    tenantOnly: false,
+  },
+  {
+    label: "Performance & Insights",
+    href: "/reports/charging-performance",
+    icon: Activity,
+    tenantOnly: true,
   },
 ] as const;
 
@@ -53,51 +66,121 @@ export const navigation = [
     label: "Project Tagging",
     icon: Tags,
     group: "Regulatory Reports",
+    reportId: "project-tagging",
   },
   {
     href: "/reports/regulatory",
     label: "Generate Reports",
     icon: FileText,
     group: "Regulatory Reports",
+    reportId: "generate-reports",
   },
   {
     href: "/reports/charging-sessions",
     label: "Charging Sessions",
     icon: Clock3,
     group: "Master Reports",
+    reportId: "charging-sessions",
   },
   {
     href: "/reports/interval-load-profile",
     label: "Interval Load Profile",
     icon: ChartNoAxesCombined,
     group: "Master Reports",
+    reportId: "interval-load-profile",
   },
   {
     href: "/reports/throughput",
     label: "Infrastructure & Throughput",
     icon: Building2,
     group: "Master Reports",
+    reportId: "infrastructure-throughput",
   },
   {
     href: "/",
     label: "Uptime & Reliability",
     icon: Activity,
     group: "Master Reports",
+    reportId: "uptime-reliability",
+  },
+  {
+    href: "/dashboard",
+    label: "Executive Overview",
+    icon: LayoutDashboard,
+    group: "Performance & Insights",
+    reportId: "executive-overview",
+  },
+  {
+    href: "/reports/charging-performance",
+    label: "Charging Performance",
+    icon: Zap,
+    group: "Performance & Insights",
+    reportId: "charging-performance",
+  },
+  {
+    href: "/reports/site-performance",
+    label: "Site Performance",
+    icon: Building2,
+    group: "Performance & Insights",
+    reportId: "site-performance",
+  },
+  {
+    href: "/reports/charger-performance",
+    label: "Charger Performance",
+    icon: Activity,
+    group: "Performance & Insights",
+    reportId: "charger-connector-performance",
+  },
+  {
+    href: "/reports/energy-demand",
+    label: "Energy & Demand",
+    icon: ChartNoAxesCombined,
+    group: "Performance & Insights",
+    reportId: "energy-demand",
+  },
+  {
+    href: "/reports/tenant-uptime-reliability",
+    label: "Uptime & Reliability",
+    icon: Activity,
+    group: "Performance & Insights",
+    reportId: "tenant-uptime-reliability",
+  },
+  {
+    href: "/reports/revenue-transaction",
+    label: "Revenue & Transaction",
+    icon: ChartNoAxesColumnIncreasing,
+    group: "Performance & Insights",
+    reportId: "revenue-financial",
   },
 ] as const;
+
+function tenantReportHome(active: Tenant) {
+  if (!active.components["Reports/Analytics"]) return null;
+  return navigation.find((item) => active.reports[item.reportId])?.href ?? null;
+}
 
 function Navigation({ category }: { category: ReportCategory }) {
   const { setOpenMobile } = useSidebar();
   const { tenantView, active } = useTenant();
   const path = usePathname();
-  const visibleCategories = categories.filter(item => !tenantView || (active.components["Reports/Analytics"] && (item.label === "Regulatory Reports" ? active.regulatory : active.master)));
+  const unlocked = !tenantView || !active.id;
+  const visibleCategories = categories.filter((item) => {
+    if (unlocked) return !item.tenantOnly;
+    return (
+      active.components["Reports/Analytics"] &&
+      navigation.some(
+        (page) =>
+          page.group === item.label && active.reports[page.reportId],
+      )
+    );
+  });
   const [reportingOpen, setReportingOpen] = useState(true);
   return (
     <Sidebar collapsible="offcanvas">
       <div className={styles.sidebar}>
         <div className={styles.brandArea}>
           <Link
-            href={tenantView ? "/tenants" : "/reports/project-tags"}
+            href={tenantView ? (tenantReportHome(active) ?? "/reports/project-tags") : "/reports/project-tags"}
             className={`eves-brand ${styles.brand}`}
             aria-label="EVES reporting home"
             onClick={() => setOpenMobile(false)}
@@ -123,7 +206,7 @@ function Navigation({ category }: { category: ReportCategory }) {
         <SidebarContent className={styles.sidebarContent}>
           <nav aria-label="Report categories">
             <SidebarMenu className={styles.categoryMenu}>
-              {tenantView && <SidebarMenuItem><SidebarMenuButton asChild className={styles.tenantLink} isActive={path === "/tenants"}><Link href="/tenants" onClick={() => setOpenMobile(false)} aria-current={path === "/tenants" ? "page" : undefined}><Building2 aria-hidden="true" /><span>Tenant</span></Link></SidebarMenuButton></SidebarMenuItem>}
+              {!tenantView && <SidebarMenuItem><SidebarMenuButton asChild className={styles.tenantLink} isActive={path === "/tenants"}><Link href="/tenants" onClick={() => setOpenMobile(false)} aria-current={path === "/tenants" ? "page" : undefined}><Building2 aria-hidden="true" /><span>Tenant</span></Link></SidebarMenuButton></SidebarMenuItem>}
               {visibleCategories.length > 0 && <SidebarMenuItem>
                 <SidebarMenuButton
                   className={styles.reportingToggle}
@@ -153,9 +236,17 @@ function Navigation({ category }: { category: ReportCategory }) {
                         className={styles.categoryLink}
                       >
                         <Link
-                          href={item.href}
+                          href={
+                            tenantView
+                              ? (navigation.find(
+                                  (page) =>
+                                    page.group === item.label &&
+                                    active.reports[page.reportId],
+                                )?.href ?? item.href)
+                              : item.href
+                          }
                           onClick={() => setOpenMobile(false)}
-                          aria-current={path !== "/tenants" && category === item.label ? "true" : undefined}
+                          aria-current={path !== "/tenants" && category === item.label ? "page" : undefined}
                         >
                           <item.icon aria-hidden="true" />
                           <span>{item.label}</span>
@@ -173,7 +264,48 @@ function Navigation({ category }: { category: ReportCategory }) {
   );
 }
 export function Shell({ children }: { children: React.ReactNode }) {
-  return <TenantProvider><ShellContent>{children}</ShellContent></TenantProvider>;
+  return (
+    <DataSourceProvider>
+      <TenantProvider>
+        <ShellContent>{children}</ShellContent>
+      </TenantProvider>
+    </DataSourceProvider>
+  );
+}
+
+function DataSourceMenu() {
+  const { source, selectSource } = useDataSource();
+  const isSample = source === "sample";
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className={styles.dataSource}
+          aria-label={`Data source: ${isSample ? "Sample data" : "Workspace data"}`}
+        >
+          {isSample ? <FlaskConical size={16} aria-hidden="true" /> : <Database size={16} aria-hidden="true" />}
+          <span>{isSample ? "Sample data" : "Workspace data"}</span>
+          <ChevronDown size={14} aria-hidden="true" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-72">
+        <DropdownMenuRadioGroup
+          value={source}
+          onValueChange={(value) => selectSource(value as DataSource)}
+        >
+          <DropdownMenuRadioItem value="sample">Sample data</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="workspace">Workspace data</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <p className="px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+          {isSample
+            ? "Sample data loads from the local sample files on every screen."
+            : "Workspace data uses the connected APIs. Screens without an API stay empty."}
+        </p>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 function ShellContent({ children }: { children: React.ReactNode }) {
   const path = usePathname();
@@ -181,13 +313,34 @@ function ShellContent({ children }: { children: React.ReactNode }) {
   const { tenantView, setTenantView, active } = useTenant();
   const current = navigation.find((n) => n.href === path);
   const category = current?.group ?? categories[0].label;
-  const allowed = tenantView ? path === "/tenants" || (active.components["Reports/Analytics"] && (current?.group === "Regulatory Reports" ? active.regulatory : current?.group === "Master Reports" ? active.master : false)) : path !== "/tenants";
-  useEffect(() => { if (!allowed) router.replace(tenantView ? "/tenants" : "/reports/project-tags"); }, [allowed, tenantView, router]);
+  const tenantReport = current?.group === "Performance & Insights";
+  const reportAllowed =
+    !!current &&
+    (!active.id ||
+      (!!active.components["Reports/Analytics"] &&
+        active.reports[current.reportId]));
+  const allowed = tenantView
+    ? path !== "/tenants" && reportAllowed
+    : !tenantReport;
+  useEffect(() => {
+    if (allowed) return;
+    const destination = tenantView ? tenantReportHome(active) : "/reports/project-tags";
+    if (destination && destination !== path) router.replace(destination);
+  }, [allowed, tenantView, active, path, router]);
   function switchView(value: string) {
-    setTenantView(value === "tenant");
-    router.push(value === "tenant" ? "/tenants" : "/reports/project-tags");
+    const nextTenant = value === "tenant";
+    setTenantView(nextTenant);
+    if (nextTenant && path === "/tenants") router.push(tenantReportHome(active) ?? "/reports/project-tags");
   }
   const activeTabRef = useRef<HTMLAnchorElement>(null);
+  const tabs =
+    path === "/tenants"
+        ? [{ href: "/tenants", label: "Tenant", icon: Building2 }]
+        : navigation.filter(
+            (item) =>
+              item.group === category &&
+              (!tenantView || active.reports[item.reportId]),
+          );
 
   useEffect(() => {
     // Keep the active page visible when its tab starts outside a narrow screen.
@@ -208,8 +361,8 @@ function ShellContent({ children }: { children: React.ReactNode }) {
           <SidebarTrigger className={styles.mobileTrigger} />
           <nav className={styles.tabScroll} aria-label="Report sub-navigation">
             <TabsList className={styles.tabList} aria-label="Report pages">
-              {(tenantView && path === "/tenants" ? [{ href: "/tenants", label: "Tenant", icon: Building2, group: "Tenant" }] : navigation)
-                .filter((item) => allowed && (path === "/tenants" || item.group === category))
+              {tabs
+                .filter(() => allowed)
                 .map((item) => (
                   <TabsTrigger
                     asChild
@@ -236,11 +389,27 @@ function ShellContent({ children }: { children: React.ReactNode }) {
                 ))}
             </TabsList>
           </nav>
-          <DropdownMenu>
+          <div className={styles.barActions}>
+            <DataSourceMenu />
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button type="button" className={styles.profile} aria-label="Select view">
+              <button
+                type="button"
+                className={styles.profile}
+                aria-label={
+                  tenantView
+                    ? `Select view. Tenant View, ${active.name}`
+                    : "Select view. Super Admin"
+                }
+              >
                 <span className={styles.profileAvatar} aria-hidden="true"><UserRound size={19} /></span>
-                <span>{tenantView ? "Tenant View" : "Super Admin"}</span><ChevronDown size={14} aria-hidden="true" />
+                <span className={styles.profileCopy}>
+                  <span>{tenantView ? "Tenant View" : "Super Admin"}</span>
+                  {tenantView && (
+                    <span className={styles.profileName}>{active.name}</span>
+                  )}
+                </span>
+                <ChevronDown size={14} aria-hidden="true" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -249,11 +418,11 @@ function ShellContent({ children }: { children: React.ReactNode }) {
                 <DropdownMenuRadioItem value="tenant">Tenant View</DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
-          </DropdownMenu>
+            </DropdownMenu>
+          </div>
         </header>
         <TabsContent value={path} className={styles.tabPanel}>
           <main id="main-content" className="page-content">
-            {tenantView && <div className={styles.tenantContext}>Tenant: {active.name}</div>}
             {allowed ? children : null}
             <footer className="page-foot">
               <span>© 2026 EVES. All rights reserved.</span>

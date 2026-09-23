@@ -1,0 +1,155 @@
+[
+  {
+    "id": "sample-tag-1",
+    "name": "Downtown fast charging expansion",
+    "type": "Funding Agency",
+    "agency": "CEC",
+    "awardId": "SAMPLE-CEC-101",
+    "description": "Fictional sample project for exploring project tagging.",
+    "mappings": { "Downtown Transit Hub": ["1", "2", "3", "4"] },
+    "createdBy": "Avery Chen",
+    "createdAt": "2026-09-01T09:00:00Z",
+    "version": 1
+  },
+  {
+    "id": "sample-tag-2",
+    "name": "Airport charging hub",
+    "type": "Funding Agency",
+    "agency": "NEVI",
+    "awardId": "SAMPLE-NEVI-202",
+    "description": "Fictional sample project for exploring project tagging.",
+    "mappings": { "Airport Fast Charge Plaza": ["1", "2", "3", "4", "5"] },
+    "createdBy": "Jordan Patel",
+    "createdAt": "2026-09-02T09:00:00Z",
+    "version": 1
+  },
+  {
+    "id": "sample-tag-3",
+    "name": "Retail destination charging",
+    "type": "Funding Agency",
+    "agency": "Cal-EvIP",
+    "awardId": "SAMPLE-EVIP-303",
+    "description": "Fictional sample project for exploring project tagging.",
+    "mappings": { "Central Mall Parking": ["1", "2", "3"] },
+    "createdBy": "Morgan Lee",
+    "createdAt": "2026-09-03T09:00:00Z",
+    "version": 1
+  },
+  {
+    "id": "sample-tag-4",
+    "name": "Transit corridor reliability",
+    "type": "Funding Agency",
+    "agency": "CIC",
+    "awardId": "SAMPLE-CIC-404",
+    "description": "Fictional sample project for exploring project tagging.",
+    "mappings": {
+      "Downtown Transit Hub": ["1", "2"],
+      "Airport Fast Charge Plaza": ["1", "2"]
+    },
+    "createdBy": "Avery Chen",
+    "createdAt": "2026-09-04T09:00:00Z",
+    "version": 1
+  },
+  {
+    "id": "sample-tag-5",
+    "name": "City center zone",
+    "type": "Zone",
+    "agency": "",
+    "awardId": "",
+    "description": "Fictional sample project for exploring project tagging.",
+    "mappings": {
+      "Downtown Transit Hub": ["1", "2", "3", "4"],
+      "Central Mall Parking": ["1", "2", "3"]
+    },
+    "createdBy": "Jordan Patel",
+    "createdAt": "2026-09-05T09:00:00Z",
+    "version": 1
+  },
+  {
+    "id": "sample-tag-6",
+    "name": "Airport service zone",
+    "type": "Zone",
+    "agency": "",
+    "awardId": "",
+    "description": "Fictional sample project for exploring project tagging.",
+    "mappings": { "Airport Fast Charge Plaza": ["1", "2", "3", "4", "5"] },
+    "createdBy": "Morgan Lee",
+    "createdAt": "2026-09-06T09:00:00Z",
+    "version": 1
+  },
+  {
+    "id": "sample-tag-7",
+    "name": "Community access pilot",
+    "type": "Funding Agency",
+    "agency": "CEC",
+    "awardId": "SAMPLE-CEC-505",
+    "description": "Fictional sample project for exploring project tagging.",
+    "mappings": {},
+    "createdBy": "Avery Chen",
+    "createdAt": "2026-09-07T09:00:00Z",
+    "version": 1
+  },
+  {
+    "id": "sample-tag-8",
+    "name": "Highway connection upgrade",
+    "type": "Funding Agency",
+    "agency": "NEVI",
+    "awardId": "SAMPLE-NEVI-606",
+    "description": "Fictional sample project for exploring project tagging.",
+    "mappings": { "Airport Fast Charge Plaza": ["3", "4", "5"] },
+    "createdBy": "Jordan Patel",
+    "createdAt": "2026-09-08T09:00:00Z",
+    "version": 1
+  },
+  {
+    "id": "sample-tag-9",
+    "name": "Retail and commuter zone",
+    "type": "Zone",
+    "agency": "",
+    "awardId": "",
+    "description": "Fictional sample project for exploring project tagging.",
+    "mappings": {
+      "Central Mall Parking": ["1", "2"],
+      "Downtown Transit Hub": ["3", "4"]
+    },
+    "createdBy": "Morgan Lee",
+    "createdAt": "2026-09-09T09:00:00Z",
+    "version": 1
+  },
+  {
+    "id": "sample-tag-10",
+    "name": "Accessible charging initiative",
+    "type": "Funding Agency",
+    "agency": "Cal-EvIP",
+    "awardId": "SAMPLE-EVIP-707",
+    "description": "Fictional sample project for exploring project tagging.",
+    "mappings": { "Central Mall Parking": ["3"] },
+    "createdBy": "Avery Chen",
+    "createdAt": "2026-09-10T09:00:00Z",
+    "version": 1
+  },
+  {
+    "id": "sample-tag-11",
+    "name": "Fleet charging readiness",
+    "type": "Funding Agency",
+    "agency": "CIC",
+    "awardId": "SAMPLE-CIC-808",
+    "description": "Fictional sample project for exploring project tagging.",
+    "mappings": {},
+    "createdBy": "Jordan Patel",
+    "createdAt": "2026-09-11T09:00:00Z",
+    "version": 1
+  },
+  {
+    "id": "sample-tag-12",
+    "name": "North expansion zone",
+    "type": "Zone",
+    "agency": "",
+    "awardId": "",
+    "description": "Fictional sample project for exploring project tagging.",
+    "mappings": {},
+    "createdBy": "Morgan Lee",
+    "createdAt": "2026-09-12T09:00:00Z",
+    "version": 1
+  }
+]

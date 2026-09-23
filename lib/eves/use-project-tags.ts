@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useDataSource, type DataSource } from "./data-source";
 import { useTags } from "./use-tags";
 import {
   createSampleTagStore,
@@ -9,7 +10,7 @@ import {
 } from "./sample-tags";
 import type { ProjectTag, TagInput } from "./types";
 
-export type TagDataSource = "workspace" | "sample";
+export type TagDataSource = DataSource;
 
 const SAMPLE_CHANGE_EVENT = "eves-sample-tags-change";
 const serverSnapshot = () => undefined;
@@ -83,27 +84,26 @@ function useSampleTags(enabled: boolean) {
   };
 }
 
-// Only Project Tagging opts into samples. The existing API and reporting hooks
-// keep their behavior; sample changes are never sent to the workspace service.
+// Sample tags stay in this browser. Workspace tags use /api/tags and follow the
+// navbar selection; an API error does not switch the selection back to sample.
 export function useProjectTags() {
+  const { source } = useDataSource();
   const workspace = useTags();
-  const [selectedSource, setSelectedSource] = useState<TagDataSource | null>(
-    null,
-  );
-  const source: TagDataSource =
-    selectedSource ?? (workspace.error ? "sample" : "workspace");
   const samples = useSampleTags(source === "sample");
+  const seen = useRef(source);
+  const reloadWorkspace = workspace.reload;
 
-  function selectSource(next: TagDataSource) {
-    setSelectedSource(next);
-    if (next === "workspace") void workspace.reload();
-  }
+  useEffect(() => {
+    if (seen.current === source) return;
+    seen.current = source;
+    if (source === "workspace") void reloadWorkspace();
+  }, [source, reloadWorkspace]);
 
   return {
     ...(source === "sample" ? samples : workspace),
     source,
-    selectSource,
-    workspaceUnavailable: !!workspace.error,
-    workspaceNotConfigured: workspace.errorCode === "TAG_STORAGE_NOT_CONFIGURED",
+    workspaceNotConfigured:
+      source === "workspace" &&
+      workspace.errorCode === "TAG_STORAGE_NOT_CONFIGURED",
   };
 }

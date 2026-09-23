@@ -1,117 +1,12 @@
 import { z } from "zod";
+import sampleTagData from "../../data/sample-tags.json";
 import { referenceSites } from "./seed";
 import { tagInputSchema, type ProjectTag, type TagInput } from "./types";
 
 export const SAMPLE_TAGS_KEY = "eves-project-tags-sample-v1";
 
-// Fictional projects, kept separate from the workspace API and regulatory exports.
-const sampleTagInputs: Pick<
-  ProjectTag,
-  "name" | "type" | "agency" | "awardId" | "mappings"
->[] = [
-  {
-    name: "Downtown fast charging expansion",
-    type: "Funding Agency",
-    agency: "CEC",
-    awardId: "SAMPLE-CEC-101",
-    mappings: { "Downtown Transit Hub": ["1", "2", "3", "4"] },
-  },
-  {
-    name: "Airport charging hub",
-    type: "Funding Agency",
-    agency: "NEVI",
-    awardId: "SAMPLE-NEVI-202",
-    mappings: { "Airport Fast Charge Plaza": ["1", "2", "3", "4", "5"] },
-  },
-  {
-    name: "Retail destination charging",
-    type: "Funding Agency",
-    agency: "Cal-EvIP",
-    awardId: "SAMPLE-EVIP-303",
-    mappings: { "Central Mall Parking": ["1", "2", "3"] },
-  },
-  {
-    name: "Transit corridor reliability",
-    type: "Funding Agency",
-    agency: "CIC",
-    awardId: "SAMPLE-CIC-404",
-    mappings: {
-      "Downtown Transit Hub": ["1", "2"],
-      "Airport Fast Charge Plaza": ["1", "2"],
-    },
-  },
-  {
-    name: "City center zone",
-    type: "Zone",
-    agency: "",
-    awardId: "",
-    mappings: {
-      "Downtown Transit Hub": ["1", "2", "3", "4"],
-      "Central Mall Parking": ["1", "2", "3"],
-    },
-  },
-  {
-    name: "Airport service zone",
-    type: "Zone",
-    agency: "",
-    awardId: "",
-    mappings: { "Airport Fast Charge Plaza": ["1", "2", "3", "4", "5"] },
-  },
-  {
-    name: "Community access pilot",
-    type: "Funding Agency",
-    agency: "CEC",
-    awardId: "SAMPLE-CEC-505",
-    mappings: {},
-  },
-  {
-    name: "Highway connection upgrade",
-    type: "Funding Agency",
-    agency: "NEVI",
-    awardId: "SAMPLE-NEVI-606",
-    mappings: { "Airport Fast Charge Plaza": ["3", "4", "5"] },
-  },
-  {
-    name: "Retail and commuter zone",
-    type: "Zone",
-    agency: "",
-    awardId: "",
-    mappings: {
-      "Central Mall Parking": ["1", "2"],
-      "Downtown Transit Hub": ["3", "4"],
-    },
-  },
-  {
-    name: "Accessible charging initiative",
-    type: "Funding Agency",
-    agency: "Cal-EvIP",
-    awardId: "SAMPLE-EVIP-707",
-    mappings: { "Central Mall Parking": ["3"] },
-  },
-  {
-    name: "Fleet charging readiness",
-    type: "Funding Agency",
-    agency: "CIC",
-    awardId: "SAMPLE-CIC-808",
-    mappings: {},
-  },
-  {
-    name: "North expansion zone",
-    type: "Zone",
-    agency: "",
-    awardId: "",
-    mappings: {},
-  },
-];
-
-export const sampleTags: ProjectTag[] = sampleTagInputs.map((tag, index) => ({
-  ...tag,
-  id: `sample-tag-${index + 1}`,
-  description: "Fictional sample project for exploring project tagging.",
-  createdBy: ["Avery Chen", "Jordan Patel", "Morgan Lee"][index % 3],
-  createdAt: `2026-09-${String(index + 1).padStart(2, "0")}T09:00:00Z`,
-  version: 1,
-}));
+// Fictional projects from data/sample-tags.json. Kept separate from the workspace API.
+export const sampleTags = sampleTagData as ProjectTag[];
 
 const storedTagSchema = tagInputSchema.and(
   z.object({

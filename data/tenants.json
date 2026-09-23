@@ -1,0 +1,78 @@
+[
+  {
+    "id": "sample-tenant-1",
+    "subdomain": "northstar",
+    "name": "Northstar Transit",
+    "email": "ops@northstar.example",
+    "createdOn": "7/7/26, 12:21:57 PM",
+    "createdBy": "Sample Admin",
+    "changedOn": "8/14/26, 2:45:57 AM",
+    "changedBy": "Sample Admin",
+    "address1": "100 Market Street",
+    "postalCode": "94105",
+    "city": "San Francisco",
+    "region": "California",
+    "country": "United States",
+    "contact": "4155550100"
+  },
+  {
+    "id": "sample-tenant-2",
+    "subdomain": "harbor",
+    "name": "Harbor Charge Co",
+    "email": "ops@harbor.example",
+    "createdOn": "6/26/25, 12:59:47 PM",
+    "createdBy": "Sample Admin",
+    "changedOn": "7/1/26, 6:36:53 AM",
+    "changedBy": "Sample Admin"
+  },
+  {
+    "id": "sample-tenant-3",
+    "subdomain": "metro",
+    "name": "Metro Fleet",
+    "email": "ops@metro.example",
+    "createdOn": "6/26/25, 1:40:00 PM",
+    "createdBy": "Sample Admin",
+    "changedOn": "6/17/26, 4:38:10 PM",
+    "changedBy": "Sample Admin"
+  },
+  {
+    "id": "sample-tenant-4",
+    "subdomain": "cedar",
+    "name": "Cedar Valley Energy",
+    "email": "ops@cedar.example",
+    "createdOn": "8/10/26, 10:11:56 AM",
+    "createdBy": "Sample Admin",
+    "changedOn": "8/10/26, 10:11:56 AM",
+    "changedBy": "Sample Admin"
+  },
+  {
+    "id": "sample-tenant-5",
+    "subdomain": "lakeside",
+    "name": "Lakeside Mobility",
+    "email": "ops@lakeside.example",
+    "createdOn": "8/6/26, 10:30:19 AM",
+    "createdBy": "Sample Admin",
+    "changedOn": "8/13/26, 3:16:15 PM",
+    "changedBy": "Sample Admin"
+  },
+  {
+    "id": "sample-tenant-6",
+    "subdomain": "summit",
+    "name": "Summit Power",
+    "email": "ops@summit.example",
+    "createdOn": "8/7/26, 2:00:33 AM",
+    "createdBy": "Sample Admin",
+    "changedOn": "8/7/26, 2:00:33 AM",
+    "changedBy": "Sample Admin"
+  },
+  {
+    "id": "sample-tenant-7",
+    "subdomain": "pioneer",
+    "name": "Pioneer EV",
+    "email": "ops@pioneer.example",
+    "createdOn": "8/7/26, 4:30:34 AM",
+    "createdBy": "Sample Admin",
+    "changedOn": "8/7/26, 4:30:34 AM",
+    "changedBy": "Sample Admin"
+  }
+]

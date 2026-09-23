@@ -1,0 +1,87 @@
+High
+1. Tag API has no authentication
+app/api/tags/route.ts, lib/eves/database.ts
+The route checks Origin, and a missing Origin is allowed. There is no user or tenant check. Anyone who can reach a public deployment can read and change every project tag. The README already says this.
+Add authentication and authorization before this is exposed, and reject requests with no Origin for state-changing methods. Do not treat the Super Admin label as a permission.
+
+2. Real-looking personal data is committed in the tenant seed
+components/eves/tenant-context.tsx
+Names, email addresses, and ids are hardcoded as the initial tenant table. That data ships in the client bundle and is copied into localStorage.
+Replace it with clearly fictional records before any wider distribution.
+
+3. Report meaning is encoded as raw column indexes
+lib/eves/report-config.ts, components/eves/report-page.tsx, components/eves/regulatory.tsx, components/eves/report-chart.tsx
+Metrics, status badges, charts, and funding filters use numbers such as column 17, 19, 29, and 31. The same indexes are repeated in the regulatory builder instead of being read from reportConfig. A column shift will silently change totals, charts, and funding filters. filterRows also treats column 17 as the session-error flag for every report kind.
+Name the fields on ReportConfig (site, error, energy, tag, and so on) and use those names in the page, chart, and regulatory export.
+
+Medium
+4. Tenant screen does not use the reporting design system
+components/eves/tenants.tsx, components/eves/tenants.module.css
+Reporting uses shadcn inputs, Choice, Table, and AlertDialog. Tenants uses native <input>, <select>, <table>, and a custom dialog. Validation is a toast instead of .form-error.
+If tenant work continues, rebuild it with the same primitives as Project Tagging. Until then, do not copy tenant markup into report screens.
+
+5. Tag form shows only the first error, and the agency control can lie
+components/eves/tag-editor.tsx
+Zod returns every issue, but the dialog shows issues[0] in one banner. Required agency uses value={form.agency || "CEC"}, so an empty agency looks selected as CEC and still fails on save.
+Show the message on the field that failed. Bind the select to the real value, including an explicit empty option when agency is required.
+
+6. Project Tagging sort does not match report tables
+components/eves/project-tags.tsx
+Report tables sort per column with aria-sort. The tag table uses one boolean that switches between name and created date, only on the first column, with no sort state for assistive tech.
+Use the same sortable-header pattern as ReportPage.
+
+7. useIsMobile paints the desktop filter first
+hooks/use-mobile.ts, components/eves/filter-panel.tsx
+The hook starts as false, so a phone first renders a popover and then swaps it for a drawer.
+Default from matchMedia before paint, or render the drawer from a CSS breakpoint so the control does not change after hydration.
+
+8. Large amounts of unused UI and CSS
+components/ui/* (carousel, command, input-otp, kanban-style message components, and others), app/globals.css (.topbar, .page-heading, .workflow-callout, .regulatory-grid, .desktop-filter)
+The kit is intentionally vendored, and product screens no longer render page titles or the old top bar. Dead classes make the stylesheet look like the current layout.
+Leave the vendored kit alone unless a primitive is actually needed. Do not restyle unused components. Remove obsolete product classes only when a change already touches that file.
+
+9. Inter is named but not loaded
+app/globals.css
+--font-sans is "Inter", Arial, Helvetica, sans-serif, and nothing imports Inter, so the UI falls back to Arial.
+Load Inter with next/font or drop it from the stack so the documented font matches what ships.
+
+10. Chart and status colors bypass the tokens
+components/eves/report-chart.tsx, .status in app/globals.css
+Charts use hex values such as #6259d9 and #959bad instead of --chart-* and --muted-foreground. Status pills use their own greens and reds.
+Use the existing chart and semantic tokens so a token change updates charts and badges together.
+
+11. Category links use an invalid current-page value
+components/eves/shell.tsx
+The reporting submenu sets aria-current="true". The page tabs correctly use aria-current="page".
+Use "page" for the active category link as well.
+
+12. Snapshot data and calculations assume a fixed September 2026 extract
+lib/eves/report-config.ts, components/eves/regulatory.tsx, lib/eves/reference-data.json
+Throughput and uptime summaries are included only when the range covers 1–7 Sep 2026. Dates missing a year are forced to 2026. That is correct for this snapshot and wrong for a live feed.
+Keep the reference adapter isolated. When a live client is added, put column mapping and period rules behind that adapter instead of spreading new indexes through the components.
+
+Low
+13. Metric icons are chosen by array position
+components/eves/report-page.tsx
+[Activity, Zap, Clock3, Building2][i] follows metric order. Reordering a metric assigns the wrong icon.
+Put the icon next to each metric definition.
+
+14. Pagination is previous/next only, and it stays visible when the table is empty
+components/eves/shared.tsx, components/eves/report-page.tsx
+Users cannot jump to a page. The footer still renders on an empty result. Acceptable at today’s snapshot sizes (about 25–48 rows).
+Hide the footer when total is 0. Add page numbers only if live datasets grow.
+
+15. GET /api/tags trusts stored JSON
+app/api/tags/route.ts
+Rows are JSON.parsed and returned without tagInputSchema. A bad row becomes a client runtime error instead of a handled DataError.
+Parse each record with the schema and skip or report invalid rows.
+
+16. components/ui/sonner.tsx calls useTheme with no provider
+app/layout.tsx
+The app is light-only. Sonner falls through to "system".
+Pass theme="light" at the Toaster in the shell, or add a provider if dark mode is ever required.
+
+17. README repeats the local-development block
+README.md
+The same install and validation section appears twice.
+Clean it up the next time the docs are edited. Not a UI defect.

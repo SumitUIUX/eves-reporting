@@ -28,4 +28,14 @@ export interface ReportDataset {
   rows: string[][];
 }
 export type ReportKind =
-  "sessions" | "intervals" | "throughput" | "uptime" | "events";
+  | "sessions"
+  | "intervals"
+  | "throughput"
+  | "uptime"
+  | "events"
+  | "chargingPerformance"
+  | "sitePerformance"
+  | "chargerPerformance"
+  | "energyDemand"
+  | "tenantUptime"
+  | "revenueTransaction";

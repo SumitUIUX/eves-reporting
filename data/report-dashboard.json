@@ -1,0 +1,319 @@
+{
+    "dashboard_period": {
+      "start_date": "2026-09-01",
+      "end_date": "2026-09-23"
+    },
+    "charging": {
+      "sessions": {
+        "value": 1248,
+        "previous_period_value": 1162,
+        "change_percent": 7.4
+      },
+      "energy_delivered_kwh": {
+        "value": 58432.6,
+        "previous_period_value": 54187.3,
+        "change_percent": 7.8
+      },
+      "revenue": {
+        "value": 24876.42,
+        "previous_period_value": 22941.18,
+        "change_percent": 8.5
+      },
+      "average_session_duration": {
+        "value": "00:52:18",
+        "previous_period_value": "00:50:42",
+        "change_percent": 3.1
+      }
+    },
+    "infrastructure": {
+      "active_chargers": {
+        "value": 27,
+        "total": 30,
+        "change_percent": 3.8
+      },
+      "connector_count": {
+        "value": 42,
+        "total": 46,
+        "change_percent": 4.8
+      },
+      "utilization_percent": {
+        "value": 64.7,
+        "previous_period_value": 61.2,
+        "change_percent": 5.7
+      },
+      "uptime_percent": {
+        "value": 97.8,
+        "previous_period_value": 97.1,
+        "change_percent": 0.7
+      }
+    },
+    "business": {
+      "revenue_trend": [
+        {
+          "date": "2026-09-01",
+          "revenue": 921.42
+        },
+        {
+          "date": "2026-09-02",
+          "revenue": 1048.63
+        },
+        {
+          "date": "2026-09-03",
+          "revenue": 987.25
+        },
+        {
+          "date": "2026-09-04",
+          "revenue": 1132.48
+        },
+        {
+          "date": "2026-09-05",
+          "revenue": 1187.36
+        },
+        {
+          "date": "2026-09-06",
+          "revenue": 1024.71
+        },
+        {
+          "date": "2026-09-07",
+          "revenue": 1098.54
+        },
+        {
+          "date": "2026-09-08",
+          "revenue": 1156.82
+        },
+        {
+          "date": "2026-09-09",
+          "revenue": 1218.47
+        },
+        {
+          "date": "2026-09-10",
+          "revenue": 1076.35
+        },
+        {
+          "date": "2026-09-11",
+          "revenue": 1264.58
+        },
+        {
+          "date": "2026-09-12",
+          "revenue": 1321.74
+        },
+        {
+          "date": "2026-09-13",
+          "revenue": 1189.62
+        },
+        {
+          "date": "2026-09-14",
+          "revenue": 1278.35
+        },
+        {
+          "date": "2026-09-15",
+          "revenue": 1342.91
+        },
+        {
+          "date": "2026-09-16",
+          "revenue": 1298.47
+        },
+        {
+          "date": "2026-09-17",
+          "revenue": 1386.25
+        },
+        {
+          "date": "2026-09-18",
+          "revenue": 1412.68
+        },
+        {
+          "date": "2026-09-19",
+          "revenue": 1354.72
+        },
+        {
+          "date": "2026-09-20",
+          "revenue": 1198.54
+        },
+        {
+          "date": "2026-09-21",
+          "revenue": 1287.36
+        },
+        {
+          "date": "2026-09-22",
+          "revenue": 1364.82
+        },
+        {
+          "date": "2026-09-23",
+          "revenue": 1401.93
+        }
+      ],
+      "top_performing_sites": [
+        {
+          "site_id": "SITE-CA-013",
+          "site_name": "Pacific Gateway EV Hub",
+          "sessions": 126,
+          "energy_delivered_kwh": 6248.5,
+          "revenue": 2684.72,
+          "utilization_percent": 78.4
+        },
+        {
+          "site_id": "SITE-CA-011",
+          "site_name": "Mission Bay Charging Station",
+          "sessions": 118,
+          "energy_delivered_kwh": 5812.3,
+          "revenue": 2497.61,
+          "utilization_percent": 76.8
+        },
+        {
+          "site_id": "SITE-CA-015",
+          "site_name": "Orange County Energy Hub",
+          "sessions": 109,
+          "energy_delivered_kwh": 5364.8,
+          "revenue": 2286.42,
+          "utilization_percent": 74.6
+        },
+        {
+          "site_id": "SITE-CA-001",
+          "site_name": "Downtown EV Charging Hub",
+          "sessions": 104,
+          "energy_delivered_kwh": 5128.7,
+          "revenue": 2198.36,
+          "utilization_percent": 72.9
+        },
+        {
+          "site_id": "SITE-CA-003",
+          "site_name": "Westside Mobility Plaza",
+          "sessions": 97,
+          "energy_delivered_kwh": 4786.2,
+          "revenue": 2041.58,
+          "utilization_percent": 70.8
+        }
+      ],
+      "underperforming_sites": [
+        {
+          "site_id": "SITE-CA-007",
+          "site_name": "Coastal Highway Station",
+          "sessions": 38,
+          "energy_delivered_kwh": 624.7,
+          "revenue": 318.42,
+          "utilization_percent": 36.8
+        },
+        {
+          "site_id": "SITE-CA-006",
+          "site_name": "Central Transit Hub",
+          "sessions": 44,
+          "energy_delivered_kwh": 782.4,
+          "revenue": 376.18,
+          "utilization_percent": 41.6
+        },
+        {
+          "site_id": "SITE-CA-005",
+          "site_name": "North Valley Charging Center",
+          "sessions": 51,
+          "energy_delivered_kwh": 914.6,
+          "revenue": 428.73,
+          "utilization_percent": 45.2
+        },
+        {
+          "site_id": "SITE-CA-002",
+          "site_name": "Riverside Shopping Center",
+          "sessions": 62,
+          "energy_delivered_kwh": 1128.5,
+          "revenue": 517.26,
+          "utilization_percent": 48.7
+        },
+        {
+          "site_id": "SITE-CA-010",
+          "site_name": "Inland Empire Charging Hub",
+          "sessions": 67,
+          "energy_delivered_kwh": 1264.8,
+          "revenue": 583.91,
+          "utilization_percent": 51.4
+        }
+      ]
+    },
+    "alerts_attention_required": {
+      "chargers_below_sla": {
+        "count": 3,
+        "sla_threshold_percent": 95,
+        "chargers": [
+          {
+            "evse_id": "EVSE-CA-00401",
+            "site_name": "Airport EV Station",
+            "uptime_percent": 94.8
+          },
+          {
+            "evse_id": "EVSE-CA-01001",
+            "site_name": "Inland Empire Charging Hub",
+            "uptime_percent": 94.2
+          },
+          {
+            "evse_id": "EVSE-CA-00201",
+            "site_name": "Riverside Shopping Center",
+            "uptime_percent": 93.7
+          }
+        ]
+      },
+      "sites_with_declining_utilization": {
+        "count": 4,
+        "sites": [
+          {
+            "site_id": "SITE-CA-007",
+            "site_name": "Coastal Highway Station",
+            "current_utilization_percent": 36.8,
+            "previous_period_utilization_percent": 42.5,
+            "change_percent": -13.4
+          },
+          {
+            "site_id": "SITE-CA-006",
+            "site_name": "Central Transit Hub",
+            "current_utilization_percent": 41.6,
+            "previous_period_utilization_percent": 46.1,
+            "change_percent": -9.8
+          },
+          {
+            "site_id": "SITE-CA-005",
+            "site_name": "North Valley Charging Center",
+            "current_utilization_percent": 45.2,
+            "previous_period_utilization_percent": 49.3,
+            "change_percent": -8.3
+          },
+          {
+            "site_id": "SITE-CA-002",
+            "site_name": "Riverside Shopping Center",
+            "current_utilization_percent": 48.7,
+            "previous_period_utilization_percent": 51.8,
+            "change_percent": -6.0
+          }
+        ]
+      },
+      "high_downtime": {
+        "count": 4,
+        "events": [
+          {
+            "evse_id": "EVSE-CA-00401",
+            "site_name": "Airport EV Station",
+            "downtime_duration": "37:26:24",
+            "downtime_events": 6,
+            "primary_reason": "Grid Power Loss"
+          },
+          {
+            "evse_id": "EVSE-CA-01001",
+            "site_name": "Inland Empire Charging Hub",
+            "downtime_duration": "33:45:36",
+            "downtime_events": 5,
+            "primary_reason": "Grid Power Loss"
+          },
+          {
+            "evse_id": "EVSE-CA-00201",
+            "site_name": "Riverside Shopping Center",
+            "downtime_duration": "30:14:24",
+            "downtime_events": 5,
+            "primary_reason": "Connector Lock Failure"
+          },
+          {
+            "evse_id": "EVSE-CA-00302",
+            "site_name": "Westside Mobility Plaza",
+            "downtime_duration": "22:18:12",
+            "downtime_events": 4,
+            "primary_reason": "High Temperature"
+          }
+        ]
+      }
+    }
+  }

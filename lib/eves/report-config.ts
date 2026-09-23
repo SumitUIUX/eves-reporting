@@ -98,6 +98,105 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
     dateStyle: "month",
     numeric: [],
   },
+  chargingPerformance: {
+    title: "Charging performance",
+    description:
+      "Track session activity, energy delivery, demand, and revenue across your charging network.",
+    short: "Charging performance",
+    defaultColumns: [0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+    filters: [
+      { label: "Site", column: 0 },
+      { label: "EVSE", column: 2 },
+      { label: "Connector type", column: 4 },
+      { label: "Vehicle type", column: 12 },
+      { label: "Payment method", column: 13 },
+      { label: "Error status", column: 14 },
+      { label: "Error type", column: 15 },
+    ],
+    dateColumn: 6,
+    numeric: [3, 9, 10, 11, 16],
+    chart: "energy",
+  },
+  sitePerformance: {
+    title: "Site performance",
+    description:
+      "Compare charging activity, utilization, uptime, demand, and revenue across sites.",
+    short: "Site performance",
+    defaultColumns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    filters: [
+      { label: "Site", column: 0 },
+      { label: "City", column: 2 },
+      { label: "State", column: 3 },
+    ],
+    numeric: [4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15],
+    chart: "uptime",
+  },
+  chargerPerformance: {
+    title: "Charger performance",
+    description:
+      "Compare sessions, energy delivery, utilization, uptime, and revenue by charger and connector.",
+    short: "Charger performance",
+    defaultColumns: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+    ],
+    filters: [
+      { label: "Site", column: 0 },
+      { label: "EVSE", column: 2 },
+      { label: "Manufacturer", column: 3 },
+      { label: "Model", column: 4 },
+      { label: "Connector type", column: 7 },
+    ],
+    numeric: [5, 6, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18],
+    chart: "uptime",
+  },
+  energyDemand: {
+    title: "Energy & demand",
+    description:
+      "Review interval energy delivery, demand peaks, and charging utilization.",
+    short: "Energy & demand",
+    defaultColumns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    filters: [
+      { label: "Site", column: 0 },
+      { label: "EVSE", column: 2 },
+      { label: "Port", column: 3 },
+    ],
+    dateColumn: 5,
+    numeric: [3, 7, 8, 9, 11],
+    chart: "power",
+  },
+  tenantUptime: {
+    title: "Uptime & reliability",
+    description:
+      "Monitor connector uptime, downtime duration, event frequency, and SLA status.",
+    short: "Uptime & reliability",
+    defaultColumns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    filters: [
+      { label: "Site", column: 0 },
+      { label: "EVSE", column: 2 },
+      { label: "Downtime reason", column: 8 },
+      { label: "SLA status", column: 9 },
+    ],
+    numeric: [3, 4, 5, 7],
+    chart: "uptime",
+  },
+  revenueTransaction: {
+    title: "Revenue & transaction",
+    description:
+      "Review transaction value, fees, taxes, and revenue distribution by charging session.",
+    short: "Revenue & transaction",
+    defaultColumns: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
+    ],
+    filters: [
+      { label: "Site", column: 0 },
+      { label: "EVSE", column: 2 },
+      { label: "Payment method", column: 9 },
+      { label: "Transaction status", column: 17 },
+    ],
+    dateColumn: 5,
+    numeric: [3, 7, 8, 10, 11, 12, 13, 14, 15, 16],
+    chart: "energy",
+  },
 };
 export function num(value: string | undefined) {
   if (!value || value === "-" || value === "—") return 0;
@@ -205,6 +304,150 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
         label: "Total revenue",
         value: "$" + f(sum(20)),
         note: `${rows.filter((r) => r[17] === "Yes").length} sessions with errors`,
+      },
+    ];
+  if (kind === "chargingPerformance")
+    return [
+      {
+        label: "Total sessions",
+        value: f(rows.length),
+        note: "Sessions in this selection",
+      },
+      {
+        label: "Energy delivered",
+        value: f(sum(9)) + " kWh",
+        note: "Total energy across sessions",
+      },
+      {
+        label: "Average duration",
+        value: rows.length
+          ? displayDuration(
+              rows.reduce((a, r) => a + duration(r[8]), 0) / rows.length,
+            )
+          : "—",
+        note: "Mean session duration",
+      },
+      {
+        label: "Total revenue",
+        value: "$" + f(sum(16)),
+        note: `Across ${f(unique(0))} sites`,
+      },
+    ];
+  if (kind === "sitePerformance")
+    return [
+      {
+        label: "Total sites",
+        value: f(rows.length),
+        note: "Sites in this selection",
+      },
+      {
+        label: "Total sessions",
+        value: f(sum(6)),
+        note: "Sessions across selected sites",
+      },
+      {
+        label: "Energy delivered",
+        value: f(sum(7)) + " kWh",
+        note: "Total energy across selected sites",
+      },
+      {
+        label: "Average uptime",
+        value: rows.length ? f(avg(13)) + "%" : "—",
+        note: "Unweighted site average",
+      },
+    ];
+  if (kind === "chargerPerformance")
+    return [
+      {
+        label: "Total chargers",
+        value: f(unique(2)),
+        note: "Unique EVSEs in this selection",
+      },
+      {
+        label: "Connectors",
+        value: f(rows.length),
+        note: "Connector ports in this selection",
+      },
+      {
+        label: "Total sessions",
+        value: f(sum(9)),
+        note: "Sessions across selected connectors",
+      },
+      {
+        label: "Average uptime",
+        value: rows.length ? f(avg(16)) + "%" : "—",
+        note: "Unweighted connector average",
+      },
+    ];
+  if (kind === "energyDemand")
+    return [
+      {
+        label: "Total intervals",
+        value: f(rows.length),
+        note: "Intervals in this selection",
+      },
+      {
+        label: "Energy delivered",
+        value: f(sum(7)) + " kWh",
+        note: "Total interval energy",
+      },
+      {
+        label: "Average demand",
+        value: rows.length ? f(avg(9)) + " kW" : "—",
+        note: "Mean interval demand",
+      },
+      {
+        label: "Peak demand",
+        value: rows.length
+          ? f(Math.max(...rows.map((row) => num(row[8])))) + " kW"
+          : "—",
+        note: "Highest demand in this selection",
+      },
+    ];
+  if (kind === "tenantUptime")
+    return [
+      {
+        label: "Average uptime",
+        value: rows.length ? f(avg(5)) + "%" : "—",
+        note: "Unweighted connector average",
+      },
+      {
+        label: "Downtime events",
+        value: f(sum(7)),
+        note: "Events across selected connectors",
+      },
+      {
+        label: "Below SLA",
+        value: f(rows.filter((row) => /below/i.test(row[9])).length),
+        note: "Connectors below their SLA",
+      },
+      {
+        label: "Connectors",
+        value: f(rows.length),
+        note: `Across ${f(unique(0))} sites`,
+      },
+    ];
+  if (kind === "revenueTransaction")
+    return [
+      {
+        label: "Transactions",
+        value: f(rows.length),
+        note: "Transactions in this selection",
+      },
+      {
+        label: "Gross revenue",
+        value: "$" + f(sum(13)),
+        note: "Before fees and taxes",
+      },
+      {
+        label: "Net revenue",
+        value: "$" + f(sum(14)),
+        note: "After fees and taxes",
+      },
+      {
+        label: "Processing & platform fees",
+        value: "$" + f(sum(10) + sum(11)),
+        note: `Across ${f(unique(0))} sites`,
       },
     ];
   if (kind === "intervals")

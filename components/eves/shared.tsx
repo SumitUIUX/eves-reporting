@@ -69,6 +69,9 @@ export function Choice({
   label,
   id,
   className = "",
+  invalid = false,
+  describedBy,
+  disabled = false,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -76,12 +79,17 @@ export function Choice({
   label: string;
   id?: string;
   className?: string;
+  invalid?: boolean;
+  describedBy?: string;
+  disabled?: boolean;
 }) {
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger
         id={id}
         aria-label={label}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
         className={`h-10 shadow-none bg-white text-sm ${className}`}
       >
         <SelectValue />

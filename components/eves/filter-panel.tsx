@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useLayoutEffect, useState, type ReactNode } from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +35,11 @@ export function FilterPanel({
   children: ReactNode;
 }) {
   const isMobile = useIsMobile();
+  const [ready, setReady] = useState(false);
+  useLayoutEffect(() => {
+    setReady(true);
+  }, []);
+  const drawer = presentation === "drawer" || (ready && isMobile);
   const trigger = (
     <Button
       variant="outline"
@@ -51,7 +56,8 @@ export function FilterPanel({
       )}
     </Button>
   );
-  if (presentation === "drawer" || isMobile) {
+  if (presentation !== "drawer" && !ready) return trigger;
+  if (drawer) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>

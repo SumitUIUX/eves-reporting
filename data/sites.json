@@ -1,0 +1,15 @@
+[
+  { "name": "Downtown Transit Hub", "chargers": ["1", "2", "3", "4"] },
+  {
+    "name": "Airport Fast Charge Plaza",
+    "chargers": ["1", "2", "3", "4", "5"]
+  },
+  { "name": "Central Mall Parking", "area": "East", "chargers": ["1", "2", "3"] },
+  { "name": "Harbor Ride & Charge", "area": "South", "chargers": ["1", "2"] },
+  {
+    "name": "University Garage C",
+    "area": "Central",
+    "chargers": ["1", "2", "3"]
+  },
+  { "name": "City Library Annex", "area": "North", "chargers": ["1", "2"] }
+]

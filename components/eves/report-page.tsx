@@ -56,9 +56,183 @@ import {
 import type { ReportDataset, ReportKind } from "@/lib/eves/types";
 import { downloadCsv } from "@/lib/eves/export";
 import { downloadExcel } from "@/lib/eves/xlsx";
-import datasets from "@/lib/eves/reference-data.json";
+import datasets from "@/data/reference-reports.json";
+import chargingPerformanceRows from "@/data/charging-performance.json";
+import sitePerformanceRows from "@/data/site-performance.json";
+import chargerPerformanceRows from "@/data/charger-performance.json";
+import energyDemandRows from "@/data/energy-demand.json";
+import tenantUptimeRows from "@/data/uptime-reliability.json";
+import revenueTransactionRows from "@/data/revenue-transaction.json";
+import { useDataSource } from "@/lib/eves/data-source";
 import { toast } from "sonner";
 import styles from "./report-page.module.css";
+
+const chargingPerformanceFields = [
+  ["site_name", "Site name"],
+  ["site_id", "Site ID"],
+  ["evse_id", "EVSE ID"],
+  ["port_id", "Port ID"],
+  ["connector_type", "Connector type"],
+  ["session_id", "Session ID"],
+  ["session_start_datetime", "Session start"],
+  ["session_end_datetime", "Session end"],
+  ["session_duration", "Session duration"],
+  ["energy_consumed_kwh", "Energy consumed (kWh)"],
+  ["peak_demand_kw", "Peak demand (kW)"],
+  ["average_demand_kw", "Average demand (kW)"],
+  ["vehicle_type", "Vehicle type"],
+  ["payment_method", "Payment method"],
+  ["is_errored", "Error status"],
+  ["error_type", "Error type"],
+  ["total_transaction_amount", "Transaction amount"],
+] as const;
+
+const chargingPerformanceData: ReportDataset = {
+  headers: chargingPerformanceFields.map(([, label]) => label),
+  rows: chargingPerformanceRows.map((record) =>
+    chargingPerformanceFields.map(([field]) => {
+      const value = record[field as keyof typeof record];
+      if (field === "is_errored") return value ? "Yes" : "No";
+      return value === null ? "—" : String(value);
+    }),
+  ),
+};
+
+const sitePerformanceFields = [
+  ["site_name", "Site name"],
+  ["site_id", "Site ID"],
+  ["city", "City"],
+  ["state", "State"],
+  ["evse_count", "EVSE count"],
+  ["port_count", "Port count"],
+  ["total_sessions", "Total sessions"],
+  ["energy_delivered_kwh", "Energy delivered (kWh)"],
+  ["average_energy_per_session_kwh", "Average energy/session (kWh)"],
+  ["average_session_duration", "Average session duration"],
+  ["peak_demand_kw", "Peak demand (kW)"],
+  ["average_demand_kw", "Average demand (kW)"],
+  ["utilization_percent", "Utilization (%)"],
+  ["uptime_percent", "Uptime (%)"],
+  ["total_revenue", "Total revenue"],
+  ["total_transaction_amount", "Transaction amount"],
+] as const;
+
+const sitePerformanceData: ReportDataset = {
+  headers: sitePerformanceFields.map(([, label]) => label),
+  rows: sitePerformanceRows.map((record) =>
+    sitePerformanceFields.map(([field]) =>
+      String(record[field as keyof typeof record]),
+    ),
+  ),
+};
+
+const chargerPerformanceFields = [
+  ["site_name", "Site name"],
+  ["site_id", "Site ID"],
+  ["evse_id", "EVSE ID"],
+  ["evse_manufacturer", "EVSE manufacturer"],
+  ["evse_model", "EVSE model"],
+  ["evse_maximum_power_kw", "EVSE maximum power (kW)"],
+  ["port_id", "Port ID"],
+  ["connector_type", "Connector type"],
+  ["port_maximum_power_kw", "Port maximum power (kW)"],
+  ["total_sessions", "Total sessions"],
+  ["energy_delivered_kwh", "Energy delivered (kWh)"],
+  ["average_energy_per_session_kwh", "Average energy/session (kWh)"],
+  ["average_session_duration", "Average session duration"],
+  ["peak_demand_kw", "Peak demand (kW)"],
+  ["average_demand_kw", "Average demand (kW)"],
+  ["utilization_percent", "Utilization (%)"],
+  ["uptime_percent", "Uptime (%)"],
+  ["downtime_events", "Downtime events"],
+  ["total_revenue", "Total revenue"],
+] as const;
+
+const chargerPerformanceData: ReportDataset = {
+  headers: chargerPerformanceFields.map(([, label]) => label),
+  rows: chargerPerformanceRows.map((record) =>
+    chargerPerformanceFields.map(([field]) =>
+      String(record[field as keyof typeof record]),
+    ),
+  ),
+};
+
+const energyDemandFields = [
+  ["site_name", "Site name"],
+  ["site_id", "Site ID"],
+  ["evse_id", "EVSE ID"],
+  ["port_id", "Port ID"],
+  ["interval_id", "Interval ID"],
+  ["interval_start_datetime", "Interval start"],
+  ["interval_end_datetime", "Interval end"],
+  ["energy_delivered_kwh", "Energy delivered (kWh)"],
+  ["peak_demand_kw", "Peak demand (kW)"],
+  ["average_demand_kw", "Average demand (kW)"],
+  ["interval_duration", "Interval duration"],
+  ["utilization_percent", "Utilization (%)"],
+] as const;
+
+const energyDemandData: ReportDataset = {
+  headers: energyDemandFields.map(([, label]) => label),
+  rows: energyDemandRows.map((record) =>
+    energyDemandFields.map(([field]) =>
+      String(record[field as keyof typeof record]),
+    ),
+  ),
+};
+
+const tenantUptimeFields = [
+  ["site_name", "Site name"],
+  ["site_id", "Site ID"],
+  ["evse_id", "EVSE ID"],
+  ["port_id", "Port ID"],
+  ["port_maximum_power_kw", "Port maximum power (kW)"],
+  ["uptime_percent", "Uptime (%)"],
+  ["total_downtime_duration", "Total downtime duration"],
+  ["downtime_event_count", "Downtime event count"],
+  ["most_common_downtime_reason", "Most common downtime reason"],
+  ["sla_status", "SLA status"],
+] as const;
+
+const tenantUptimeData: ReportDataset = {
+  headers: tenantUptimeFields.map(([, label]) => label),
+  rows: tenantUptimeRows.map((record) =>
+    tenantUptimeFields.map(([field]) =>
+      String(record[field as keyof typeof record]),
+    ),
+  ),
+};
+
+const revenueTransactionFields = [
+  ["site_name", "Site name"],
+  ["site_id", "Site ID"],
+  ["evse_id", "EVSE ID"],
+  ["port_id", "Port ID"],
+  ["session_id", "Session ID"],
+  ["session_start_datetime", "Session start"],
+  ["session_end_datetime", "Session end"],
+  ["energy_delivered_kwh", "Energy delivered (kWh)"],
+  ["total_transaction_amount", "Transaction amount"],
+  ["payment_method", "Payment method"],
+  ["payment_processing_fee", "Processing fee"],
+  ["platform_fee", "Platform fee"],
+  ["tax", "Tax"],
+  ["gross_revenue", "Gross revenue"],
+  ["net_revenue", "Net revenue"],
+  ["cpo_revenue", "CPO revenue"],
+  ["site_owner_revenue", "Site owner revenue"],
+  ["transaction_status", "Transaction status"],
+] as const;
+
+const revenueTransactionData: ReportDataset = {
+  headers: revenueTransactionFields.map(([, label]) => label),
+  rows: revenueTransactionRows.map((record) =>
+    revenueTransactionFields.map(([field]) =>
+      String(record[field as keyof typeof record]),
+    ),
+  ),
+};
+
 export function ReportPage({ kind: initialKind }: { kind: ReportKind }) {
   const [view, setView] = useState("summary");
   const kind =
@@ -84,7 +258,28 @@ function ReportView({
   setView: (v: string) => void;
   showTabs: boolean;
 }) {
-  const data = datasets[kind] as ReportDataset;
+  const { source } = useDataSource();
+  const snapshot =
+    kind === "chargingPerformance"
+      ? chargingPerformanceData
+      : kind === "sitePerformance"
+        ? sitePerformanceData
+        : kind === "chargerPerformance"
+          ? chargerPerformanceData
+          : kind === "energyDemand"
+            ? energyDemandData
+            : kind === "tenantUptime"
+              ? tenantUptimeData
+              : kind === "revenueTransaction"
+                ? revenueTransactionData
+              : (datasets[kind] as ReportDataset);
+  const data = useMemo(
+    () =>
+      source === "sample"
+        ? snapshot
+        : { headers: snapshot.headers, rows: [] },
+    [source, snapshot],
+  );
   const config = reportConfig[kind];
   const [applied, setApplied] = useState<ReportFilters>(emptyFilters),
     [search, setSearch] = useState(""),
@@ -254,15 +449,26 @@ function ReportView({
                             : ""
                         }
                       >
-                        {i === 17 && kind === "sessions" ? (
+                        {(kind === "sessions" && i === 17) ||
+                        (kind === "chargingPerformance" && i === 14) ? (
                           <span
                             className={`status ${row[i] === "Yes" ? "error" : ""}`}
                           >
                             {row[i] === "Yes" ? "Errored" : "No errors"}
                           </span>
-                        ) : kind === "uptime" && i === 13 ? (
+                        ) : ((kind === "uptime" ||
+                              kind === "sitePerformance") &&
+                            i === 13) ||
+                          (kind === "chargerPerformance" && i === 16) ||
+                          (kind === "tenantUptime" && i === 5) ? (
                           <span
                             className={`status ${num(row[i]) < 95 ? "error" : ""}`}
+                          >
+                            {row[i]}
+                          </span>
+                        ) : kind === "tenantUptime" && i === 9 ? (
+                          <span
+                            className={`status ${/below/i.test(row[i]) ? "error" : ""}`}
                           >
                             {row[i]}
                           </span>

@@ -1,20 +1,16 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Tags,
   MapPin,
   Building2,
   Plus,
-  MoreHorizontal,
   Pencil,
   Trash2,
   Link2,
   Landmark,
   Tag,
   ArrowDownUp,
-  ChevronDown,
-  FlaskConical,
-  Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,15 +22,6 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-} from "@/components/ui/dropdown-menu";
-import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogHeader,
@@ -44,10 +31,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import {
-  useProjectTags,
-  type TagDataSource,
-} from "@/lib/eves/use-project-tags";
+import { useProjectTags } from "@/lib/eves/use-project-tags";
 import {
   emptyTagFilters,
   filterTags,
@@ -80,6 +64,25 @@ const tagColumnLabels = [
   "Created on",
 ];
 
+function tagColumnValue(tag: ProjectTag, column: number) {
+  switch (column) {
+    case 0:
+      return tag.name;
+    case 1:
+      return tag.type;
+    case 2:
+      return tag.agency;
+    case 3:
+      return Object.keys(tag.mappings).length;
+    case 4:
+      return tag.createdBy;
+    case 5:
+      return tag.createdAt;
+    default:
+      return "";
+  }
+}
+
 export function ProjectTags() {
   const {
     tags,
@@ -89,28 +92,36 @@ export function ProjectTags() {
     save,
     remove,
     source,
-    selectSource,
-    workspaceUnavailable,
     workspaceNotConfigured,
   } = useProjectTags();
   const isSample = source === "sample";
+  const workspaceEmpty =
+    source === "workspace" && (workspaceNotConfigured || !!error);
+  const pending = loading || (!!error && !workspaceEmpty);
   const [columns, setColumns] = useState<number[]>(() =>
     tagColumnLabels.map((_, index) => index),
   );
   const [filters, setFilters] = useState<TagFilters>(emptyTagFilters);
-  const [page, setPage] = useState(1),
+  const     [page, setPage] = useState(1),
     [size, setSize] = useState(10),
-    [sort, setSort] = useState(false),
+    [sort, setSort] = useState<{ column: number; asc: boolean }>({
+      column: 5,
+      asc: true,
+    }),
     [editor, setEditor] = useState<ProjectTag | "new" | null>(null),
     [mapping, setMapping] = useState<ProjectTag | null>(null),
     [deleting, setDeleting] = useState<ProjectTag | null>(null),
     [busy, setBusy] = useState(false),
     [deleteError, setDeleteError] = useState("");
-  const filtered = filterTags(tags, filters).sort((a, b) =>
-    sort
-      ? a.name.localeCompare(b.name)
-      : a.createdAt.localeCompare(b.createdAt),
-  );
+  const filtered = filterTags(tags, filters).sort((a, b) => {
+    const left = tagColumnValue(a, sort.column);
+    const right = tagColumnValue(b, sort.column);
+    const result =
+      typeof left === "number" && typeof right === "number"
+        ? left - right
+        : String(left).localeCompare(String(right), undefined, { numeric: true });
+    return result * (sort.asc ? 1 : -1);
+  });
   const pages = Math.max(1, Math.ceil(filtered.length / size));
   const current = Math.min(page, pages);
   const rows = filtered.slice((current - 1) * size, current * size);
@@ -120,13 +131,13 @@ export function ProjectTags() {
     setFilters(next);
     setPage(1);
   }
-  function changeSource(next: TagDataSource) {
-    selectSource(next);
-    changeFilters(emptyTagFilters);
+  useEffect(() => {
+    setFilters(emptyTagFilters);
+    setPage(1);
     setEditor(null);
     setMapping(null);
     setDeleting(null);
-  }
+  }, [source]);
   async function persist(input: TagInput, tag?: ProjectTag) {
     const result = await save(input, tag);
     toast.success(
@@ -194,38 +205,6 @@ export function ProjectTags() {
     <>
       <div className={headerStyles.header}>
         <PageActions>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                aria-label={`Data source: ${isSample ? "Sample data" : "Workspace data"}`}
-              >
-                {isSample ? <FlaskConical size={16} /> : <Database size={16} />}
-                {isSample ? "Sample data" : "Workspace data"}
-                <ChevronDown size={14} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72">
-              <DropdownMenuRadioGroup
-                value={source}
-                onValueChange={(value) => changeSource(value as TagDataSource)}
-              >
-                <DropdownMenuRadioItem value="workspace">
-                  Workspace data
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="sample">
-                  Sample data
-                </DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-              <DropdownMenuSeparator />
-              <p className="px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-                {workspaceUnavailable &&
-                  "The workspace service is unavailable. "}
-                Sample tags stay in this browser and are not included in
-                Generate Reports.
-              </p>
-            </DropdownMenuContent>
-          </DropdownMenu>
           <ProjectTagFilterControl
             tags={tags}
             applied={filters}
@@ -243,25 +222,25 @@ export function ProjectTags() {
       <div className="metrics">
         <Metric
           label="Total project tags"
-          value={loading || error ? "—" : tags.length}
+          value={pending ? "—" : tags.length}
           note="Across your workspace"
           icon={Tags}
         />
         <Metric
           label="Funding agency tags"
-          value={loading || error ? "—" : funding}
+          value={pending ? "—" : funding}
           note="Projects linked to funding"
           icon={Landmark}
         />
         <Metric
           label="Zone tags"
-          value={loading || error ? "—" : tags.length - funding}
+          value={pending ? "—" : tags.length - funding}
           note="Geographic reporting groups"
           icon={MapPin}
         />
         <Metric
           label="Sites mapped"
-          value={loading || error ? "—" : sites}
+          value={pending ? "—" : sites}
           note="Unique sites across all tags"
           icon={Building2}
         />
@@ -286,7 +265,7 @@ export function ProjectTags() {
         />
         {loading ? (
           <DataLoading />
-        ) : source === "workspace" && workspaceNotConfigured ? (
+        ) : workspaceEmpty ? (
           <DataEmpty />
         ) : error ? (
           <DataError message={error} retry={() => void reload()} />
@@ -310,28 +289,70 @@ export function ProjectTags() {
           <Table className="eves-table">
             <TableHeader>
               <TableRow>
+                <TableHead>Action(s)</TableHead>
                 {columns.map((column) => (
-                  <TableHead key={column}>
-                    {column === 0 ? (
-                      <button
-                        className="flex items-center gap-2"
-                        onClick={() => setSort(!sort)}
-                      >
-                        {tagColumnLabels[column]} <ArrowDownUp size={12} />
-                      </button>
-                    ) : (
-                      tagColumnLabels[column]
-                    )}
+                  <TableHead
+                    key={column}
+                    aria-sort={
+                      sort.column === column
+                        ? sort.asc
+                          ? "ascending"
+                          : "descending"
+                        : "none"
+                    }
+                  >
+                    <button
+                      type="button"
+                      className="flex items-center gap-2"
+                      onClick={() =>
+                        setSort((current) => ({
+                          column,
+                          asc: current.column === column ? !current.asc : true,
+                        }))
+                      }
+                    >
+                      {tagColumnLabels[column]}
+                      <ArrowDownUp size={12} />
+                    </button>
                   </TableHead>
                 ))}
-                <TableHead className="w-10">
-                  <span className="sr-only">Actions</span>
-                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((t) => (
                 <TableRow key={t.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Edit ${t.name}`}
+                        onClick={() => setEditor(t)}
+                      >
+                        <Pencil size={16} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Map sites for ${t.name}`}
+                        onClick={() => setMapping(t)}
+                      >
+                        <Link2 size={16} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive"
+                        aria-label={`Delete ${t.name}`}
+                        onClick={() => {
+                          setDeleting(t);
+                          setDeleteError("");
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </TableCell>
                   {columns.includes(0) && (
                     <TableCell>
                       <div className="project-cell">
@@ -431,41 +452,6 @@ export function ProjectTags() {
                       </span>
                     </TableCell>
                   )}
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Actions for ${t.name}`}
-                          className="w-8 text-muted-foreground"
-                        >
-                          <MoreHorizontal size={19} />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setEditor(t)}>
-                          <Pencil />
-                          Edit tag
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setMapping(t)}>
-                          <Link2 />
-                          Map sites & chargers
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onSelect={() => {
-                            setDeleting(t);
-                            setDeleteError("");
-                          }}
-                        >
-                          <Trash2 />
-                          Delete tag
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

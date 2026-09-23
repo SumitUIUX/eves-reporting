@@ -32,6 +32,9 @@ interface EditorProps {
   onClose: () => void;
   onSave: (input: TagInput, tag?: ProjectTag) => Promise<ProjectTag>;
 }
+type TagField = "name" | "type" | "agency" | "awardId" | "description";
+const UNSELECTED_AGENCY = "unselected";
+const tagFields: TagField[] = ["name", "type", "agency", "awardId", "description"];
 export function TagEditor({
   tag,
   onClose,
@@ -48,7 +51,10 @@ export function TagEditor({
         mappings: {},
       },
     ),
-    [error, setError] = useState(""),
+    [fieldErrors, setFieldErrors] = useState<Partial<Record<TagField, string>>>(
+      {},
+    ),
+    [formError, setFormError] = useState(""),
     [saving, setSaving] = useState(false),
     [discard, setDiscard] = useState(false);
   const dirty =
@@ -64,22 +70,37 @@ export function TagEditor({
       },
     );
   const close = () => (dirty ? setDiscard(true) : onClose());
-  const set = (key: keyof TagInput, value: string) =>
+  const set = (key: TagField, value: string) => {
     setForm((p) => ({ ...p, [key]: value }));
+    setFieldErrors((current) => ({ ...current, [key]: undefined }));
+    setFormError("");
+  };
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const result = tagInputSchema.safeParse(form);
     if (!result.success) {
-      setError(result.error.issues[0].message);
+      const next: Partial<Record<TagField, string>> = {};
+      for (const issue of result.error.issues) {
+        const key = issue.path[0];
+        if (tagFields.includes(key as TagField) && !next[key as TagField])
+          next[key as TagField] = issue.message;
+      }
+      setFieldErrors(next);
+      setFormError(
+        Object.keys(next).length
+          ? ""
+          : (result.error.issues[0]?.message ?? "Check the form and try again."),
+      );
       return;
     }
     setSaving(true);
-    setError("");
+    setFieldErrors({});
+    setFormError("");
     try {
       await onSave(result.data, tag);
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to save tag.");
+      setFormError(e instanceof Error ? e.message : "Unable to save tag.");
     } finally {
       setSaving(false);
     }
@@ -133,8 +154,15 @@ export function TagEditor({
                       : "e.g. Downtown charging expansion"
                   }
                   value={form.name}
+                  aria-invalid={!!fieldErrors.name || undefined}
+                  aria-describedby={fieldErrors.name ? "tag-name-error" : undefined}
                   onChange={(e) => set("name", e.target.value)}
                 />
+                {fieldErrors.name && (
+                  <p id="tag-name-error" role="alert" className="form-error">
+                    {fieldErrors.name}
+                  </p>
+                )}
               </div>
               {form.type === "Funding Agency" && (
                 <>
@@ -144,12 +172,27 @@ export function TagEditor({
                     </label>
                     <Choice
                       id="agency"
-                      value={form.agency || "CEC"}
-                      onChange={(v) => set("agency", v)}
+                      value={form.agency || UNSELECTED_AGENCY}
+                      onChange={(v) =>
+                        set("agency", v === UNSELECTED_AGENCY ? "" : v)
+                      }
                       label="Funding agency"
-                      options={["CEC", "CIC", "Cal-EvIP", "NEVI"]}
+                      invalid={!!fieldErrors.agency}
+                      describedBy={fieldErrors.agency ? "agency-error" : undefined}
+                      options={[
+                        { value: UNSELECTED_AGENCY, label: "Select an agency" },
+                        "CEC",
+                        "CIC",
+                        "Cal-EvIP",
+                        "NEVI",
+                      ]}
                       className="w-full"
                     />
+                    {fieldErrors.agency && (
+                      <p id="agency-error" role="alert" className="form-error">
+                        {fieldErrors.agency}
+                      </p>
+                    )}
                   </div>
                   <div className="form-field">
                     <label htmlFor="award">Award / funding ID</label>
@@ -158,8 +201,17 @@ export function TagEditor({
                       maxLength={80}
                       placeholder="Enter award ID"
                       value={form.awardId}
+                      aria-invalid={!!fieldErrors.awardId || undefined}
+                      aria-describedby={
+                        fieldErrors.awardId ? "award-error" : undefined
+                      }
                       onChange={(e) => set("awardId", e.target.value)}
                     />
+                    {fieldErrors.awardId && (
+                      <p id="award-error" role="alert" className="form-error">
+                        {fieldErrors.awardId}
+                      </p>
+                    )}
                   </div>
                 </>
               )}
@@ -176,13 +228,22 @@ export function TagEditor({
                   rows={3}
                   placeholder="Add context for your team…"
                   value={form.description}
+                  aria-invalid={!!fieldErrors.description || undefined}
+                  aria-describedby={
+                    fieldErrors.description ? "description-error" : undefined
+                  }
                   onChange={(e) => set("description", e.target.value)}
                 />
+                {fieldErrors.description && (
+                  <p id="description-error" role="alert" className="form-error">
+                    {fieldErrors.description}
+                  </p>
+                )}
               </div>
             </div>
-            {error && (
+            {formError && (
               <p role="alert" className="form-error">
-                {error}
+                {formError}
               </p>
             )}
             <div className="dialog-footer">

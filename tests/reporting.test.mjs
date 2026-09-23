@@ -25,7 +25,7 @@ const {
 const { csvCell, csvText } = await vite.ssrLoadModule("/lib/eves/export.ts");
 const data = JSON.parse(
   await readFile(
-    new URL("../lib/eves/reference-data.json", import.meta.url),
+    new URL("../data/reference-reports.json", import.meta.url),
     "utf8",
   ),
 );
