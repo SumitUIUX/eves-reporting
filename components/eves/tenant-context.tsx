@@ -41,7 +41,6 @@ export const reportHierarchy = [
 ] as const;
 export type TenantDataSource = DataSource;
 export type Tenant = {
-  reports: Record<ReportKey, boolean>;
   id: string; name: string; subdomain: string; email: string; analytics: string[]; regulatory: boolean; master: boolean;
   reports: Record<string, boolean>;
   address1: string; address2: string; postalCode: string; city: string; department: string; region: string; country: string; contact: string; latitude: string; longitude: string;
