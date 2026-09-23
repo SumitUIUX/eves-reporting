@@ -15,6 +15,14 @@ function validOrigin(req: Request) {
 }
 async function initialize() {
   await batch([
+    {
+      sql: "CREATE TABLE IF NOT EXISTS app_metadata (`key` TEXT PRIMARY KEY NOT NULL, `value` TEXT NOT NULL)",
+      params: [],
+    },
+    {
+      sql: "CREATE TABLE IF NOT EXISTS project_tags (`id` TEXT PRIMARY KEY NOT NULL, `data` TEXT NOT NULL, `version` INTEGER DEFAULT 1 NOT NULL)",
+      params: [],
+    },
     ...referenceTags.map((t) => ({
       sql: "INSERT OR IGNORE INTO project_tags (id,data,version) SELECT ?,?,1 WHERE NOT EXISTS (SELECT 1 FROM app_metadata WHERE key = 'reference_seed')",
       params: [t.id, JSON.stringify(t)],
@@ -68,6 +76,7 @@ export async function POST(req: Request) {
         { error: "Choose valid sites and charger selections." },
         400,
       );
+    await initialize();
     const tag: ProjectTag = {
       ...input,
       agency: input.type === "Zone" ? "" : input.agency,
@@ -111,6 +120,7 @@ export async function PUT(req: Request) {
         { error: "Choose valid sites and charger selections." },
         400,
       );
+    await initialize();
     const current = await query("SELECT data FROM project_tags WHERE id=?", [
       id,
     ]);
@@ -157,6 +167,7 @@ export async function DELETE(req: Request) {
         version: z.number().int().positive(),
       })
       .parse(await req.json());
+    await initialize();
     const result = await query(
       "DELETE FROM project_tags WHERE id=? AND version=?",
       [id, version],
