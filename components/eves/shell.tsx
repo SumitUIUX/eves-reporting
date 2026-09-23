@@ -90,7 +90,7 @@ function Navigation({ category }: { category: ReportCategory }) {
   const { setOpenMobile } = useSidebar();
   const { tenantView, active } = useTenant();
   const path = usePathname();
-  const visibleCategories = categories.filter(item => !tenantView || (item.label === "Regulatory Reports" ? active.regulatory : active.master));
+  const visibleCategories = categories.filter(item => !tenantView || (active.components["Reports/Analytics"] && (item.label === "Regulatory Reports" ? active.regulatory : active.master)));
   const [reportingOpen, setReportingOpen] = useState(true);
   return (
     <Sidebar collapsible="offcanvas">
@@ -149,13 +149,13 @@ function Navigation({ category }: { category: ReportCategory }) {
                     <SidebarMenuItem key={item.label} className={styles.submenuItem}>
                       <SidebarMenuButton
                         asChild
-                        isActive={category === item.label}
+                        isActive={path !== "/tenants" && category === item.label}
                         className={styles.categoryLink}
                       >
                         <Link
                           href={item.href}
                           onClick={() => setOpenMobile(false)}
-                          aria-current={category === item.label ? "true" : undefined}
+                          aria-current={path !== "/tenants" && category === item.label ? "true" : undefined}
                         >
                           <item.icon aria-hidden="true" />
                           <span>{item.label}</span>
@@ -181,7 +181,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
   const { tenantView, setTenantView, active } = useTenant();
   const current = navigation.find((n) => n.href === path);
   const category = current?.group ?? categories[0].label;
-  const allowed = tenantView ? path === "/tenants" || (current?.group === "Regulatory Reports" ? active.regulatory : current?.group === "Master Reports" ? active.master : false) : path !== "/tenants";
+  const allowed = tenantView ? path === "/tenants" || (active.components["Reports/Analytics"] && (current?.group === "Regulatory Reports" ? active.regulatory : current?.group === "Master Reports" ? active.master : false)) : path !== "/tenants";
   useEffect(() => { if (!allowed) router.replace(tenantView ? "/tenants" : "/reports/project-tags"); }, [allowed, tenantView, router]);
   function switchView(value: string) {
     setTenantView(value === "tenant");
