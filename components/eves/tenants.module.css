@@ -19,7 +19,7 @@
 .dialog { padding:0!important; gap:0!important; width:calc(100vw - 64px)!important; max-width:1140px!important; border:0!important; border-radius:22px!important; overflow:hidden; background:#fff; }
 .modalHeader { display:flex; align-items:stretch; background:var(--primary); height:64px; padding:8px 14px 0 20px; gap:8px; }
 .tabs { padding:0; gap:4px; height:56px; background:transparent; justify-content:flex-start; min-width:0; flex:1; }
-.tab { color:#e3e2ff; background:transparent; border:0; border-radius:7px 7px 0 0; height:56px; padding:0 14px; gap:10px; font-size:14px; box-shadow:none!important; }
+.tab { flex:0 0 auto; color:#e3e2ff; background:transparent; border:0; border-radius:7px 7px 0 0; height:56px; padding:0 14px; gap:10px; font-size:14px; box-shadow:none!important; }
 .tab[data-state="active"] { color:var(--primary); background:#fff; }
 .tab::after { display:none; }
 .headerButton { align-self:center; color:#ecebff; width:32px; height:40px; display:grid; place-items:center; margin-bottom:8px; }
@@ -55,3 +55,5 @@
 .componentDetail { color:#666; padding:8px 58px 18px; font-size:13px; }
 .confirm { display:flex; justify-content:flex-end; gap:10px; }
 @media(max-width:700px) { .dialog { width:calc(100vw - 24px)!important; } .modalHeader { padding-left:8px; gap:0; } .tab { font-size:11px; padding:0 8px; gap:5px; } .tab svg { width:17px; } .modalBody { padding:20px 16px; } .identity { grid-template-columns:1fr; gap:18px; } .identity > img { width:85px; height:95px; } .addressGrid { grid-template-columns:1fr; } .components { padding:10px; } .componentHead { font-size:13px; padding:8px; } .reporting { padding:8px 14px 22px; } .options { margin-left:8px; } }
+
+.tab > svg { width:22px; height:22px; }
