@@ -7,10 +7,10 @@ const groups = [
     frequency: "Quarterly",
     format: "TBC",
     reports: [
-      "Charging Infra Deployment Report",
-      "Charging Sessions Report",
-      "Interval Load Profile",
-      "Uptime & Reliability",
+      { name: "Charging Infra Deployment Report" },
+      { name: "Charging Sessions Report" },
+      { name: "Interval Load Profile" },
+      { name: "Uptime & Reliability" },
     ],
   },
   {
@@ -18,10 +18,15 @@ const groups = [
     frequency: "Semiannual",
     format: ".csv",
     reports: [
-      "Charger Usage and Throughput Report",
-      "Uptime Reporting",
-      "Excluded Downtime Reporting",
-      "Contact Information and Inventory",
+      { name: "Charger Usage and Throughput Report" },
+      { name: "Uptime Reporting" },
+      { name: "Excluded Downtime Reporting" },
+      { name: "Contact Information and Inventory" },
+      { name: "Utilization Session", frequency: "Quarterly" },
+      { name: "Utilization Interval", frequency: "Quarterly" },
+      { name: "Reliability Downtime", frequency: "Quarterly" },
+      { name: "Reliability Uptime", frequency: "Quarterly" },
+      { name: "Utilization Inventory", frequency: "Quarterly" },
     ],
   },
   {
@@ -29,10 +34,10 @@ const groups = [
     frequency: "TBC",
     format: "TBC",
     reports: [
-      "Sites/Stations",
-      "Charging Sessions",
-      "Charger Interval Report",
-      "Downtime Events",
+      { name: "Sites/Stations" },
+      { name: "Charging Sessions" },
+      { name: "Charger Interval Report" },
+      { name: "Downtime Events" },
     ],
   },
 ];
@@ -71,15 +76,15 @@ export function ReportingReference() {
           </thead>
           {groups.map((group) => (
             <tbody key={group.agency}>
-              {group.reports.map((name, index) => (
-                <tr key={name}>
+              {group.reports.map((report, index) => (
+                <tr key={report.name}>
                   {index === 0 && (
                     <th scope="rowgroup" rowSpan={group.reports.length}>
                       {group.agency}
                     </th>
                   )}
-                  <td>{name}</td>
-                  <td>{group.frequency}</td>
+                  <td>{report.name}</td>
+                  <td>{"frequency" in report ? report.frequency : group.frequency}</td>
                   <td>{group.format}</td>
                   <td>
                     {group.agency === "CEC" ? (

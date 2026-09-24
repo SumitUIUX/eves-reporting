@@ -45,6 +45,11 @@ const definitions: Record<
     { name: "Uptime Reporting", kind: "uptime" },
     { name: "Excluded Downtime", kind: "events", excluded: true },
     { name: "Contact Information & Inventory", kind: "throughput" },
+    { name: "Utilization Session", kind: "sessions" },
+    { name: "Utilization Interval", kind: "intervals" },
+    { name: "Reliability Downtime", kind: "events" },
+    { name: "Reliability Uptime", kind: "uptime" },
+    { name: "Utilization Inventory", kind: "throughput" },
   ],
   "Cal-EvIP": [
     { name: "Sites / Stations", kind: "throughput" },
@@ -122,13 +127,13 @@ export function Regulatory() {
         const chosen = tags.filter((t) => funding.includes(t.id));
         const tagIndex =
           report.kind === "sessions"
-            ? 29
+            ? 33
             : report.kind === "intervals"
-              ? 17
+              ? 19
               : report.kind === "throughput"
                 ? 31
                 : report.kind === "uptime"
-                  ? 14
+                  ? 16
                   : -1;
         const matchesTag =
           tagIndex >= 0 && chosen.some((t) => t.name === row[tagIndex]);

@@ -40,9 +40,9 @@ export function ReportChart({
         : kind === "chargingPerformance"
         ? isoDate(row[6])
         : kind === "sessions"
-        ? isoDate(row[10], "dmy")
+        ? isoDate(row[12], "dmy")
         : kind === "intervals"
-          ? row[10]
+          ? row[12]
           : row[0];
     const value = num(
       row[
@@ -57,10 +57,12 @@ export function ReportChart({
           : kind === "chargingPerformance"
           ? 9
           : kind === "sessions"
-            ? 19
+            ? 21
             : kind === "intervals"
-              ? 15
-              : 13
+              ? 17
+              : kind === "uptime"
+                ? 15
+                : 13
       ],
     );
     const old = grouped.get(key) ?? { value: 0, count: 0 };

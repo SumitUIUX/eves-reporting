@@ -20,18 +20,18 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
     description:
       "A clearer view of every session, from connection to completion.",
     short: "Sessions",
-    defaultColumns: [0, 1, 5, 7, 10, 25, 19, 20, 17],
+    defaultColumns: [0, 1, 5, 6, 7, 9, 12, 29, 21, 22, 23, 24, 19],
     filters: [
       { label: "Site", column: 1 },
       { label: "Charger", column: 5 },
-      { label: "Connector type", column: 7 },
-      { label: "Session type", column: 28 },
-      { label: "Payment method", column: 30 },
-      { label: "Project tag", column: 29 },
+      { label: "Connector type", column: 9 },
+      { label: "Session type", column: 32 },
+      { label: "Payment method", column: 34 },
+      { label: "Project tag", column: 33 },
     ],
-    dateColumn: 10,
+    dateColumn: 12,
     dateStyle: "dmy",
-    numeric: [8, 9, 19, 20, 23, 26, 27],
+    numeric: [10, 11, 21, 23, 27, 30, 31],
     chart: "energy",
   },
   intervals: {
@@ -39,15 +39,15 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
     description:
       "Understand energy demand and power delivery, interval by interval.",
     short: "Intervals",
-    defaultColumns: [0, 4, 6, 9, 10, 12, 13, 14, 15, 16],
+    defaultColumns: [0, 4, 5, 6, 8, 11, 12, 14, 15, 16, 17, 18],
     filters: [
       { label: "Site", column: 0 },
       { label: "Charger", column: 4 },
-      { label: "Project tag", column: 17 },
+      { label: "Project tag", column: 19 },
     ],
-    dateColumn: 9,
+    dateColumn: 11,
     dateStyle: "month",
-    numeric: [5, 7, 13, 14, 15],
+    numeric: [7, 9, 15, 16, 17],
     chart: "power",
   },
   throughput: {
@@ -72,14 +72,13 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
     description:
       "Monitor availability, identify downtime, and keep your network dependable.",
     short: "Uptime",
-    defaultColumns: [0, 3, 4, 5, 6, 7, 8, 9, 11, 13, 14],
+    defaultColumns: [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16],
     filters: [
       { label: "Site", column: 0 },
-      { label: "Site area", column: 2 },
       { label: "Charger", column: 3 },
-      { label: "Project tag", column: 14 },
+      { label: "Project tag", column: 16 },
     ],
-    numeric: [7, 8, 10, 13],
+    numeric: [9, 10, 12, 15],
     chart: "uptime",
   },
   events: {
@@ -87,14 +86,13 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
     description:
       "Monitor availability, identify downtime, and keep your network dependable.",
     short: "Downtime events",
-    defaultColumns: [0, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    defaultColumns: [0, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
     filters: [
       { label: "Site", column: 1 },
-      { label: "Site area", column: 3 },
       { label: "Charger", column: 4 },
-      { label: "Status", column: 11 },
+      { label: "Status", column: 14 },
     ],
-    dateColumn: 8,
+    dateColumn: 11,
     dateStyle: "month",
     numeric: [],
   },
@@ -236,7 +234,7 @@ export function isoDate(value: string, style?: "dmy" | "month") {
     : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 export interface ReportFilters {
-  values: Record<string, string>;
+  values: Record<string, string | string[]>;
   from: string;
   to: string;
   errors: boolean;
@@ -256,10 +254,13 @@ export function filterRows(
   return dataset.rows.filter(
     (row) =>
       Object.entries(filters.values).every(
-        ([column, value]) =>
-          !value || value === "all" || row[Number(column)] === value,
+        ([column, value]) => {
+          if (Array.isArray(value))
+            return !value.length || value.includes(row[Number(column)]);
+          return !value || value === "all" || row[Number(column)] === value;
+        },
       ) &&
-      (!filters.errors || row[17] === "Yes") &&
+      (!filters.errors || row[19] === "Yes") &&
       (!search || row.join(" ").toLowerCase().includes(search.toLowerCase())) &&
       ((!filters.from && !filters.to) ||
         config.dateColumn === undefined ||
@@ -288,22 +289,22 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
       },
       {
         label: "Energy delivered",
-        value: f(sum(19)) + " kWh",
+        value: f(sum(21)) + " kWh",
         note: "Total energy across sessions",
       },
       {
         label: "Average duration",
         value: rows.length
           ? displayDuration(
-              rows.reduce((a, r) => a + duration(r[25]), 0) / rows.length,
+              rows.reduce((a, r) => a + duration(r[29]), 0) / rows.length,
             )
           : "—",
         note: "Mean session duration",
       },
       {
         label: "Total revenue",
-        value: "$" + f(sum(20)),
-        note: `${rows.filter((r) => r[17] === "Yes").length} sessions with errors`,
+        value: "$" + f(sum(23)),
+        note: `${rows.filter((r) => r[19] === "Yes").length} sessions with errors`,
       },
     ];
   if (kind === "chargingPerformance")
@@ -352,7 +353,7 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
       },
       {
         label: "Average uptime",
-        value: rows.length ? f(avg(13)) + "%" : "—",
+        value: rows.length ? f(avg(15)) + "%" : "—",
         note: "Unweighted site average",
       },
     ];
@@ -459,15 +460,15 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
       },
       {
         label: "Energy delivered",
-        value: f(sum(13)) + " kWh",
+        value: f(sum(15)) + " kWh",
         note: "Sum of interval energy",
       },
       {
         label: "Average power",
         value: rows.length
           ? f(
-              rows.reduce((a, r) => a + num(r[15]) * duration(r[16]), 0) /
-                (rows.reduce((a, r) => a + duration(r[16]), 0) || 1),
+              rows.reduce((a, r) => a + num(r[17]) * duration(r[18]), 0) /
+                (rows.reduce((a, r) => a + duration(r[18]), 0) || 1),
             ) + " kW"
           : "—",
         note: "Weighted by interval duration",
@@ -475,9 +476,9 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
       {
         label: "Peak power",
         value: rows.length
-          ? f(Math.max(...rows.map((r) => num(r[14])))) + " kW"
+          ? f(Math.max(...rows.map((r) => num(r[16])))) + " kW"
           : "—",
-        note: `${rows.length ? f((rows.filter((r) => num(r[15]) === 0).length / rows.length) * 100) : 0}% idle intervals`,
+        note: `${rows.length ? f((rows.filter((r) => num(r[17]) === 0).length / rows.length) * 100) : 0}% idle intervals`,
       },
     ];
   if (kind === "throughput")
@@ -512,12 +513,12 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
       },
       {
         label: "Downtime events",
-        value: f(sum(8)),
+        value: f(sum(10)),
         note: "Total connector event count",
       },
       {
         label: "Below SLA",
-        value: f(rows.filter((r) => num(r[13]) < 95).length),
+        value: f(rows.filter((r) => num(r[15]) < 95).length),
         note: "Connectors below 95% uptime",
       },
       {
@@ -534,7 +535,7 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
     },
     {
       label: "Open events",
-      value: f(rows.filter((r) => /open|active|ongoing/i.test(r[11])).length),
+      value: f(rows.filter((r) => /open|active|ongoing/i.test(r[14])).length),
       note: "Unresolved events",
     },
     {

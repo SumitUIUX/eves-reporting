@@ -13,6 +13,7 @@ import {
 } from "@/lib/eves/report-config";
 import type { ReportDataset, ReportKind } from "@/lib/eves/types";
 import { Choice } from "./shared";
+import { ReportEntitySelector } from "./report-entity-selector";
 import styles from "./report-filter-control.module.css";
 
 interface ReportFilterControlProps {
@@ -35,7 +36,9 @@ export function ReportFilterControl({
   const [error, setError] = useState("");
   const id = useId();
   const activeCount =
-    Object.values(applied.values).filter((value) => value !== "all").length +
+    Object.values(applied.values).filter((value) =>
+      Array.isArray(value) ? value.length > 0 : value !== "all",
+    ).length +
     Number(!!applied.from) +
     Number(!!applied.to) +
     Number(applied.errors);
@@ -69,34 +72,72 @@ export function ReportFilterControl({
   const form = (
     <form className={styles.form} onSubmit={apply} noValidate>
       <div className={styles.fields}>
-        {config.filters.map((filter) => (
-          <div className={styles.field} key={filter.column}>
-            <label htmlFor={`${id}-filter-${filter.column}`}>
-              {filter.label}
-            </label>
-            <Choice
-              id={`${id}-filter-${filter.column}`}
-              label={filter.label}
-              value={draft.values[filter.column] ?? "all"}
-              onChange={(value) =>
-                setDraft((previous) => ({
-                  ...previous,
-                  values: { ...previous.values, [filter.column]: value },
-                }))
-              }
-              options={[
-                {
-                  value: "all",
-                  label: `All ${filter.label.toLowerCase()}${filter.label.endsWith("s") ? "" : "s"}`,
-                },
-                ...[...new Set(data.rows.map((row) => row[filter.column]))]
-                  .filter((value) => value && value !== "-" && value !== "—")
-                  .sort(),
-              ]}
-              className={styles.select}
-            />
-          </div>
-        ))}
+        {config.filters.map((filter) => {
+          const options = [
+            ...new Set(data.rows.map((row) => row[filter.column])),
+          ]
+            .filter((value) => value && value !== "-" && value !== "—")
+            .sort();
+          const modal =
+            filter.label === "Site" ||
+            filter.label === "Charger" ||
+            filter.label === "EVSE" ||
+            filter.label === "Project tag";
+          const value = draft.values[filter.column] ?? "all";
+          return (
+            <div className={styles.field} key={filter.column}>
+              <label htmlFor={`${id}-filter-${filter.column}`}>
+                {filter.label}
+              </label>
+              {modal ? (
+                <ReportEntitySelector
+                  id={`${id}-filter-${filter.column}`}
+                  label={filter.label}
+                  options={options}
+                  selected={
+                    Array.isArray(value)
+                      ? value
+                      : value === "all"
+                        ? []
+                        : [value]
+                  }
+                  onChange={(selected) =>
+                    setDraft((previous) => ({
+                      ...previous,
+                      values: {
+                        ...previous.values,
+                        [filter.column]: selected.length ? selected : "all",
+                      },
+                    }))
+                  }
+                />
+              ) : (
+                <Choice
+                  id={`${id}-filter-${filter.column}`}
+                  label={filter.label}
+                  value={Array.isArray(value) ? "all" : value}
+                  onChange={(nextValue) =>
+                    setDraft((previous) => ({
+                      ...previous,
+                      values: {
+                        ...previous.values,
+                        [filter.column]: nextValue,
+                      },
+                    }))
+                  }
+                  options={[
+                    {
+                      value: "all",
+                      label: `All ${filter.label.toLowerCase()}${filter.label.endsWith("s") ? "" : "s"}`,
+                    },
+                    ...options,
+                  ]}
+                  className={styles.select}
+                />
+              )}
+            </div>
+          );
+        })}
         {config.dateColumn !== undefined && (
           <>
             <div className={styles.field}>

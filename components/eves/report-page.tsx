@@ -67,6 +67,24 @@ import { useDataSource } from "@/lib/eves/data-source";
 import { toast } from "sonner";
 import styles from "./report-page.module.css";
 
+const referenceDatasets = Object.fromEntries(
+  Object.entries(datasets).map(([kind, dataset]) => [
+    kind,
+    {
+      headers: dataset.headers,
+      rows: dataset.rows.map((row) =>
+        row.map((value) =>
+          typeof value === "boolean"
+            ? value
+              ? "Yes"
+              : "No"
+            : String(value ?? "—"),
+        ),
+      ),
+    },
+  ]),
+) as Record<string, ReportDataset>;
+
 const chargingPerformanceFields = [
   ["site_name", "Site name"],
   ["site_id", "Site ID"],
@@ -272,7 +290,7 @@ function ReportView({
               ? tenantUptimeData
               : kind === "revenueTransaction"
                 ? revenueTransactionData
-              : (datasets[kind] as ReportDataset);
+              : referenceDatasets[kind];
   const data = useMemo(
     () =>
       source === "sample"
@@ -449,16 +467,15 @@ function ReportView({
                             : ""
                         }
                       >
-                        {(kind === "sessions" && i === 17) ||
+                        {(kind === "sessions" && i === 19) ||
                         (kind === "chargingPerformance" && i === 14) ? (
                           <span
                             className={`status ${row[i] === "Yes" ? "error" : ""}`}
                           >
                             {row[i] === "Yes" ? "Errored" : "No errors"}
                           </span>
-                        ) : ((kind === "uptime" ||
-                              kind === "sitePerformance") &&
-                            i === 13) ||
+                        ) : (kind === "uptime" && i === 15) ||
+                          (kind === "sitePerformance" && i === 13) ||
                           (kind === "chargerPerformance" && i === 16) ||
                           (kind === "tenantUptime" && i === 5) ? (
                           <span
@@ -472,7 +489,7 @@ function ReportView({
                           >
                             {row[i]}
                           </span>
-                        ) : kind === "events" && i === 11 ? (
+                        ) : kind === "events" && i === 14 ? (
                           <span
                             className={`status ${/open|active|ongoing/i.test(row[i]) ? "error" : ""}`}
                           >

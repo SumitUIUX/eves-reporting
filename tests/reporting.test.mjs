@@ -69,6 +69,15 @@ test("date, site and error filters compose without modifying the reference rows"
     ).length,
     0,
   );
+  assert.equal(
+    filterRows(data.sessions, reportConfig.sessions, {
+      ...emptyFilters,
+      values: {
+        1: ["Central Mall Parking", "Downtown Transit Hub"],
+      },
+    }).length,
+    10,
+  );
 });
 
 test("timestamp sorting retains time and the reference year", () => {
