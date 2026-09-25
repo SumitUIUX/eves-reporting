@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Download,
   ChevronDown,
@@ -43,6 +44,9 @@ import {
 } from "./shared";
 import { ColumnVisibilityControl } from "./column-visibility-control";
 import { ReportChart } from "./report-chart";
+import { ReportFilterDrawer, ActiveFilterChips } from "./report-filter-drawer";
+import { defaultPerformanceFilters, isPerformanceReport, periodLabel, changeFilter } from "@/lib/eves/performance-filters";
+import { executivePerformanceData, executiveSiteRows } from "@/lib/eves/executive-performance-data";
 import { ReportFilterControl } from "./report-filter-control";
 import {
   reportConfig,
@@ -216,7 +220,7 @@ const tenantUptimeData: ReportDataset = {
   headers: tenantUptimeFields.map(([, label]) => label),
   rows: tenantUptimeRows.map((record) =>
     tenantUptimeFields.map(([field]) =>
-      String(record[field as keyof typeof record]),
+      field === "sla_status" ? record.uptime_percent >= 95 ? "Meeting SLA" : "Below SLA" : String(record[field as keyof typeof record]),
     ),
   ),
 };
@@ -277,8 +281,9 @@ function ReportView({
   showTabs: boolean;
 }) {
   const { source } = useDataSource();
+  const router = useRouter();
   const snapshot =
-    kind === "chargingPerformance"
+    kind === "executivePerformance" ? executivePerformanceData : kind === "chargingPerformance"
       ? chargingPerformanceData
       : kind === "sitePerformance"
         ? sitePerformanceData
@@ -299,7 +304,10 @@ function ReportView({
     [source, snapshot],
   );
   const config = reportConfig[kind];
-  const [applied, setApplied] = useState<ReportFilters>(emptyFilters),
+  const performance = isPerformanceReport(kind);
+  const [defaults] = useState(() => performance ? defaultPerformanceFilters(config) : emptyFilters);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [applied, setApplied] = useState<ReportFilters>(defaults),
     [search, setSearch] = useState(""),
     [columns, setColumns] = useState<number[]>(() =>
       data.headers.map((_, index) => index),
@@ -309,7 +317,8 @@ function ReportView({
     [sort, setSort] = useState<{ column: number; asc: boolean } | null>(null),
     [detail, setDetail] = useState<string[] | null>(null);
   const rows = useMemo(() => {
-    const filtered = filterRows(data, config, applied, search);
+    const scoped = filterRows(data, config, applied, search);
+    const filtered = kind === "executivePerformance" ? executiveSiteRows(scoped, periodLabel(applied)) : scoped;
     if (sort)
       filtered.sort((a, b) => {
         let result = 0;
@@ -326,15 +335,18 @@ function ReportView({
         return result * (sort.asc ? 1 : -1);
       });
     return filtered;
-  }, [data, config, applied, search, sort]);
+  }, [data, config, applied, search, sort, kind]);
+  const chartRows = kind === "executivePerformance" ? filterRows(data, config, applied, search) : rows;
   const stats = metricsFor(kind, rows);
   const current = Math.min(page, Math.max(1, Math.ceil(rows.length / size)));
   function apply(filters: ReportFilters) {
-    setApplied(filters);
+    let normalized = filters;
+    if (performance) for (const field of config.filters.filter(f => f.label === "Site" || f.label === "EVSE")) normalized = changeFilter(data, config, normalized, field.column, normalized.values[field.column] ?? "all");
+    setApplied(normalized);
     setPage(1);
   }
   function reset() {
-    apply(emptyFilters);
+    apply(defaults);
   }
   function exportReport(format: "csv" | "xlsx") {
     const d = { headers: data.headers, rows };
@@ -349,14 +361,15 @@ function ReportView({
   return (
     <>
       <div className={styles.header}>
+        {performance && <div className="mr-auto min-w-0"><h1 className="text-lg font-semibold">{config.title}</h1><p className="mt-1 text-sm text-muted-foreground">{periodLabel(applied)}</p></div>}
         <PageActions>
-          <ReportFilterControl
+          {performance ? <ReportFilterDrawer key={JSON.stringify(applied)} kind={kind} config={config} data={data} applied={applied} defaults={defaults} onApply={apply} open={filterOpen} onOpenChange={setFilterOpen} /> : <ReportFilterControl
             kind={kind}
             config={config}
             data={data}
             applied={applied}
             onApply={apply}
-          />
+          />}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button disabled={!rows.length}>
@@ -379,15 +392,17 @@ function ReportView({
           </DropdownMenu>
         </PageActions>
       </div>
-      <div className="metrics report-metrics">
+      {performance && <ActiveFilterChips applied={applied} defaults={defaults} config={config} onChange={apply} />}
+      {performance && source !== "sample" ? <div className="panel p-10 text-center" role="alert"><p>Unable to load data.</p><p className="mt-2 text-sm text-muted-foreground">Workspace reporting is not connected.</p><Button className="mt-4" variant="outline" onClick={() => router.refresh()}>Try again</Button></div> : <>
+      {(!performance || rows.length > 0) && <div className="metrics report-metrics">
         {stats.map((s, i) => (
           <Metric
             key={s.label}
             {...s}
-            icon={[Activity, Zap, Clock3, Building2][i]}
+            icon={[Activity, Zap, Clock3, Building2][i % 4]}
           />
         ))}
-      </div>
+      </div>}
       {showTabs && (
         <div className="panel-tabs mb-5 rounded-lg border">
           <Tabs value={view} onValueChange={setView}>
@@ -398,7 +413,7 @@ function ReportView({
           </Tabs>
         </div>
       )}
-      <ReportChart kind={kind} rows={rows} />
+      <ReportChart kind={kind} rows={chartRows} period={performance ? applied : undefined} />
       <section className="panel">
         <div className="table-toolbar">
           <div className="toolbar-left">
@@ -425,7 +440,7 @@ function ReportView({
           </div>
         </div>
         {rows.length ? (
-          <Table className="eves-table report-table">
+          <Table className={`eves-table report-table ${performance ? "performance-table" : ""}`}>
             <TableHeader>
               <TableRow>
                 {columns.map((i) => (
@@ -520,15 +535,15 @@ function ReportView({
             </TableBody>
           </Table>
         ) : (
-          <DataEmpty>
+          <DataEmpty message={performance ? "No data available for the selected filters." : undefined}>
             <Button
               variant="outline"
               onClick={() => {
-                reset();
-                setSearch("");
+                if (performance) setFilterOpen(true);
+                else { reset(); setSearch(""); }
               }}
             >
-              Clear filters
+              {performance ? "Adjust filters" : "Clear filters"}
             </Button>
           </DataEmpty>
         )}
@@ -540,6 +555,7 @@ function ReportView({
           setSize={setSize}
         />
       </section>
+      </>}
       <Sheet
         open={!!detail}
         onOpenChange={(v) => {

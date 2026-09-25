@@ -2,6 +2,7 @@ import type { ReportKind, ReportDataset } from "./types";
 export interface FilterDefinition {
   label: string;
   column: number;
+  unavailable?: string;
 }
 export interface ReportConfig {
   title: string;
@@ -15,6 +16,12 @@ export interface ReportConfig {
   chart?: "energy" | "power" | "uptime";
 }
 export const reportConfig: Record<ReportKind, ReportConfig> = {
+  executivePerformance: {
+    title: "Executive Performance", description: "Network performance from recorded charging sessions.", short: "Executive performance",
+    defaultColumns: [0, 1, 2, 3, 4, 5, 6, 7],
+    filters: [{ label: "Site", column: 0 }, { label: "Region / State", column: 2 }, { label: "Site Status", column: -1, unavailable: "Site status is not supplied by this data source." }],
+    dateColumn: 3, numeric: [4, 5, 6, 7], chart: "energy",
+  },
   sessions: {
     title: "Charging sessions",
     description:
@@ -108,6 +115,7 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
       { label: "Connector type", column: 4 },
       { label: "Vehicle type", column: 12 },
       { label: "Payment method", column: 13 },
+      { label: "Session Status", column: -1, unavailable: "Session status is not supplied by this data source." },
       { label: "Error status", column: 14 },
       { label: "Error type", column: 15 },
     ],
@@ -125,6 +133,7 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
       { label: "Site", column: 0 },
       { label: "City", column: 2 },
       { label: "State", column: 3 },
+      { label: "Site Status", column: -1, unavailable: "Site status is not supplied by this data source." },
     ],
     numeric: [4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15],
     chart: "uptime",
@@ -140,9 +149,11 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
     filters: [
       { label: "Site", column: 0 },
       { label: "EVSE", column: 2 },
-      { label: "Manufacturer", column: 3 },
-      { label: "Model", column: 4 },
+      { label: "Port", column: 6 },
       { label: "Connector type", column: 7 },
+      { label: "Charger Status", column: -1, unavailable: "Live charger status is not supplied by this data source." },
+      { label: "Error Status", column: -2, unavailable: "Charger errors are not supplied by this data source." },
+      { label: "Error Type", column: -3, unavailable: "Charger errors are not supplied by this data source." },
     ],
     numeric: [5, 6, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18],
     chart: "uptime",
@@ -155,7 +166,6 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
     defaultColumns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
     filters: [
       { label: "Site", column: 0 },
-      { label: "EVSE", column: 2 },
       { label: "Port", column: 3 },
     ],
     dateColumn: 5,
@@ -171,7 +181,9 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
     filters: [
       { label: "Site", column: 0 },
       { label: "EVSE", column: 2 },
+      { label: "Charger Status", column: -1, unavailable: "Live charger status is not supplied by this data source." },
       { label: "Downtime reason", column: 8 },
+      { label: "Error Type", column: -2, unavailable: "Dated error events are not supplied by this data source." },
       { label: "SLA status", column: 9 },
     ],
     numeric: [3, 4, 5, 7],
@@ -225,6 +237,7 @@ export function isoDate(value: string, style?: "dmy" | "month") {
     const m = value.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
     return m ? `${m[3]}-${m[2]}-${m[1]}` : "";
   }
+  if (/^\d{4}-\d{2}-\d{2}T.*Z$/.test(value)) return value.slice(0, 10);
   const normalized = /^[A-Z][a-z]{2} \d{2}, \d{2}:\d{2}$/.test(value)
     ? value.replace(", ", ", 2026 ")
     : value;
@@ -238,6 +251,9 @@ export interface ReportFilters {
   from: string;
   to: string;
   errors: boolean;
+  preset?: string;
+  timeOfDay?: string;
+  dayOfWeek?: string;
 }
 export const emptyFilters: ReportFilters = {
   values: {},
@@ -261,6 +277,12 @@ export function filterRows(
         },
       ) &&
       (!filters.errors || row[19] === "Yes") &&
+      ((!filters.timeOfDay || filters.timeOfDay === "all") || (config.dateColumn !== undefined && (() => {
+        const hour = new Date(row[config.dateColumn!]).getUTCHours();
+        const period = hour >= 6 && hour < 12 ? "Morning" : hour >= 12 && hour < 18 ? "Afternoon" : hour >= 18 && hour < 22 ? "Evening" : "Night";
+        return Number.isFinite(hour) && filters.timeOfDay === period;
+      })())) &&
+      ((!filters.dayOfWeek || filters.dayOfWeek === "all") || (config.dateColumn !== undefined && String(new Date(row[config.dateColumn]).getUTCDay()) === filters.dayOfWeek)) &&
       (!search || row.join(" ").toLowerCase().includes(search.toLowerCase())) &&
       ((!filters.from && !filters.to) ||
         config.dateColumn === undefined ||
@@ -280,6 +302,12 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
   const avg = (i: number) => (rows.length ? sum(i) / rows.length : 0);
   const f = (n: number) =>
     n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  if (kind === "executivePerformance") return [
+    { label: "Total sessions", value: f(sum(4)), note: "Recorded sessions in this period" },
+    { label: "Energy delivered", value: f(sum(5)) + " kWh", note: "Across selected sites" },
+    { label: "Total revenue", value: "$" + f(sum(6)), note: "Recorded transaction amounts" },
+    { label: "Active sites", value: f(unique(1)), note: "Sites with recorded sessions" },
+  ];
   if (kind === "sessions")
     return [
       {
@@ -353,7 +381,7 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
       },
       {
         label: "Average uptime",
-        value: rows.length ? f(avg(15)) + "%" : "—",
+        value: rows.length ? f(avg(13)) + "%" : "—",
         note: "Unweighted site average",
       },
     ];

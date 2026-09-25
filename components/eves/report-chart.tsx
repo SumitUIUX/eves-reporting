@@ -11,14 +11,17 @@ import {
   ReferenceLine,
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
-import { num, isoDate } from "@/lib/eves/report-config";
+import { timeBucket, periodLabel, granularityLabel } from "@/lib/eves/performance-filters";
+import { num, isoDate, type ReportFilters } from "@/lib/eves/report-config";
 import type { ReportKind } from "@/lib/eves/types";
 export function ReportChart({
   kind,
   rows,
+  period,
 }: {
   kind: ReportKind;
   rows: string[][];
+  period?: ReportFilters;
 }) {
   if (!rows.length || kind === "throughput" || kind === "events") return null;
   const uptimeChart =
@@ -29,7 +32,9 @@ export function ReportChart({
   const grouped = new Map<string, { value: number; count: number }>();
   for (const row of rows) {
     const key =
-      kind === "revenueTransaction"
+      period?.from && (kind === "chargingPerformance" || kind === "energyDemand" || kind === "executivePerformance")
+        ? timeBucket(row[kind === "chargingPerformance" ? 6 : kind === "energyDemand" ? 5 : 3], period.from, period.to)
+        : kind === "revenueTransaction"
         ? isoDate(row[5])
         : kind === "tenantUptime"
         ? `${row[2]} / ${row[3]}`
@@ -46,7 +51,7 @@ export function ReportChart({
           : row[0];
     const value = num(
       row[
-        kind === "revenueTransaction"
+        kind === "executivePerformance" ? 5 : kind === "revenueTransaction"
           ? 14
           : kind === "tenantUptime"
           ? 5
@@ -72,7 +77,7 @@ export function ReportChart({
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([label, v]) => ({
       label:
-        kind === "revenueTransaction"
+        period?.from ? label : kind === "revenueTransaction"
           ? label.slice(5)
           : kind === "energyDemand"
           ? `${label.slice(5, 10)} ${label.slice(11, 16)}`
@@ -81,7 +86,7 @@ export function ReportChart({
           : label,
       value: Number(
         (
-          kind === "sessions" ||
+          kind === "executivePerformance" || kind === "sessions" ||
           kind === "chargingPerformance" ||
           kind === "revenueTransaction"
             ? v.value
@@ -98,14 +103,14 @@ export function ReportChart({
       : "kWh";
   return (
     <div className="chart-box">
-      <div className="flex items-center justify-between gap-3 mb-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <h2 className="text-sm font-semibold">
-          {kind === "sessions" || kind === "chargingPerformance"
+          {kind === "executivePerformance" || kind === "sessions" || kind === "chargingPerformance"
             ? "Energy delivered over time"
             : kind === "revenueTransaction"
               ? "Net revenue over time"
             : kind === "energyDemand"
-              ? "Average demand by interval"
+              ? "Average demand over time"
               : kind === "intervals"
               ? "Average power by interval"
               : kind === "chargerPerformance" || kind === "tenantUptime"
@@ -113,7 +118,7 @@ export function ReportChart({
               : "Average uptime by site"}
         </h2>
         <span className="text-xs text-muted-foreground">
-          {uptimeChart ? "SLA threshold: 95%" : "Reference snapshot"}
+          {period ? `${periodLabel(period)}${period.from ? " · " + granularityLabel(period.from, period.to) : ""}${uptimeChart ? " · SLA: 95%" : ""}` : uptimeChart ? "SLA threshold: 95%" : "Reference snapshot"}
         </span>
       </div>
       <ChartContainer

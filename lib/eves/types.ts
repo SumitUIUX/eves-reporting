@@ -28,6 +28,7 @@ export interface ReportDataset {
   rows: string[][];
 }
 export type ReportKind =
+  | "executivePerformance"
   | "sessions"
   | "intervals"
   | "throughput"

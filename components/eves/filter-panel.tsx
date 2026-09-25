@@ -26,6 +26,7 @@ export function FilterPanel({
   activeCount,
   presentation = "responsive",
   children,
+  drawerClassName = "",
 }: {
   title: string;
   open: boolean;
@@ -33,6 +34,7 @@ export function FilterPanel({
   activeCount: number;
   presentation?: "responsive" | "drawer";
   children: ReactNode;
+  drawerClassName?: string;
 }) {
   const isMobile = useIsMobile();
   const [ready, setReady] = useState(false);
@@ -61,7 +63,7 @@ export function FilterPanel({
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>
-        <SheetContent side="right" className={styles.mobile}>
+        <SheetContent side="right" className={`${styles.mobile} ${drawerClassName}`}>
           <SheetHeader className={styles.header}>
             <SheetTitle>{title}</SheetTitle>
             <SheetDescription>Choose your scope, then apply.</SheetDescription>

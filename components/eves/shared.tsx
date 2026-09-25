@@ -131,9 +131,11 @@ export function SearchInput({
 export function DataEmpty({
   children,
   compact = false,
+  message = "No records have been found",
 }: {
   children?: React.ReactNode;
   compact?: boolean;
+  message?: string;
 }) {
   return (
     <Empty
@@ -151,7 +153,7 @@ export function DataEmpty({
         <EmptyTitle
           className={compact ? "text-sm font-normal" : "text-base font-normal"}
         >
-          No records have been found
+          {message}
         </EmptyTitle>
       </EmptyHeader>
       {children}

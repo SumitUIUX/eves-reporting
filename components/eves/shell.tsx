@@ -38,6 +38,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuRad
 import styles from "./navigation.module.css";
 
 const categories = [
+  { label: "Executive Overview", href: "/dashboard", icon: LayoutDashboard, tenantOnly: true },
   {
     label: "Regulatory Reports",
     href: "/reports/project-tags",
@@ -52,10 +53,11 @@ const categories = [
   },
   {
     label: "Performance & Insights",
-    href: "/reports/charging-performance",
+    href: "/reports/executive-performance",
     icon: Activity,
     tenantOnly: true,
   },
+  { label: "Revenue & Transaction", href: "/reports/revenue-transaction", icon: ChartNoAxesColumnIncreasing, tenantOnly: true },
 ] as const;
 
 type ReportCategory = (typeof categories)[number]["label"];
@@ -107,8 +109,15 @@ export const navigation = [
     href: "/dashboard",
     label: "Executive Overview",
     icon: LayoutDashboard,
-    group: "Performance & Insights",
+    group: "Executive Overview",
     reportId: "executive-overview",
+  },
+  {
+    href: "/reports/executive-performance",
+    label: "Executive Performance",
+    icon: LayoutDashboard,
+    group: "Performance & Insights",
+    reportId: "executive-performance",
   },
   {
     href: "/reports/charging-performance",
@@ -149,7 +158,7 @@ export const navigation = [
     href: "/reports/revenue-transaction",
     label: "Revenue & Transaction",
     icon: ChartNoAxesColumnIncreasing,
-    group: "Performance & Insights",
+    group: "Revenue & Transaction",
     reportId: "revenue-financial",
   },
 ] as const;
@@ -313,7 +322,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
   const { tenantView, setTenantView, active } = useTenant();
   const current = navigation.find((n) => n.href === path);
   const category = current?.group ?? categories[0].label;
-  const tenantReport = current?.group === "Performance & Insights";
+  const tenantReport = categories.some(item => item.label === current?.group && item.tenantOnly);
   const reportAllowed =
     !!current &&
     (!active.id ||

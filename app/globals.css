@@ -1003,3 +1003,18 @@ svg {
 .eves-nav [data-active="true"]:after {
   right: 9px;
 }
+
+/* One scrollport keeps the report header and trailing actions aligned. */
+[data-slot="table-container"]:has(> .performance-table) {
+  max-height: min(65dvh, 680px);
+  overflow: auto;
+  isolation: isolate;
+}
+.performance-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: #f9fafc;
+}
+.performance-table tr > th:first-child,
+.performance-table tr > th:last-child { z-index: 5; }
