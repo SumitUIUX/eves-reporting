@@ -670,6 +670,26 @@ svg {
   background: #f9fafc;
   z-index: 2;
 }
+/* Keep the shared report detail action visible inside the table scrollport. */
+.report-table tr > :is(th, td):last-child {
+  position: sticky;
+  right: 0;
+  left: auto;
+  z-index: 2;
+  background: var(--card);
+  box-shadow: -1px 0 0 var(--border), -5px 0 8px -6px rgb(32 35 51 / 22%);
+}
+.report-table tr > th:last-child {
+  z-index: 3;
+  background: #f9fafc;
+}
+.report-table tbody tr:hover > td:last-child {
+  background: #fafaff;
+}
+.report-table tbody tr[data-state="selected"] > td:last-child,
+.report-table tbody tr:has([aria-expanded="true"]) > td:last-child {
+  background: var(--muted);
+}
 .status {
   font-size: 12px;
   border-radius: 4px;
