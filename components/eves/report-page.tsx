@@ -408,7 +408,11 @@ function ReportView({
                 setSearch(v);
                 setPage(1);
               }}
-              placeholder={`Search ${config.short.toLowerCase()}…`}
+              placeholder={
+                kind === "chargerPerformance"
+                  ? "Search by site name or site ID"
+                  : `Search ${config.short.toLowerCase()}…`
+              }
             />
           </div>
           <div className="toolbar-right">
