@@ -498,7 +498,7 @@ function DashboardContent({
                 <div>
                   <CardTitle className="text-base">Chargers below SLA</CardTitle>
                   <CardDescription>
-                    Threshold: {alerts.chargers_below_sla.sla_threshold_percent}%
+                    {alerts.chargers_below_sla.sla_threshold_percent}% minimum · Last 7 days
                   </CardDescription>
                 </div>
               </div>
@@ -521,20 +521,37 @@ function DashboardContent({
             </CardHeader>
             <CardContent className="divide-y px-5">
               {alerts.chargers_below_sla.chargers.map((charger) => (
-                <div key={charger.evse_id} className="flex items-center justify-between gap-4 py-3">
+                <div key={charger.evse_id} className="space-y-2 py-4">
                   <div className="min-w-0">
                     <p className="text-sm font-medium">{charger.evse_id}</p>
-                    <p className="truncate text-xs text-muted-foreground">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       {charger.site_name}
                     </p>
                   </div>
-                  <span className="font-semibold tabular-nums text-destructive">
-                    {charger.uptime_percent.toFixed(1)}%
-                  </span>
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-sm font-medium tabular-nums">
+                      {charger.uptime_percent.toFixed(1)}% uptime
+                    </span>
+                    <div className="shrink-0 text-right text-destructive">
+                      <span
+                        className="inline-flex items-center gap-1 text-sm font-semibold tabular-nums"
+                        title="Percentage points below the SLA minimum"
+                        aria-label={`${Math.max(0, alerts.chargers_below_sla.sla_threshold_percent - charger.uptime_percent).toFixed(1)} percentage points below the SLA minimum`}
+                      >
+                        <span aria-hidden="true">↓</span>
+                        {Math.max(
+                          0,
+                          alerts.chargers_below_sla.sla_threshold_percent -
+                            charger.uptime_percent,
+                        ).toFixed(1)}%
+                      </span>
+                      <p className="mt-0.5 text-xs">Below SLA</p>
+                    </div>
+                  </div>
                 </div>
               ))}
               {reportEnabled("tenant-uptime-reliability") && (
-                <div className="pt-3">
+                <div className="flex justify-center pt-3">
                   <PanelLink href="/reports/tenant-uptime-reliability" />
                 </div>
               )}
