@@ -46,7 +46,6 @@ import { ColumnVisibilityControl } from "./column-visibility-control";
 import { ReportChart } from "./report-chart";
 import { ReportFilterDrawer, ActiveFilterChips } from "./report-filter-drawer";
 import { defaultPerformanceFilters, isPerformanceReport, periodLabel, changeFilter } from "@/lib/eves/performance-filters";
-import { executivePerformanceData, executiveSiteRows } from "@/lib/eves/executive-performance-data";
 import { ReportFilterControl } from "./report-filter-control";
 import {
   reportConfig,
@@ -283,7 +282,7 @@ function ReportView({
   const { source } = useDataSource();
   const router = useRouter();
   const snapshot =
-    kind === "executivePerformance" ? executivePerformanceData : kind === "chargingPerformance"
+    kind === "chargingPerformance"
       ? chargingPerformanceData
       : kind === "sitePerformance"
         ? sitePerformanceData
@@ -317,8 +316,7 @@ function ReportView({
     [sort, setSort] = useState<{ column: number; asc: boolean } | null>(null),
     [detail, setDetail] = useState<string[] | null>(null);
   const rows = useMemo(() => {
-    const scoped = filterRows(data, config, applied, search);
-    const filtered = kind === "executivePerformance" ? executiveSiteRows(scoped, periodLabel(applied)) : scoped;
+    const filtered = filterRows(data, config, applied, search);
     if (sort)
       filtered.sort((a, b) => {
         let result = 0;
@@ -336,7 +334,6 @@ function ReportView({
       });
     return filtered;
   }, [data, config, applied, search, sort, kind]);
-  const chartRows = kind === "executivePerformance" ? filterRows(data, config, applied, search) : rows;
   const stats = metricsFor(kind, rows);
   const current = Math.min(page, Math.max(1, Math.ceil(rows.length / size)));
   function apply(filters: ReportFilters) {
@@ -413,7 +410,7 @@ function ReportView({
           </Tabs>
         </div>
       )}
-      <ReportChart kind={kind} rows={chartRows} period={performance ? applied : undefined} />
+      <ReportChart kind={kind} rows={rows} period={performance ? applied : undefined} />
       <section className="panel">
         <div className="table-toolbar">
           <div className="toolbar-left">

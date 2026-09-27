@@ -30,7 +30,6 @@ export const reportHierarchy = [
     label: "Tenant Reports",
     items: [
       { id: "executive-overview", label: "Executive Overview" },
-      { id: "executive-performance", label: "Executive Performance" },
       { id: "charging-performance", label: "Charging Performance" },
       { id: "site-performance", label: "Site Performance" },
       { id: "charger-connector-performance", label: "Charger / Connector Performance" },
@@ -62,7 +61,6 @@ export function reportsFromTenant(tenant: { regulatory?: boolean; master?: boole
     for (const [id, enabled] of Object.entries(tenant.reports)) {
       if (id in reports && typeof enabled === "boolean") reports[id] = enabled;
     }
-    if (!("executive-performance" in tenant.reports)) reports["executive-performance"] = tenant.reports["executive-overview"] === true;
     return reports;
   }
   for (const item of reportHierarchy[0].items) reports[item.id] = tenant.regulatory !== false;

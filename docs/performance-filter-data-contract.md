@@ -1,6 +1,6 @@
 # Performance & Insights filtering: data readiness
 
-The six reports share `ReportFilterDrawer`. Report-specific field definitions live in `report-config.ts`; date presets, dependency rules, counts, and chart buckets live in `performance-filters.ts`. All displayed report outputs and exports use the same filtered row set. Executive Performance aggregates the existing recorded sessions by site after filtering; it does not borrow the separate Executive Overview totals.
+Five detailed performance reports share `ReportFilterDrawer`. Report-specific field definitions live in `report-config.ts`; date presets, dependency rules, counts, and chart buckets live in `performance-filters.ts`. All displayed report outputs and exports use the same filtered row set. Executive Overview and Revenue & Transaction retain their existing controls.
 
 ## Existing source limitations
 
@@ -8,7 +8,6 @@ There is currently no workspace reporting API in this repository. Workspace mode
 
 | Report | Connected filtering | Missing source fields |
 | --- | --- | --- |
-| Executive Performance | Site, UTC session start date, state joined by site ID | Site status |
 | Charging Performance | Site, UTC session start date, EVSE, connector, vehicle, payment, error flag/type | Session status; utilization denominator |
 | Site Performance | Site, city, state | Reporting period or dated measures; site status |
 | Charger Performance | Site, EVSE, port, connector | Reporting period or dated measures; charger status; error flag/type |
@@ -23,7 +22,7 @@ Provide the actual reporting endpoint/schema, tenant scope, timezone, site and c
 
 Default date range is the previous seven complete UTC days; presets use UTC because the existing session/interval records carry UTC timestamps. The supplied timestamped sample data covers September 1–8, 2026 (sessions) and September 1–7 (intervals). A current period outside this coverage correctly produces an empty result. The drawer displays the available date coverage.
 
-Executive Overview remains at `/dashboard`, with its component, date display and refresh behavior unchanged. Revenue & Transaction retains its page outside the six-tab Performance & Insights group. Existing Executive Overview permission grants are migrated to Executive Performance; an explicitly denied permission is not expanded.
+Performance & Insights contains seven tabs: Executive Overview, Charging Performance, Site Performance, Charger Performance, Energy & Demand, Uptime, and Revenue & Transaction. Executive Overview remains at `/dashboard` and Revenue & Transaction at `/reports/revenue-transaction`, with their existing components and behaviors unchanged. The retired `/reports/executive-performance` route redirects to `/dashboard`; it contains no duplicate view.
 
 ## Verification
 

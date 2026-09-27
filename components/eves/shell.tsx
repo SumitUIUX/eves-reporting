@@ -38,7 +38,6 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuRad
 import styles from "./navigation.module.css";
 
 const categories = [
-  { label: "Executive Overview", href: "/dashboard", icon: LayoutDashboard, tenantOnly: true },
   {
     label: "Regulatory Reports",
     href: "/reports/project-tags",
@@ -53,11 +52,10 @@ const categories = [
   },
   {
     label: "Performance & Insights",
-    href: "/reports/executive-performance",
+    href: "/dashboard",
     icon: Activity,
     tenantOnly: true,
   },
-  { label: "Revenue & Transaction", href: "/reports/revenue-transaction", icon: ChartNoAxesColumnIncreasing, tenantOnly: true },
 ] as const;
 
 type ReportCategory = (typeof categories)[number]["label"];
@@ -109,15 +107,8 @@ export const navigation = [
     href: "/dashboard",
     label: "Executive Overview",
     icon: LayoutDashboard,
-    group: "Executive Overview",
-    reportId: "executive-overview",
-  },
-  {
-    href: "/reports/executive-performance",
-    label: "Executive Performance",
-    icon: LayoutDashboard,
     group: "Performance & Insights",
-    reportId: "executive-performance",
+    reportId: "executive-overview",
   },
   {
     href: "/reports/charging-performance",
@@ -149,7 +140,7 @@ export const navigation = [
   },
   {
     href: "/reports/tenant-uptime-reliability",
-    label: "Uptime & Reliability",
+    label: "Uptime",
     icon: Activity,
     group: "Performance & Insights",
     reportId: "tenant-uptime-reliability",
@@ -158,7 +149,7 @@ export const navigation = [
     href: "/reports/revenue-transaction",
     label: "Revenue & Transaction",
     icon: ChartNoAxesColumnIncreasing,
-    group: "Revenue & Transaction",
+    group: "Performance & Insights",
     reportId: "revenue-financial",
   },
 ] as const;

@@ -1,7 +1,7 @@
 import type { ReportDataset, ReportKind } from './types';
 import type { ReportConfig, ReportFilters } from './report-config';
 
-export const performanceKinds = ['executivePerformance', 'chargingPerformance', 'sitePerformance', 'chargerPerformance', 'energyDemand', 'tenantUptime'] as const;
+export const performanceKinds = ['chargingPerformance', 'sitePerformance', 'chargerPerformance', 'energyDemand', 'tenantUptime'] as const;
 export function isPerformanceReport(kind: ReportKind) {
   return (performanceKinds as readonly string[]).includes(kind);
 }

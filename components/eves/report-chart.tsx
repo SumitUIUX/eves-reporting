@@ -32,8 +32,8 @@ export function ReportChart({
   const grouped = new Map<string, { value: number; count: number }>();
   for (const row of rows) {
     const key =
-      period?.from && (kind === "chargingPerformance" || kind === "energyDemand" || kind === "executivePerformance")
-        ? timeBucket(row[kind === "chargingPerformance" ? 6 : kind === "energyDemand" ? 5 : 3], period.from, period.to)
+      period?.from && (kind === "chargingPerformance" || kind === "energyDemand")
+        ? timeBucket(row[kind === "chargingPerformance" ? 6 : 5], period.from, period.to)
         : kind === "revenueTransaction"
         ? isoDate(row[5])
         : kind === "tenantUptime"
@@ -51,7 +51,7 @@ export function ReportChart({
           : row[0];
     const value = num(
       row[
-        kind === "executivePerformance" ? 5 : kind === "revenueTransaction"
+        kind === "revenueTransaction"
           ? 14
           : kind === "tenantUptime"
           ? 5
@@ -86,7 +86,7 @@ export function ReportChart({
           : label,
       value: Number(
         (
-          kind === "executivePerformance" || kind === "sessions" ||
+          kind === "sessions" ||
           kind === "chargingPerformance" ||
           kind === "revenueTransaction"
             ? v.value
@@ -105,7 +105,7 @@ export function ReportChart({
     <div className="chart-box">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <h2 className="text-sm font-semibold">
-          {kind === "executivePerformance" || kind === "sessions" || kind === "chargingPerformance"
+          {kind === "sessions" || kind === "chargingPerformance"
             ? "Energy delivered over time"
             : kind === "revenueTransaction"
               ? "Net revenue over time"

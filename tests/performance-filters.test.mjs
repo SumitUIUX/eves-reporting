@@ -7,7 +7,8 @@ const vite = await createServer({ configFile: false, appType: 'custom', root, re
 after(() => vite.close());
 const f = await vite.ssrLoadModule('/lib/eves/performance-filters.ts');
 const { reportConfig, filterRows, metricsFor } = await vite.ssrLoadModule('/lib/eves/report-config.ts');
-const { executivePerformanceData, executiveSiteRows } = await vite.ssrLoadModule('/lib/eves/executive-performance-data.ts');
+const { default: sessions } = await vite.ssrLoadModule('/data/charging-performance.json');
+const sessionData = { headers: [], rows: sessions.map(r => [r.site_name, r.site_id, r.evse_id, String(r.port_id), r.connector_type, r.session_id, r.session_start_datetime, r.session_end_datetime, r.session_duration, String(r.energy_consumed_kwh), String(r.peak_demand_kw), String(r.average_demand_kw), r.vehicle_type, r.payment_method, r.is_errored ? 'Yes' : 'No', r.error_type ?? '—', String(r.total_transaction_amount)]) };
 const scope = { values: {}, errors: false, from: '2026-09-01', to: '2026-09-01', preset: 'custom' };
 
 test('UTC presets include full previous days and cross month/year boundaries', () => {
@@ -20,14 +21,10 @@ test('UTC presets include full previous days and cross month/year boundaries', (
   assert.match(f.dateRangeError({ ...scope, to: '2026-02-30' }), /valid/);
 });
 test('one selected reporting period drives actual records, aggregate KPIs, and table totals', () => {
-  const filtered = filterRows(executivePerformanceData, reportConfig.executivePerformance, scope);
+  const filtered = filterRows(sessionData, reportConfig.chargingPerformance, scope);
   assert.equal(filtered.length, 2);
-  const table = executiveSiteRows(filtered, f.periodLabel(scope));
-  assert.equal(table.length, 1);
-  assert.equal(table[0][4], '2');
-  assert.equal(table[0][5], '93.90');
-  assert.equal(metricsFor('executivePerformance', table)[1].value, '93.9 kWh');
-  assert.equal(filterRows(executivePerformanceData, reportConfig.executivePerformance, { ...scope, from: '2026-10-01', to: '2026-10-02' }).length, 0);
+  assert.equal(metricsFor('chargingPerformance', filtered)[1].value, '93.9 kWh');
+  assert.equal(filterRows(sessionData, reportConfig.chargingPerformance, { ...scope, from: '2026-10-01', to: '2026-10-02' }).length, 0);
 });
 test('hierarchy options and stale selections respect Site → EVSE → Port', () => {
   const config = { filters: [{ label: 'Site', column: 0 }, { label: 'EVSE', column: 1 }, { label: 'Port', column: 2 }] };

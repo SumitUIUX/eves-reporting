@@ -16,12 +16,6 @@ export interface ReportConfig {
   chart?: "energy" | "power" | "uptime";
 }
 export const reportConfig: Record<ReportKind, ReportConfig> = {
-  executivePerformance: {
-    title: "Executive Performance", description: "Network performance from recorded charging sessions.", short: "Executive performance",
-    defaultColumns: [0, 1, 2, 3, 4, 5, 6, 7],
-    filters: [{ label: "Site", column: 0 }, { label: "Region / State", column: 2 }, { label: "Site Status", column: -1, unavailable: "Site status is not supplied by this data source." }],
-    dateColumn: 3, numeric: [4, 5, 6, 7], chart: "energy",
-  },
   sessions: {
     title: "Charging sessions",
     description:
@@ -302,12 +296,6 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
   const avg = (i: number) => (rows.length ? sum(i) / rows.length : 0);
   const f = (n: number) =>
     n.toLocaleString("en-US", { maximumFractionDigits: 2 });
-  if (kind === "executivePerformance") return [
-    { label: "Total sessions", value: f(sum(4)), note: "Recorded sessions in this period" },
-    { label: "Energy delivered", value: f(sum(5)) + " kWh", note: "Across selected sites" },
-    { label: "Total revenue", value: "$" + f(sum(6)), note: "Recorded transaction amounts" },
-    { label: "Active sites", value: f(unique(1)), note: "Sites with recorded sessions" },
-  ];
   if (kind === "sessions")
     return [
       {
