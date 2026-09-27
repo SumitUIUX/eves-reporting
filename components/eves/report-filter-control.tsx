@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ReportDatePicker } from "./report-date-picker";
 import { Switch } from "@/components/ui/switch";
 import { FilterPanel } from "./filter-panel";
 import {
@@ -142,14 +142,14 @@ export function ReportFilterControl({
           <>
             <div className={styles.field}>
               <label htmlFor={`${id}-from`}>From date</label>
-              <Input
+              <ReportDatePicker
                 id={`${id}-from`}
-                type="date"
+                label="From date"
                 value={draft.from}
-                onChange={(event) => {
+                onChange={(value) => {
                   setDraft((previous) => ({
                     ...previous,
-                    from: event.target.value,
+                    from: value,
                   }));
                   setError("");
                 }}
@@ -157,17 +157,15 @@ export function ReportFilterControl({
             </div>
             <div className={styles.field}>
               <label htmlFor={`${id}-to`}>To date</label>
-              <Input
+              <ReportDatePicker
                 id={`${id}-to`}
-                type="date"
+                label="To date"
                 value={draft.to}
                 min={draft.from || undefined}
-                aria-invalid={!!error}
-                aria-describedby={error ? `${id}-error` : undefined}
-                onChange={(event) => {
+                onChange={(value) => {
                   setDraft((previous) => ({
                     ...previous,
-                    to: event.target.value,
+                    to: value,
                   }));
                   setError("");
                 }}
@@ -206,7 +204,7 @@ export function ReportFilterControl({
   return (
     <FilterPanel
       title="Report filters"
-      presentation={kind === "intervals" ? "drawer" : "responsive"}
+      
       open={open}
       onOpenChange={changeOpen}
       activeCount={activeCount}

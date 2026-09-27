@@ -15,6 +15,7 @@ import {
   Gauge,
   PlugZap,
   RefreshCw,
+  RotateCcw,
   Server,
   TrendingDown,
   Zap,
@@ -50,6 +51,12 @@ import {
 } from "@/lib/eves/dashboard-data";
 import { useDataSource } from "@/lib/eves/data-source";
 import { useTenant } from "@/components/eves/tenant-context";
+import { FilterPanel } from "./filter-panel";
+import { DateRangeFilter } from "./report-filter-drawer";
+import { ReportEntitySelector } from "./report-entity-selector";
+import { dateRangeError } from "@/lib/eves/performance-filters";
+import type { ReportFilters } from "@/lib/eves/report-config";
+import filterStyles from "./report-filter-control.module.css";
 import type { LucideIcon } from "lucide-react";
 
 const integer = new Intl.NumberFormat("en-US");
@@ -213,6 +220,22 @@ function DashboardContent({
   refreshing: boolean;
   refresh: () => void;
 }) {
+  const defaults: ReportFilters = { values: {}, from: data.dashboard_period.start_date, to: data.dashboard_period.end_date, errors: false, preset: "custom" };
+  const [applied, setApplied] = useState(defaults);
+  const [draft, setDraft] = useState(defaults);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const selectedSites = Array.isArray(applied.values.site) ? applied.values.site : [];
+  const fullPeriod = applied.from === defaults.from && applied.to === defaults.to;
+  const scoped = selectedSites.length > 0 || !fullPeriod;
+  const sites = [...new Set([
+    ...data.business.top_performing_sites.map(s => s.site_name),
+    ...data.business.underperforming_sites.map(s => s.site_name),
+    ...data.alerts_attention_required.chargers_below_sla.chargers.map(s => s.site_name),
+    ...data.alerts_attention_required.sites_with_declining_utilization.sites.map(s => s.site_name),
+    ...data.alerts_attention_required.high_downtime.events.map(s => s.site_name),
+  ])].sort();
+  const matchingSites = [...data.business.top_performing_sites, ...data.business.underperforming_sites].filter(site => !selectedSites.length || selectedSites.includes(site.site_name));
+  const scopedRevenue = data.business.revenue_trend.filter(point => point.date >= applied.from && point.date <= applied.to);
   const { active } = useTenant();
   const reportEnabled = (reportId: string) =>
     !!active.components["Reports/Analytics"] && !!active.reports[reportId];
@@ -245,15 +268,31 @@ function DashboardContent({
     <div className="space-y-9">
       <header className="flex justify-end">
         <div className="flex flex-wrap items-center justify-end gap-2">
+          <FilterPanel title="Report filters" open={filtersOpen} onOpenChange={open => { if (open) setDraft(applied); setFiltersOpen(open); }} activeCount={Number(selectedSites.length > 0) + Number(!fullPeriod)}>
+            <form className={filterStyles.form} onSubmit={event => { event.preventDefault(); if (dateRangeError(draft)) return; setApplied(draft); setFiltersOpen(false); }}>
+              <div className={filterStyles.fields}>
+                <div className={filterStyles.field}>
+                  <label htmlFor="executive-site">Site</label>
+                  <ReportEntitySelector id="executive-site" label="Site" options={sites} selected={Array.isArray(draft.values.site) ? draft.values.site : []} onChange={site => setDraft(v => ({ ...v, values: { site } }))} />
+                </div>
+                <DateRangeFilter value={draft} onChange={setDraft} />
+                <p className="col-span-full text-xs text-muted-foreground">Available snapshot: {defaults.from} – {defaults.to}. Site summaries cover this full period. Only network revenue has daily records; scoped network KPIs are unavailable.</p>
+              </div>
+              <div className={filterStyles.footer}>
+                <Button type="button" variant="ghost" onClick={() => { setDraft(defaults); setApplied(defaults); }}><RotateCcw size={14} />Reset filters</Button>
+                <Button type="submit" disabled={!!dateRangeError(draft)}>Apply filters</Button>
+              </div>
+            </form>
+          </FilterPanel>
           <Badge variant="outline" className="h-10 gap-2 rounded-md px-3 font-normal">
             <CalendarDays className="size-4 text-muted-foreground" />
-            {date(data.dashboard_period.start_date, {
+            {date(applied.from, {
               month: "short",
               day: "numeric",
               year: "numeric",
             })}
             {" – "}
-            {date(data.dashboard_period.end_date, {
+            {date(applied.to, {
               month: "short",
               day: "numeric",
               year: "numeric",
@@ -269,6 +308,12 @@ function DashboardContent({
         </div>
       </header>
 
+      {scoped ? <div className="space-y-4">
+        <p role="status" className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">{selectedSites.length ? selectedSites.join(", ") : "All sites"} · Network KPIs and comparisons are unavailable for this scope in the current aggregate snapshot.</p>
+        {fullPeriod && matchingSites.length > 0 && <Card className="shadow-none"><CardHeader><CardTitle>Selected site summaries</CardTitle><CardDescription>Available site records for the full snapshot period</CardDescription></CardHeader><CardContent>{matchingSites.map((site, index) => <SiteRow key={site.site_id} site={site} rank={index + 1} />)}</CardContent></Card>}
+        {!selectedSites.length && scopedRevenue.length > 0 && <Card className="shadow-none"><CardHeader><CardTitle>Revenue</CardTitle><CardDescription>All sites · Selected date range</CardDescription></CardHeader><CardContent><ChartContainer config={{ revenue: { label: "Revenue", color: "var(--chart-1)" } }} className="h-64 w-full"><AreaChart data={scopedRevenue}><CartesianGrid vertical={false} /><XAxis dataKey="date" /><YAxis /><Tooltip formatter={value => currency.format(Number(value))} /><Area dataKey="revenue" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.15} /></AreaChart></ChartContainer></CardContent></Card>}
+        {((selectedSites.length > 0 && (!fullPeriod || !matchingSites.length)) || (!selectedSites.length && !scopedRevenue.length)) && <DataEmpty><p>No data available for the selected filters.</p></DataEmpty>}
+      </div> : <>
       <section aria-labelledby="charging-heading" className="space-y-4">
         <div id="charging-heading">
           <SectionHeading
@@ -661,6 +706,7 @@ function DashboardContent({
           </Card>
         </div>
       </section>
+      </>}
     </div>
   );
 }

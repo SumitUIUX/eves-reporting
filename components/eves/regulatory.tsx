@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import {
   Download,
+  RotateCcw,
   Check,
   Info,
   Mail,
@@ -21,6 +22,8 @@ import {
   type ReportingPeriod,
 } from "@/lib/eves/report-period";
 import styles from "./regulatory.module.css";
+import filterStyles from "./report-filter-control.module.css";
+import { FilterPanel } from "./filter-panel";
 import { useTags } from "@/lib/eves/use-tags";
 import { useDataSource } from "@/lib/eves/data-source";
 import { resolveFundingTags } from "@/lib/eves/funding-tags";
@@ -72,6 +75,14 @@ export function Regulatory() {
     [emailOpen, setEmailOpen] = useState(false),
     [error, setError] = useState(""),
     [lastExport, setLastExport] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [draft, setDraft] = useState({ funding, period, quarters, selectedMonths, from, to });
+  const draftPeriodOptions = draft.period === "Quarter" ? quarterOptions : monthOptions;
+  const draftSelectedPeriods = draft.period === "Quarter" ? draft.quarters : draft.selectedMonths;
+  const draftDelivery = evaluateReportDelivery(getReportRanges({ period: draft.period, quarters: draft.quarters, months: draft.selectedMonths, from: draft.from, to: draft.to }), draft.period);
+  function applyScope(scope: typeof draft) {
+    changed(() => { setFunding(scope.funding); setPeriod(scope.period); setQuarters(scope.quarters); setMonths(scope.selectedMonths); setFrom(scope.from); setTo(scope.to); });
+  }
   const { source } = useDataSource();
   const tagState = useTags();
   const loading = source === "workspace" && tagState.loading;
@@ -237,6 +248,105 @@ export function Regulatory() {
   }
   return (
     <>
+      <div className="mb-6 flex justify-end">
+        <FilterPanel title="Report filters" open={filtersOpen} onOpenChange={open => { if (open) setDraft({ funding, period, quarters, selectedMonths, from, to }); setFiltersOpen(open); }} activeCount={Number(funding.length > 0) + 1}>
+          <form className={filterStyles.form} onSubmit={event => { event.preventDefault(); if (!draftDelivery.valid) return; applyScope(draft); setFiltersOpen(false); }}>
+            <div className={filterStyles.fields}>
+          <div className={filterStyles.field}>
+            <label htmlFor="report-funding">Funding ID (optional)</label>
+            <ReportMultiSelect
+              id="report-funding"
+              label="Funding IDs"
+              options={eligibleTags.map((tag) => ({
+                value: tag.id,
+                label: tag.awardId || tag.name,
+              }))}
+              selected={draft.funding}
+              onChange={(value) => (setDraft(v => ({ ...v, funding: value })))}
+              placeholder="All funding IDs"
+              searchPlaceholder="Search funding IDs…"
+              disabled={loading || !!tagError}
+            />
+            {tagError && (
+              <p className={styles.fieldError}>
+                Funding tags unavailable.{" "}
+                <button type="button" onClick={() => void reload()}>
+                  Retry
+                </button>
+              </p>
+            )}
+          </div>
+          <div className={filterStyles.field}>
+            <label htmlFor="period-type">Reporting period</label>
+            <Choice
+              id="period-type"
+              value={draft.period}
+              label="Reporting period"
+              options={["Quarter", "Months", "Custom range"]}
+              onChange={(value) =>
+                (setDraft(v => ({ ...v, period: value as ReportingPeriod })))
+              }
+            />
+          </div>
+          {draft.period === "Custom range" ? (
+            <>
+              <div className={filterStyles.field}>
+                <label htmlFor="custom-from">Date from</label>
+                <ReportDatePicker
+                  id="custom-from"
+                  label="Date from"
+                  value={draft.from}
+                  onChange={(value) => (setDraft(v => ({ ...v, from: value })))}
+                />
+              </div>
+              <div className={filterStyles.field}>
+                <label htmlFor="custom-to">Date to</label>
+                <ReportDatePicker
+                  id="custom-to"
+                  label="Date to"
+                  value={draft.to}
+                  min={draft.from}
+                  onChange={(value) => (setDraft(v => ({ ...v, to: value })))}
+                />
+              </div>
+            </>
+          ) : (
+            <div className={filterStyles.field}>
+              <label htmlFor="selected-report-periods">
+                {draft.period === "Quarter" ? "Select quarter(s)" : "Select month(s)"}
+              </label>
+              <ReportMultiSelect
+                id="selected-report-periods"
+                label={
+                  draft.period === "Quarter" ? "Select quarters" : "Select months"
+                }
+                options={draftPeriodOptions}
+                selected={draftSelectedPeriods}
+                onChange={(value) =>
+                  (
+                    draft.period === "Quarter"
+                      ? setDraft(v => ({ ...v, quarters: value }))
+                      : setDraft(v => ({ ...v, selectedMonths: value }))
+                  )
+                }
+                placeholder={
+                  draft.period === "Quarter" ? "Select quarter(s)" : "Select month(s)"
+                }
+                searchPlaceholder={
+                  draft.period === "Quarter" ? "Search quarters…" : "Search months…"
+                }
+              />
+            </div>
+          )}
+              {!draftDelivery.valid && <p role="alert" className="col-span-full text-sm text-destructive">{draftDelivery.error}</p>}
+            </div>
+            <div className={filterStyles.footer}>
+              <Button type="button" variant="ghost" onClick={() => { const defaults = { funding: [], period: "Quarter" as ReportingPeriod, quarters: ["2026-Q3"], selectedMonths: ["2026-09"], from: "2026-09-01", to: "2026-09-07" }; setDraft(defaults); applyScope(defaults); }}><RotateCcw size={14} />Reset filters</Button>
+              <Button type="submit" disabled={!draftDelivery.valid}>Apply filters</Button>
+            </div>
+          </form>
+        </FilterPanel>
+      </div>
       <section className={styles.builder} aria-label="Build your report">
         <div className={styles.fields}>
           <div className={styles.field}>
@@ -270,92 +380,6 @@ export function Regulatory() {
               searchPlaceholder="Search reports…"
             />
           </div>
-          <div className={styles.field}>
-            <label htmlFor="report-funding">Funding ID (optional)</label>
-            <ReportMultiSelect
-              id="report-funding"
-              label="Funding IDs"
-              options={eligibleTags.map((tag) => ({
-                value: tag.id,
-                label: tag.awardId || tag.name,
-              }))}
-              selected={funding}
-              onChange={(value) => changed(() => setFunding(value))}
-              placeholder="All funding IDs"
-              searchPlaceholder="Search funding IDs…"
-              disabled={loading || !!tagError}
-            />
-            {tagError && (
-              <p className={styles.fieldError}>
-                Funding tags unavailable.{" "}
-                <button type="button" onClick={() => void reload()}>
-                  Retry
-                </button>
-              </p>
-            )}
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="period-type">Reporting period</label>
-            <Choice
-              id="period-type"
-              value={period}
-              label="Reporting period"
-              options={["Quarter", "Months", "Custom range"]}
-              onChange={(value) =>
-                changed(() => setPeriod(value as ReportingPeriod))
-              }
-            />
-          </div>
-          {period === "Custom range" ? (
-            <>
-              <div className={styles.field}>
-                <label htmlFor="custom-from">Date from</label>
-                <ReportDatePicker
-                  id="custom-from"
-                  label="Date from"
-                  value={from}
-                  onChange={(value) => changed(() => setFrom(value))}
-                />
-              </div>
-              <div className={styles.field}>
-                <label htmlFor="custom-to">Date to</label>
-                <ReportDatePicker
-                  id="custom-to"
-                  label="Date to"
-                  value={to}
-                  min={from}
-                  onChange={(value) => changed(() => setTo(value))}
-                />
-              </div>
-            </>
-          ) : (
-            <div className={styles.field}>
-              <label htmlFor="selected-report-periods">
-                {period === "Quarter" ? "Select quarter(s)" : "Select month(s)"}
-              </label>
-              <ReportMultiSelect
-                id="selected-report-periods"
-                label={
-                  period === "Quarter" ? "Select quarters" : "Select months"
-                }
-                options={periodOptions}
-                selected={selectedPeriods}
-                onChange={(value) =>
-                  changed(() =>
-                    period === "Quarter"
-                      ? setQuarters(value)
-                      : setMonths(value),
-                  )
-                }
-                placeholder={
-                  period === "Quarter" ? "Select quarter(s)" : "Select month(s)"
-                }
-                searchPlaceholder={
-                  period === "Quarter" ? "Search quarters…" : "Search months…"
-                }
-              />
-            </div>
-          )}
           <fieldset className={styles.field}>
             <legend>Export type</legend>
             <div className={styles.formatOptions} aria-label="Export type">

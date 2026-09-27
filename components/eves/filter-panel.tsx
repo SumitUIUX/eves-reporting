@@ -1,13 +1,8 @@
 "use client";
 
-import { useLayoutEffect, useState, type ReactNode } from "react";
-import { SlidersHorizontal, X } from "lucide-react";
+import { type ReactNode } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Sheet,
   SheetContent,
@@ -16,7 +11,6 @@ import {
   SheetDescription,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
 import styles from "./report-filter-control.module.css";
 
 export function FilterPanel({
@@ -24,7 +18,6 @@ export function FilterPanel({
   open,
   onOpenChange,
   activeCount,
-  presentation = "responsive",
   children,
   drawerClassName = "",
 }: {
@@ -32,16 +25,9 @@ export function FilterPanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   activeCount: number;
-  presentation?: "responsive" | "drawer";
   children: ReactNode;
   drawerClassName?: string;
 }) {
-  const isMobile = useIsMobile();
-  const [ready, setReady] = useState(false);
-  useLayoutEffect(() => {
-    setReady(true);
-  }, []);
-  const drawer = presentation === "drawer" || (ready && isMobile);
   const trigger = (
     <Button
       variant="outline"
@@ -58,9 +44,7 @@ export function FilterPanel({
       )}
     </Button>
   );
-  if (presentation !== "drawer" && !ready) return trigger;
-  if (drawer) {
-    return (
+  return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>
         <SheetContent side="right" className={`${styles.mobile} ${drawerClassName}`}>
@@ -72,31 +56,4 @@ export function FilterPanel({
         </SheetContent>
       </Sheet>
     );
-  }
-  return (
-    <Popover open={open} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={8}
-        collisionPadding={12}
-        className={styles.popover}
-        aria-label={title}
-      >
-        <div className={styles.heading}>
-          <h2>{title}</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={styles.close}
-            aria-label="Close filters"
-            onClick={() => onOpenChange(false)}
-          >
-            <X size={16} />
-          </Button>
-        </div>
-        {children}
-      </PopoverContent>
-    </Popover>
-  );
 }

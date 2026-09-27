@@ -54,7 +54,7 @@ export function ReportFilterDrawer({ kind, config, data, applied, defaults, onAp
           options={[{ value: 'all', label: `All ${filter.label.toLowerCase()}` }, ...options.map(option => ({ value: option, label: filter.label.toLowerCase() === 'error status' ? option === 'Yes' ? 'Errored' : 'No errors' : option }))]} className="w-full" />}
     </div>;
   }
-  return <FilterPanel title="Report filters" presentation="drawer" open={open} onOpenChange={updateOpen} activeCount={filterCount(applied, defaults)} drawerClassName={styles.drawer}>
+  return <FilterPanel title="Report filters"  open={open} onOpenChange={updateOpen} activeCount={filterCount(applied, defaults)} drawerClassName={styles.drawer}>
     <form className={styles.form} onSubmit={event => { event.preventDefault(); if (!valid) return; onApply(draft); onOpenChange(false); }}>
       <div className={styles.fields}>
         {fields.filter(f => f.label === 'Site').map(field)}
