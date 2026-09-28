@@ -255,12 +255,13 @@ const revenueTransactionData: ReportDataset = {
 };
 
 export function ReportPage({ kind: initialKind }: { kind: ReportKind }) {
+  const { source } = useDataSource();
   const [view, setView] = useState("summary");
   const kind =
     initialKind === "uptime" && view === "events" ? "events" : initialKind;
   return (
     <ReportView
-      key={kind}
+      key={`${kind}-${source}`}
       kind={kind}
       view={view}
       setView={setView}
@@ -304,7 +305,7 @@ function ReportView({
   );
   const config = reportConfig[kind];
   const performance = isPerformanceReport(kind);
-  const [defaults] = useState(() => performance ? defaultPerformanceFilters(config) : emptyFilters);
+  const [defaults] = useState(() => performance ? defaultPerformanceFilters(config, new Date(), source === "sample" ? data : undefined) : emptyFilters);
   const [filterOpen, setFilterOpen] = useState(false);
   const [applied, setApplied] = useState<ReportFilters>(defaults),
     [search, setSearch] = useState(""),
@@ -358,7 +359,7 @@ function ReportView({
   return (
     <>
       <div className={styles.header}>
-        {performance && <div className="mr-auto min-w-0"><h1 className="text-lg font-semibold">{config.title}</h1><p className="mt-1 text-sm text-muted-foreground">{periodLabel(applied)}</p></div>}
+        {performance && <div className="mr-auto min-w-0"><h1 className="text-lg font-semibold">{config.title}</h1><p className="mt-1 text-sm text-muted-foreground">{periodLabel(applied)}</p>{source === "sample" && config.dateColumn !== undefined && <p className="mt-1 text-xs text-muted-foreground">Sample records: {defaults.from} – {defaults.to}. Reset filters to show all sample records.</p>}</div>}
         <PageActions>
           {performance ? <ReportFilterDrawer key={JSON.stringify(applied)} kind={kind} config={config} data={data} applied={applied} defaults={defaults} onApply={apply} open={filterOpen} onOpenChange={setFilterOpen} /> : <ReportFilterControl
             kind={kind}

@@ -1,5 +1,5 @@
 import type { ReportDataset, ReportKind } from './types';
-import type { ReportConfig, ReportFilters } from './report-config';
+import { isoDate, type ReportConfig, type ReportFilters } from './report-config';
 
 export const performanceKinds = ['chargingPerformance', 'sitePerformance', 'chargerPerformance', 'energyDemand', 'tenantUptime'] as const;
 export function isPerformanceReport(kind: ReportKind) {
@@ -29,8 +29,16 @@ export function presetRange(preset: string, now = new Date()) {
   }
   return { from: dateKey(from), to: dateKey(to) };
 }
-export function defaultPerformanceFilters(config: ReportConfig, now = new Date()): ReportFilters {
-  return { values: {}, errors: false, from: '', to: '', ...(config.dateColumn !== undefined ? { ...presetRange('last7', now), preset: 'last7' } : {}) };
+export function defaultPerformanceFilters(config: ReportConfig, now = new Date(), sample?: ReportDataset): ReportFilters {
+  const defaults: ReportFilters = { values: {}, errors: false, from: '', to: '', ...(config.dateColumn !== undefined ? { ...presetRange('last7', now), preset: 'last7' } : {}) };
+  // Static demo snapshots should remain useful as the calendar advances.
+  // Live/workspace defaults and explicitly selected presets still use real dates.
+  if (sample && config.dateColumn !== undefined) {
+    const dates = sample.rows.map(row => isoDate(row[config.dateColumn!], config.dateStyle))
+      .filter(value => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value))).sort();
+    if (dates.length) return { ...defaults, from: dates[0], to: dates[dates.length - 1], preset: 'custom' };
+  }
+  return defaults;
 }
 export function dateRangeError(filters: ReportFilters) {
   if (!filters.from || !filters.to) return 'Select both a From and To date.';

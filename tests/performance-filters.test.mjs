@@ -59,3 +59,19 @@ test('charts group hourly, daily, weekly, or monthly without losing year context
   assert.equal(f.timeBucket(t, '2026-08-01', '2026-09-07'), '2026-09-07');
   assert.equal(f.timeBucket(t, '2026-01-01', '2026-09-07'), '2026-09');
 });
+
+ test('sample defaults retain all Charging and Energy records regardless of the current date', async () => {
+  const { default: energy } = await vite.ssrLoadModule('/data/energy-demand.json');
+  const energyData = { headers: [], rows: energy.map(r => [r.site_name, r.site_id, r.evse_id, String(r.port_id), r.interval_id, r.interval_start_datetime, r.interval_end_datetime, String(r.energy_delivered_kwh), String(r.peak_demand_kw), String(r.average_demand_kw), r.interval_duration, String(r.utilization_percent)]) };
+  for (const [kind, data] of [['chargingPerformance', sessionData], ['energyDemand', energyData]]) {
+    const config = reportConfig[kind];
+    const defaults = f.defaultPerformanceFilters(config, new Date('2030-01-01'), data);
+    assert.equal(defaults.preset, 'custom');
+    const rows = filterRows(data, config, defaults);
+    assert.equal(rows.length, data.rows.length);
+    assert.ok(rows.length > 0);
+    assert.ok(metricsFor(kind, rows).length > 0);
+    assert.equal(filterRows(data, config, { ...defaults, from: '2030-01-01', to: '2030-01-02' }).length, 0);
+    assert.equal(f.defaultPerformanceFilters(config, new Date('2030-01-01')).preset, 'last7');
+  }
+});
