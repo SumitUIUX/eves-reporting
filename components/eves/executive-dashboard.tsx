@@ -9,7 +9,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   BatteryCharging,
-  CalendarDays,
   Clock3,
   DollarSign,
   Gauge,
@@ -30,7 +29,6 @@ import {
 } from "recharts";
 
 import { DataEmpty, DataError } from "@/components/eves/shared";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -309,20 +307,6 @@ function DashboardContent({
               </div>
             </form>
           </FilterPanel>
-          <Badge variant="outline" className="h-10 gap-2 rounded-md px-3 font-normal">
-            <CalendarDays className="size-4 text-muted-foreground" />
-            {date(applied.from, {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-            {" – "}
-            {date(applied.to, {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </Badge>
           <Button variant="outline" onClick={refresh} disabled={refreshing}>
             <RefreshCw
               className={`size-4 ${refreshing ? "animate-spin" : ""}`}
