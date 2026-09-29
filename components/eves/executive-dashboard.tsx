@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -155,6 +155,31 @@ function PanelLink({ href, label = "View report" }: { href: string; label?: stri
         <ArrowRight className="size-3.5" aria-hidden="true" />
       </Link>
     </Button>
+  );
+}
+
+function AttentionCard({ title, description, count, icon: Icon, href, children }: {
+  title: string;
+  description: string;
+  count: number;
+  icon: LucideIcon;
+  href?: string;
+  children: ReactNode;
+}) {
+  const badgeClass = "grid h-8 min-w-8 shrink-0 place-items-center rounded-full border border-primary/15 bg-primary/10 px-2 text-sm font-semibold tabular-nums text-primary";
+  return (
+    <Card className="h-full gap-0 overflow-hidden py-0 shadow-none">
+      <div className="flex items-start gap-3 border-b bg-muted/20 px-5 py-5">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/5 text-primary"><Icon className="size-5" aria-hidden="true" /></span>
+        <div className="min-w-0 flex-1">
+          <CardTitle className="text-base leading-6">{title}</CardTitle>
+          <CardDescription className="mt-1 text-xs leading-5">{description}</CardDescription>
+        </div>
+        {href ? <Link href={href} className={`${badgeClass} transition-colors hover:bg-primary/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`} aria-label={`${count} ${title.toLowerCase()}; view report`}>{count}</Link> : <span className={badgeClass} aria-label={`${count} ${title.toLowerCase()}`}>{count}</span>}
+      </div>
+      <CardContent className="flex-1 divide-y px-5">{children}</CardContent>
+      {href && <div className="flex justify-start border-t bg-muted/10 px-5 py-4"><PanelLink href={href} /></div>}
+    </Card>
   );
 }
 
@@ -533,38 +558,9 @@ function DashboardContent({
             description="Areas that may need operational follow-up."
           />
         </div>
-        <div className="grid gap-4 xl:grid-cols-3">
-          <Card className="gap-3 py-5 shadow-none">
-            <CardHeader className="px-5">
-              <div className="flex items-center gap-2">
-                <span className="grid size-8 place-items-center rounded-lg bg-destructive/8 text-destructive">
-                  <AlertTriangle className="size-4" aria-hidden="true" />
-                </span>
-                <div>
-                  <CardTitle className="text-base">Chargers below SLA</CardTitle>
-                  <CardDescription>
-                    {alerts.chargers_below_sla.sla_threshold_percent}% minimum · Last 7 days
-                  </CardDescription>
-                </div>
-              </div>
-              <CardAction>
-                {reportEnabled("tenant-uptime-reliability") ? (
-                  <Badge variant="destructive" asChild>
-                    <Link
-                      href="/reports/tenant-uptime-reliability"
-                      aria-label={`${alerts.chargers_below_sla.count} chargers below SLA; view report`}
-                    >
-                      {alerts.chargers_below_sla.count}
-                    </Link>
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">
-                    {alerts.chargers_below_sla.count}
-                  </Badge>
-                )}
-              </CardAction>
-            </CardHeader>
-            <CardContent className="divide-y px-5">
+        <div className="grid items-stretch gap-4 xl:grid-cols-3">
+          <AttentionCard title="Chargers below SLA" description={`${alerts.chargers_below_sla.sla_threshold_percent}% minimum · Last 7 days`} count={alerts.chargers_below_sla.count} icon={AlertTriangle} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
+
               {alerts.chargers_below_sla.chargers.map((charger) => (
                 <div key={charger.evse_id} className="space-y-2 py-4">
                   <div className="min-w-0">
@@ -595,47 +591,14 @@ function DashboardContent({
                   </div>
                 </div>
               ))}
-              {reportEnabled("tenant-uptime-reliability") && (
-                <div className="flex justify-center pt-3">
-                  <PanelLink href="/reports/tenant-uptime-reliability" />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          </AttentionCard>
 
-          <Card className="gap-3 py-5 shadow-none">
-            <CardHeader className="px-5">
-              <div className="flex items-center gap-2">
-                <span className="grid size-8 place-items-center rounded-lg bg-amber-500/10 text-amber-700">
-                  <TrendingDown className="size-4" aria-hidden="true" />
-                </span>
-                <div>
-                  <CardTitle className="text-base">Declining utilization</CardTitle>
-                  <CardDescription>Current vs previous week</CardDescription>
-                </div>
-              </div>
-              <CardAction>
-                {reportEnabled("site-performance") ? (
-                  <Badge variant="outline" asChild>
-                    <Link
-                      href="/reports/site-performance"
-                      aria-label={`${alerts.sites_with_declining_utilization.count} sites with declining utilization; view report`}
-                    >
-                      {alerts.sites_with_declining_utilization.count}
-                    </Link>
-                  </Badge>
-                ) : (
-                  <Badge variant="outline">
-                    {alerts.sites_with_declining_utilization.count}
-                  </Badge>
-                )}
-              </CardAction>
-            </CardHeader>
-            <CardContent className="divide-y px-5">
+          <AttentionCard title="Declining utilization" description={"Current vs previous week"} count={alerts.sites_with_declining_utilization.count} icon={TrendingDown} href={reportEnabled("site-performance") ? "/reports/site-performance" : undefined}>
+
               {alerts.sites_with_declining_utilization.sites.map((site) => (
-                <div key={site.site_id} className="flex items-center justify-between gap-3 py-3">
+                <div key={site.site_id} className="flex items-center justify-between gap-3 py-4">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{site.site_name}</p>
+                    <p className="text-sm font-medium leading-5">{site.site_name}</p>
                     <p className="text-xs tabular-nums text-muted-foreground">
                       {site.current_utilization_percent.toFixed(1)}% current ·{" "}
                       {site.previous_period_utilization_percent.toFixed(1)}% previous
@@ -646,50 +609,19 @@ function DashboardContent({
                   </span>
                 </div>
               ))}
-              {reportEnabled("site-performance") && (
-                <div className="pt-3">
-                  <PanelLink href="/reports/site-performance" />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          </AttentionCard>
 
-          <Card className="gap-3 py-5 shadow-none">
-            <CardHeader className="px-5">
-              <div className="flex items-center gap-2">
-                <span className="grid size-8 place-items-center rounded-lg bg-destructive/8 text-destructive">
-                  <Clock3 className="size-4" aria-hidden="true" />
-                </span>
-                <div>
-                  <CardTitle className="text-base">High downtime</CardTitle>
-                  <CardDescription>Longest downtime durations</CardDescription>
-                </div>
-              </div>
-              <CardAction>
-                {reportEnabled("tenant-uptime-reliability") ? (
-                  <Badge variant="destructive" asChild>
-                    <Link
-                      href="/reports/tenant-uptime-reliability"
-                      aria-label={`${alerts.high_downtime.count} high downtime events; view report`}
-                    >
-                      {alerts.high_downtime.count}
-                    </Link>
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">{alerts.high_downtime.count}</Badge>
-                )}
-              </CardAction>
-            </CardHeader>
-            <CardContent className="divide-y px-5">
+          <AttentionCard title="High downtime" description={"Longest downtime durations"} count={alerts.high_downtime.count} icon={Clock3} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
+
               {alerts.high_downtime.events.map((event) => (
-                <div key={event.evse_id} className="py-3">
+                <div key={event.evse_id} className="py-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-medium">{event.evse_id}</p>
                     <span className="text-sm font-semibold tabular-nums text-destructive">
                       {event.downtime_duration}
                     </span>
                   </div>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {event.site_name}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -697,13 +629,8 @@ function DashboardContent({
                   </p>
                 </div>
               ))}
-              {reportEnabled("tenant-uptime-reliability") && (
-                <div className="pt-3">
-                  <PanelLink href="/reports/tenant-uptime-reliability" />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          </AttentionCard>
+
         </div>
       </section>
       </>}
