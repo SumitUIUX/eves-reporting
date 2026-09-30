@@ -1,6 +1,7 @@
 import type { ReportDataset } from "./types";
 // Neutralize formula interpretation when opening a CSV in a spreadsheet application.
 export function csvCell(value: string) {
+  value = String(value ?? "");
   const safe = /^[\t\r\n]|^\s*[=+@]|^\s*-(?!\d+(?:\.\d+)?\s*$)/.test(value)
     ? `'${value}`
     : value;

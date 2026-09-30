@@ -18,3 +18,13 @@ test('empty or unsupported data never invents affected sites', () => {
   assert.deepEqual(unmappedFundingSites([], [tag]), []);
   assert.deepEqual(unmappedFundingSites([{ headers: ['Other'], rows: [['x']] }], [tag]), []);
 });
+
+test('real session snapshot values serialize into Excel and CSV exports', async () => {
+  const { default: snapshots } = await vite.ssrLoadModule('/data/reference-reports.json');
+  const { createWorkbook } = await vite.ssrLoadModule('/lib/eves/xlsx.ts');
+  const { csvText } = await vite.ssrLoadModule('/lib/eves/export.ts');
+  const bytes = createWorkbook([{ name: 'Sessions', data: snapshots.sessions }]);
+  assert.ok(bytes.length > 100);
+  assert.equal(bytes[0], 0x50);
+  assert.match(csvText(snapshots.sessions), /"false"/);
+});

@@ -2,7 +2,7 @@ import type { ReportDataset } from "./types";
 import { downloadBlob } from "./export";
 const encoder = new TextEncoder();
 const xml = (v: string) =>
-  v
+  String(v ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
