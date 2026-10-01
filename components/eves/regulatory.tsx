@@ -37,8 +37,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTenant } from "./tenant-context";
 import { ExportHistory } from "./export-history";
 import { saveExport } from "@/lib/eves/export-history";
-import { unmappedFundingSites } from "@/lib/eves/funding-coverage";
-import { FundingMappingAlert } from "./funding-mapping-alert";
 const definitions: Record<
   string,
   { name: string; kind: ReportKind; excluded?: boolean }[]
@@ -81,7 +79,7 @@ export function Regulatory() {
     [emailOpen, setEmailOpen] = useState(false),
     [error, setError] = useState(""),
     [lastExport, setLastExport] = useState("");
-  const { active, tenantView } = useTenant();
+  const { active } = useTenant();
   const [tab, setTab] = useState("reports");
   const [historyRevision, setHistoryRevision] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -128,7 +126,7 @@ export function Regulatory() {
     setError("");
     setLastExport("");
   }
-  function buildReport(report: (typeof reports)[number], ignoreFunding = false) {
+  function buildReport(report: (typeof reports)[number]) {
     const snapshot =
       datasets[report.kind as keyof typeof datasets] as ReportDataset;
     const data =
@@ -141,7 +139,7 @@ export function Regulatory() {
     );
     const rows = data.rows.filter((row) => {
       if (report.excluded && row[0] !== "Excluded") return false;
-      if (funding.length && !ignoreFunding) {
+      if (funding.length) {
         const siteIndex =
           report.kind === "sessions" || report.kind === "events" ? 1 : 0;
         const chosen = tags.filter((t) => funding.includes(t.id));
@@ -172,8 +170,6 @@ export function Regulatory() {
     .map(report => buildReport(report));
   const rowCount = prepared.reduce((n, s) => n + s.data.rows.length, 0);
   const historyScope = `${source}:${active.id}`;
-  const canManageTags = !tenantView || (!!active.components["Reports/Analytics"] && !!active.reports["project-tagging"]);
-  const affectedSites = unmappedFundingSites(reports.filter(report => selected.includes(report.name)).map(report => buildReport(report, true).data), eligibleTags);
   const deliveryLabel = !delivery.valid ? "Choose a valid period" : delivery.delivery === "email" ? "Email required · service not connected" : "Direct download";
   async function generate() {
     setError("");
@@ -367,7 +363,6 @@ export function Regulatory() {
           </form>
         </FilterPanel>
       </div>
-      {tagError ? <div role="alert" className="mb-5 rounded-xl border p-5"><h2 className="font-semibold">Funding mappings unavailable</h2><p className="mt-1 text-sm text-muted-foreground">We could not check funding coverage. Reload project tags before generating a funding-scoped report.</p><Button className="mt-3" variant="outline" onClick={() => void reload()}>Retry mapping check</Button></div> : !loading && delivery.valid && <FundingMappingAlert sites={affectedSites} agency={agency} canManage={canManageTags} />}
       <section className={styles.builder} aria-label="Build your report">
         <div className={styles.fields}>
           <div className={styles.field}>
