@@ -136,8 +136,17 @@ test('Revenue uses custom sample coverage and inclusive transaction date filteri
   const defaults = f.defaultPerformanceFilters(config, new Date('2030-01-01'), data);
   assert.equal(defaults.preset, 'custom');
   assert.equal(filterRows(data, config, defaults).length, records.length);
-  const oneDay = filterRows(data, config, { ...defaults, to: defaults.from });
+  const oneDay = filterRows(data, config, { ...defaults, from: "2026-09-10", to: "2026-09-10" });
   assert.ok(oneDay.length > 0);
-  assert.ok(oneDay.every(row => row[5].startsWith(defaults.from)));
+  assert.ok(oneDay.every(row => row[5].startsWith("2026-09-10")));
   assert.equal(filterRows(data, config, { ...defaults, from: '2030-01-01', to: '2030-01-02' }).length, 0);
+});
+
+ test('every report shares the September custom default regardless of source or current date', () => {
+  for (const config of Object.values(reportConfig)) {
+    const defaults = f.defaultPerformanceFilters(config, new Date('2030-01-01'), { headers: [], rows: [] });
+    assert.equal(defaults.from, '2026-09-01');
+    assert.equal(defaults.to, '2026-09-30');
+    assert.equal(defaults.preset, 'custom');
+  }
 });

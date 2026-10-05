@@ -66,7 +66,7 @@ export function Regulatory() {
     [quarters, setQuarters] = useState<string[]>(["2026-Q3"]),
     [selectedMonths, setMonths] = useState<string[]>(["2026-09"]),
     [from, setFrom] = useState("2026-09-01"),
-    [to, setTo] = useState("2026-09-07"),
+    [to, setTo] = useState("2026-09-30"),
     [format, setFormat] = useState("xlsx"),
     [busy, setBusy] = useState(false),
     [emailOpen, setEmailOpen] = useState(false),

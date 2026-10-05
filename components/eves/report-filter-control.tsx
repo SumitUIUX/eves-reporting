@@ -8,7 +8,7 @@ import { dateRangeError } from "@/lib/eves/performance-filters";
 import { Switch } from "@/components/ui/switch";
 import { FilterPanel } from "./filter-panel";
 import {
-  emptyFilters,
+  defaultReportFilters as emptyFilters,
   type ReportConfig,
   type ReportFilters,
 } from "@/lib/eves/report-config";

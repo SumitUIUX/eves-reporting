@@ -49,7 +49,7 @@ import { defaultPerformanceFilters, isPerformanceReport, changeFilter } from "@/
 import { ReportFilterControl } from "./report-filter-control";
 import {
   reportConfig,
-  emptyFilters,
+  defaultReportFilters as emptyFilters,
   filterRows,
   metricsFor,
   num,

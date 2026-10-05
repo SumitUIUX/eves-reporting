@@ -238,6 +238,8 @@ export interface ReportFilters {
   timeOfDay?: string;
   dayOfWeek?: string;
 }
+export const defaultReportRange = { from: "2026-09-01", to: "2026-09-30", preset: "custom" } as const;
+export const defaultReportFilters: ReportFilters = { values: {}, errors: false, ...defaultReportRange };
 export const emptyFilters: ReportFilters = {
   values: {},
   from: "",

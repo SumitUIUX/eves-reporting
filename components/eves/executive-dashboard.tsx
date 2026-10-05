@@ -54,6 +54,7 @@ import { useTenant } from "@/components/eves/tenant-context";
 import { FilterPanel } from "./filter-panel";
 import { DateRangeFilter } from "./report-filter-drawer";
 import { ReportEntitySelector } from "./report-entity-selector";
+import { defaultReportRange } from "@/lib/eves/report-config";
 import { dateRangeError } from "@/lib/eves/performance-filters";
 import type { ReportFilters } from "@/lib/eves/report-config";
 import filterStyles from "./report-filter-control.module.css";
@@ -244,7 +245,7 @@ function DashboardContent({
   refreshing: boolean;
   refresh: () => void;
 }) {
-  const defaults: ReportFilters = { values: {}, from: data.dashboard_period.start_date, to: data.dashboard_period.end_date, errors: false, preset: "custom" };
+  const defaults: ReportFilters = { values: {}, errors: false, ...defaultReportRange };
   const [applied, setApplied] = useState(defaults);
   const [draft, setDraft] = useState(defaults);
   const [filtersOpen, setFiltersOpen] = useState(false);
