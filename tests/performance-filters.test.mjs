@@ -43,13 +43,17 @@ test('time of day and weekday filter actual UTC interval starts', () => {
   const filtered = filterRows(data, config, { ...scope, from: '2026-09-07', to: '2026-09-08', timeOfDay: 'Morning', dayOfWeek: '1' });
   assert.deepEqual(filtered, [['2026-09-07T08:00:00Z']]);
 });
-test('date is one active filter and defaults do not count; unsupported snapshots remain undated', () => {
+test('date is one active filter and every Performance drawer defaults to custom range', () => {
   const defaults = f.defaultPerformanceFilters(reportConfig.chargingPerformance, new Date('2026-09-25'));
   assert.equal(f.filterCount(defaults, defaults), 0);
   assert.equal(f.filterCount({ ...scope, values: { 0: ['A','B'] } }, defaults), 2);
   const undated = f.defaultPerformanceFilters(reportConfig.tenantUptime);
-  assert.equal(undated.from, '');
-  assert.match(f.periodLabel(undated), /unavailable/);
+  assert.equal(undated.preset, 'custom');
+  assert.equal(f.dateRangeError(undated), '');
+  for (const kind of ['sitePerformance', 'chargerPerformance', 'tenantUptime', 'revenueTransaction']) {
+    assert.equal(f.isPerformanceReport(kind), true);
+    assert.equal(f.defaultPerformanceFilters(reportConfig[kind]).preset, 'custom');
+  }
   assert.equal(reportConfig.energyDemand.filters.some(x => x.label === 'EVSE'), false);
 });
 test('charts group hourly, daily, weekly, or monthly without losing year context', () => {
@@ -72,7 +76,7 @@ test('charts group hourly, daily, weekly, or monthly without losing year context
     assert.ok(rows.length > 0);
     assert.ok(metricsFor(kind, rows).length > 0);
     assert.equal(filterRows(data, config, { ...defaults, from: '2030-01-01', to: '2030-01-02' }).length, 0);
-    assert.equal(f.defaultPerformanceFilters(config, new Date('2030-01-01')).preset, 'last7');
+    assert.equal(f.defaultPerformanceFilters(config, new Date('2030-01-01')).preset, 'custom');
   }
 });
 
@@ -123,4 +127,17 @@ test('executive site filtering retains every dashboard section with scoped sessi
   assert.equal(empty.charging.sessions.value,0);
   assert.equal(empty.business.revenue_trend.length,0);
   assert.ok(empty.infrastructure && empty.alerts_attention_required);
+});
+
+test('Revenue uses custom sample coverage and inclusive transaction date filtering', async () => {
+  const { default: records } = await vite.ssrLoadModule('/data/revenue-transaction.json');
+  const data = { headers: [], rows: records.map(r => [r.site_name, r.site_id, r.evse_id, String(r.port_id), r.session_id, r.session_start_datetime]) };
+  const config = reportConfig.revenueTransaction;
+  const defaults = f.defaultPerformanceFilters(config, new Date('2030-01-01'), data);
+  assert.equal(defaults.preset, 'custom');
+  assert.equal(filterRows(data, config, defaults).length, records.length);
+  const oneDay = filterRows(data, config, { ...defaults, to: defaults.from });
+  assert.ok(oneDay.length > 0);
+  assert.ok(oneDay.every(row => row[5].startsWith(defaults.from)));
+  assert.equal(filterRows(data, config, { ...defaults, from: '2030-01-01', to: '2030-01-02' }).length, 0);
 });

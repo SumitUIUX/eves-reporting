@@ -34,7 +34,7 @@ export function ReportFilterDrawer({ kind, config, data, applied, defaults, onAp
 }) {
   const [draft, setDraft] = useState(applied);
   const id = useId();
-  const valid = config.dateColumn === undefined || !dateRangeError(draft);
+  const valid = !dateRangeError(draft);
   const updateOpen = (next: boolean) => { if (next) setDraft(applied); onOpenChange(next); };
   // Mount anew when opened externally (e.g. the empty-state action).
   const fields = config.filters;
@@ -54,7 +54,8 @@ export function ReportFilterDrawer({ kind, config, data, applied, defaults, onAp
     <form className={styles.form} onSubmit={event => { event.preventDefault(); if (!valid) return; onApply(draft); onOpenChange(false); }}>
       <div className={styles.fields}>
         {fields.filter(f => f.label === 'Site').map(field)}
-        {config.dateColumn !== undefined && <DateRangeFilter value={draft} onChange={setDraft} />}
+        <DateRangeFilter value={draft} onChange={setDraft} />
+        {config.dateColumn === undefined && <p className="col-span-full text-sm text-muted-foreground" role="note">Snapshot data; date range does not change these results.</p>}
         {fields.filter(f => f.label !== 'Site').map(field)}
         {kind === 'energyDemand' && <>
           <div className={styles.field}><label htmlFor={`${id}-time`}>Time of Day (UTC)</label><Choice id={`${id}-time`} label="Time of Day" value={draft.timeOfDay ?? 'all'} options={[{ value: 'all', label: 'All day' }, 'Morning', 'Afternoon', 'Evening', 'Night']} onChange={timeOfDay => setDraft(v => ({ ...v, timeOfDay }))} className="w-full" /></div>

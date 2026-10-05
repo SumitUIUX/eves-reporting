@@ -1,7 +1,7 @@
 import type { ReportDataset, ReportKind } from './types';
 import { isoDate, type ReportConfig, type ReportFilters } from './report-config';
 
-export const performanceKinds = ['chargingPerformance', 'sitePerformance', 'chargerPerformance', 'energyDemand', 'tenantUptime'] as const;
+export const performanceKinds = ['chargingPerformance', 'sitePerformance', 'chargerPerformance', 'energyDemand', 'tenantUptime', 'revenueTransaction'] as const;
 export function isPerformanceReport(kind: ReportKind) {
   return (performanceKinds as readonly string[]).includes(kind);
 }
@@ -30,7 +30,7 @@ export function presetRange(preset: string, now = new Date()) {
   return { from: dateKey(from), to: dateKey(to) };
 }
 export function defaultPerformanceFilters(config: ReportConfig, now = new Date(), sample?: ReportDataset): ReportFilters {
-  const defaults: ReportFilters = { values: {}, errors: false, from: '', to: '', ...(config.dateColumn !== undefined ? { ...presetRange('last7', now), preset: 'last7' } : {}) };
+  const defaults: ReportFilters = { values: {}, errors: false, ...presetRange('last7', now), preset: 'custom' };
   // Static demo snapshots should remain useful as the calendar advances.
   // Live/workspace defaults and explicitly selected presets still use real dates.
   if (sample && config.dateColumn !== undefined) {
