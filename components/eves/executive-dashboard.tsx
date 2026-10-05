@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { executiveSites, filterExecutiveDashboard } from "@/lib/eves/dashboard-filters";
+import { Children, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -82,6 +83,7 @@ function date(value: string, options?: Intl.DateTimeFormatOptions) {
 }
 
 function Trend({ value }: { value: number }) {
+  if (!Number.isFinite(value)) return null;
   const rising = value >= 0;
   const Icon = rising ? ArrowUpRight : ArrowDownRight;
   return (
@@ -115,7 +117,7 @@ function MetricCard({
         <div className="space-y-2">
           <CardDescription>{label}</CardDescription>
           <CardTitle className="text-2xl tracking-tight tabular-nums">
-            {value}
+            {metric.available === false ? "—" : value}
           </CardTitle>
         </div>
         <span className="grid size-9 place-items-center rounded-lg bg-primary/8 text-primary">
@@ -123,7 +125,7 @@ function MetricCard({
         </span>
       </CardHeader>
       <CardContent className="flex items-center justify-between gap-3 px-5 text-xs">
-        <span className="text-muted-foreground">{previous}</span>
+        <span className="text-muted-foreground">{metric.note ?? (Number.isFinite(metric.change_percent) ? previous : "")}</span>
         <Trend value={metric.change_percent} />
       </CardContent>
     </Card>
@@ -173,7 +175,7 @@ function AttentionCard({ title, description, count, icon: Icon, href, children }
         </div>
         {href ? <Link href={href} className={`${badgeClass} transition-colors hover:bg-primary/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`} aria-label={`${count} ${title.toLowerCase()}; view report`}>{count}</Link> : <span className={badgeClass} aria-label={`${count} ${title.toLowerCase()}`}>{count}</span>}
       </div>
-      <CardContent className="flex-1 divide-y px-5">{children}</CardContent>
+      <CardContent className="flex-1 divide-y px-5">{Children.count(children) ? children : <p className="py-8 text-sm text-muted-foreground">No matching records</p>}</CardContent>
       {href && <div className="flex justify-start border-t bg-muted/10 px-5 py-4"><PanelLink href={href} /></div>}
     </Card>
   );
@@ -248,20 +250,13 @@ function DashboardContent({
   const selectedSites = Array.isArray(applied.values.site) ? applied.values.site : [];
   const fullPeriod = applied.from === defaults.from && applied.to === defaults.to;
   const scoped = selectedSites.length > 0 || !fullPeriod;
-  const sites = [...new Set([
-    ...data.business.top_performing_sites.map(s => s.site_name),
-    ...data.business.underperforming_sites.map(s => s.site_name),
-    ...data.alerts_attention_required.chargers_below_sla.chargers.map(s => s.site_name),
-    ...data.alerts_attention_required.sites_with_declining_utilization.sites.map(s => s.site_name),
-    ...data.alerts_attention_required.high_downtime.events.map(s => s.site_name),
-  ])].sort();
-  const matchingSites = [...data.business.top_performing_sites, ...data.business.underperforming_sites].filter(site => !selectedSites.length || selectedSites.includes(site.site_name));
-  const scopedRevenue = data.business.revenue_trend.filter(point => point.date >= applied.from && point.date <= applied.to);
+  const sites = executiveSites;
+  const filteredData = useMemo(() => filterExecutiveDashboard(data, applied), [data, applied]);
   const { active } = useTenant();
   const reportEnabled = (reportId: string) =>
     !!active.components["Reports/Analytics"] && !!active.reports[reportId];
   const { charging, infrastructure, business, alerts_attention_required: alerts } =
-    data;
+    filteredData;
   const topSites = useMemo(
     () =>
       [...business.top_performing_sites]
@@ -288,7 +283,7 @@ function DashboardContent({
   return (
     <div className="space-y-9">
       <header className="flex flex-wrap items-center justify-between gap-4">
-        <h2 id="charging-heading" className="text-base font-semibold">{scoped ? "Executive Overview" : "Charging"}</h2>
+        <h2 id="charging-heading" className="text-base font-semibold">Charging</h2>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <FilterPanel title="Report filters" open={filtersOpen} onOpenChange={open => { if (open) setDraft(applied); setFiltersOpen(open); }} activeCount={Number(selectedSites.length > 0) + Number(!fullPeriod)}>
             <form className={filterStyles.form} onSubmit={event => { event.preventDefault(); if (dateRangeError(draft)) return; setApplied(draft); setFiltersOpen(false); }}>
@@ -315,12 +310,6 @@ function DashboardContent({
         </div>
       </header>
 
-      {scoped ? <div className="space-y-4">
-        <p role="status" className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">{selectedSites.length ? selectedSites.join(", ") : "All sites"} · Network KPIs and comparisons are unavailable for this scope in the current aggregate snapshot.</p>
-        {fullPeriod && matchingSites.length > 0 && <Card className="shadow-none"><CardHeader><CardTitle>Selected site summaries</CardTitle></CardHeader><CardContent>{matchingSites.map((site, index) => <SiteRow key={site.site_id} site={site} rank={index + 1} />)}</CardContent></Card>}
-        {!selectedSites.length && scopedRevenue.length > 0 && <Card className="shadow-none"><CardHeader><CardTitle>Revenue</CardTitle></CardHeader><CardContent><ChartContainer config={{ revenue: { label: "Revenue", color: "var(--chart-1)" } }} className="h-64 w-full"><AreaChart data={scopedRevenue}><CartesianGrid vertical={false} /><XAxis dataKey="date" /><YAxis /><Tooltip formatter={value => currency.format(Number(value))} /><Area dataKey="revenue" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.15} /></AreaChart></ChartContainer></CardContent></Card>}
-        {((selectedSites.length > 0 && (!fullPeriod || !matchingSites.length)) || (!selectedSites.length && !scopedRevenue.length)) && <DataEmpty><p>No data available for the selected filters.</p></DataEmpty>}
-      </div> : <>
       <section aria-labelledby="charging-heading" className="!mt-4 space-y-4">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
@@ -412,7 +401,7 @@ function DashboardContent({
               )}
             </CardHeader>
             <CardContent className="px-3 sm:px-5">
-              <ChartContainer
+              {!trend.length ? <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">No data available for the selected filters.</div> : <ChartContainer
                 config={{ revenue: { label: "Revenue", color: "var(--chart-1)" } }}
                 className="h-[280px] w-full aspect-auto"
               >
@@ -468,7 +457,7 @@ function DashboardContent({
                     activeDot={{ r: 4 }}
                   />
                 </AreaChart>
-              </ChartContainer>
+              </ChartContainer>}
             </CardContent>
           </Card>
 
@@ -483,6 +472,7 @@ function DashboardContent({
               )}
             </CardHeader>
             <CardContent className="divide-y px-5">
+              {!topSites.length && <p className="py-8 text-sm text-muted-foreground">No matching records</p>}
               {topSites.map((site, index) => (
                 <SiteRow key={site.site_id} site={site} rank={index + 1} />
               ))}
@@ -501,6 +491,7 @@ function DashboardContent({
             )}
           </CardHeader>
           <CardContent className="grid gap-3 px-5 md:grid-cols-2 xl:grid-cols-5">
+            {!underperforming.length && <p className="py-8 text-sm text-muted-foreground">No matching sites</p>}
             {underperforming.map((site) => (
               <div key={site.site_id} className="rounded-lg border bg-muted/20 p-4">
                 <p className="truncate text-sm font-medium">{site.site_name}</p>
@@ -535,7 +526,7 @@ function DashboardContent({
           />
         </div>
         <div className="grid items-stretch gap-4 xl:grid-cols-3">
-          <AttentionCard title="Chargers below SLA" description={`${alerts.chargers_below_sla.sla_threshold_percent}% minimum · Last 7 days`} count={alerts.chargers_below_sla.count} icon={AlertTriangle} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
+          <AttentionCard title="Chargers below SLA" description={`${alerts.chargers_below_sla.sla_threshold_percent}% minimum · ${scoped ? "Asset snapshot" : "Last 7 days"}`} count={alerts.chargers_below_sla.count} icon={AlertTriangle} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
 
               {alerts.chargers_below_sla.chargers.map((charger) => (
                 <div key={charger.evse_id} className="space-y-2 py-4">
@@ -569,7 +560,7 @@ function DashboardContent({
               ))}
           </AttentionCard>
 
-          <AttentionCard title="Declining utilization" description={"Current vs previous week"} count={alerts.sites_with_declining_utilization.count} icon={TrendingDown} href={reportEnabled("site-performance") ? "/reports/site-performance" : undefined}>
+          <AttentionCard title="Declining utilization" description={scoped ? "Snapshot comparison" : "Current vs previous week"} count={alerts.sites_with_declining_utilization.count} icon={TrendingDown} href={reportEnabled("site-performance") ? "/reports/site-performance" : undefined}>
 
               {alerts.sites_with_declining_utilization.sites.map((site) => (
                 <div key={site.site_id} className="flex items-center justify-between gap-3 py-4">
@@ -587,7 +578,7 @@ function DashboardContent({
               ))}
           </AttentionCard>
 
-          <AttentionCard title="High downtime" description={"Longest downtime durations"} count={alerts.high_downtime.count} icon={Clock3} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
+          <AttentionCard title="High downtime" description={scoped ? "Asset snapshot" : "Longest downtime durations"} count={alerts.high_downtime.count} icon={Clock3} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
 
               {alerts.high_downtime.events.map((event) => (
                 <div key={event.evse_id} className="py-4">
@@ -609,7 +600,7 @@ function DashboardContent({
 
         </div>
       </section>
-      </>}
+
     </div>
   );
 }

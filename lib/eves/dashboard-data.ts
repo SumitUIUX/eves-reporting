@@ -6,6 +6,8 @@ export type DashboardMetric<T extends number | string = number> = {
   previous_period_value?: T;
   total?: number;
   change_percent: number;
+  note?: string;
+  available?: boolean;
 };
 
 export type DashboardSite = {

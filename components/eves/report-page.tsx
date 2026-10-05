@@ -392,7 +392,7 @@ function ReportView({
       </div>
       {performance && <ActiveFilterChips applied={applied} defaults={defaults} config={config} onChange={apply} />}
       {performance && source !== "sample" ? <div className="panel p-10 text-center" role="alert"><p>Unable to load data.</p><p className="mt-2 text-sm text-muted-foreground">Workspace reporting is not connected.</p><Button className="mt-4" variant="outline" onClick={() => router.refresh()}>Try again</Button></div> : <>
-      {(!performance || rows.length > 0) && <div className="metrics report-metrics">
+      <div className="metrics report-metrics">
         {stats.map((s, i) => (
           <Metric
             key={s.label}
@@ -401,7 +401,7 @@ function ReportView({
             icon={[Activity, Zap, Clock3, Building2][i % 4]}
           />
         ))}
-      </div>}
+      </div>
       {showTabs && (
         <div className="panel-tabs mb-5 rounded-lg border">
           <Tabs value={view} onValueChange={setView}>

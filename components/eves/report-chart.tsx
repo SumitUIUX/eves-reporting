@@ -23,7 +23,8 @@ export function ReportChart({
   rows: string[][];
   period?: ReportFilters;
 }) {
-  if (!rows.length || kind === "throughput" || kind === "events") return null;
+  if (kind === "throughput" || kind === "events") return null;
+  if (!rows.length) return <div className="chart-box"><h2 className="text-sm font-semibold">{kind === "sessions" || kind === "chargingPerformance" ? "Energy delivered over time" : kind === "revenueTransaction" ? "Net revenue over time" : kind === "energyDemand" ? "Average demand over time" : kind === "intervals" ? "Average power by interval" : "Average uptime"}</h2><div className="flex h-[205px] items-center justify-center text-sm text-muted-foreground">No data available for the selected filters.</div></div>;
   const uptimeChart =
     kind === "uptime" ||
     kind === "sitePerformance" ||

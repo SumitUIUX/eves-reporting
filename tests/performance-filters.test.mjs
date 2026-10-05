@@ -99,3 +99,28 @@ test('every report filter targets supplied data and selects the matching rows', 
     }
   }
 });
+
+test('executive site filtering retains every dashboard section with scoped session totals', async () => {
+  const { filterExecutiveDashboard, executiveSites } = await vite.ssrLoadModule('/lib/eves/dashboard-filters.ts');
+  const { default: base } = await vite.ssrLoadModule('/data/report-dashboard.json');
+  const defaults = { ...scope, from: base.dashboard_period.start_date, to: base.dashboard_period.end_date, values: {} };
+  assert.equal(filterExecutiveDashboard(base, defaults), base);
+  for (const site of executiveSites) {
+    const result = filterExecutiveDashboard(base, { ...defaults, values: { site: [site] } });
+    const matching = sessions.filter(r => r.site_name === site);
+    assert.equal(result.charging.sessions.value, matching.length);
+    assert.equal(result.charging.revenue.value, matching.reduce((n,r)=>n+r.total_transaction_amount,0));
+    assert.ok(result.infrastructure && result.business && result.alerts_attention_required);
+    for (const list of [result.business.top_performing_sites,result.business.underperforming_sites,result.alerts_attention_required.chargers_below_sla.chargers,result.alerts_attention_required.high_downtime.events]) assert.ok(list.every(r=>r.site_name === site));
+    assert.ok(Number.isNaN(result.charging.sessions.change_percent), 'Do not invent previous-period comparisons');
+  }
+  const single = filterExecutiveDashboard(base, { ...defaults, from:'2026-09-01',to:'2026-09-01',values:{site:['Downtown EV Charging Hub']} });
+  assert.equal(single.charging.sessions.value,2);
+  assert.equal(single.charging.energy_delivered_kwh.value,93.9);
+  assert.ok(single.business.revenue_trend.every(p=>p.date === '2026-09-01'));
+  assert.equal(single.infrastructure.uptime_percent.note,'Asset snapshot');
+  const empty = filterExecutiveDashboard(base,{...defaults,from:'2030-01-01',to:'2030-01-02'});
+  assert.equal(empty.charging.sessions.value,0);
+  assert.equal(empty.business.revenue_trend.length,0);
+  assert.ok(empty.infrastructure && empty.alerts_attention_required);
+});
