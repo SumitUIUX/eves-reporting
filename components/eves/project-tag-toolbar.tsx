@@ -41,7 +41,7 @@ export function ProjectTagToolbar({
         <SearchInput
           value={filters.search}
           onChange={(search) => onChange({ ...filters, search })}
-          placeholder="Search project name or award ID…"
+          placeholder="search by site name or site ID"
         />
       </div>
       <div className={styles.controls}>

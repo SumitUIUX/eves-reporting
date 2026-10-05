@@ -91,7 +91,7 @@ export function ReportEntitySelector({
           <span className="truncate">
             {selected.length
               ? `${selected.length} ${label.toLowerCase()}${selected.length === 1 ? "" : "s"} selected`
-              : `All ${label.toLowerCase()}${label.endsWith("s") ? "" : "s"}`}
+              : label === "EVSE" ? "All EVSE" : `All ${label.toLowerCase()}${label.endsWith("s") ? "" : "s"}`}
           </span>
           <ChevronDown className="size-4 text-muted-foreground" />
         </Button>
@@ -150,7 +150,7 @@ export function ReportEntitySelector({
                     }
                   />
                 </TableHead>
-                <TableHead>{label}</TableHead>
+                <TableHead>{label === "EVSE" ? "All EVSE" : label}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

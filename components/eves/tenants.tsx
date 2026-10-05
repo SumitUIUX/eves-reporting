@@ -254,7 +254,7 @@ export function Tenants() {
           <SearchInput
             value={query}
             onChange={changeQuery}
-            placeholder="Search tenants…"
+            placeholder="search by site name or site ID"
           />
         </div>
         {rows.length ? (
