@@ -1,5 +1,7 @@
 "use client";
 
+import { RefreshButton } from "./refresh-button";
+
 import Link from "next/link";
 import { executiveSites, filterExecutiveDashboard } from "@/lib/eves/dashboard-filters";
 import { Children, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -14,7 +16,6 @@ import {
   DollarSign,
   Gauge,
   PlugZap,
-  RefreshCw,
   RotateCcw,
   Server,
   TrendingDown,
@@ -300,13 +301,7 @@ function DashboardContent({
               </div>
             </form>
           </FilterPanel>
-          <Button variant="outline" onClick={refresh} disabled={refreshing}>
-            <RefreshCw
-              className={`size-4 ${refreshing ? "animate-spin" : ""}`}
-              aria-hidden="true"
-            />
-            Refresh
-          </Button>
+          <RefreshButton onClick={refresh} refreshing={refreshing} />
         </div>
       </header>
 

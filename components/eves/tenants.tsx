@@ -1,4 +1,6 @@
 "use client";
+
+import { RefreshButton } from "./refresh-button";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -8,7 +10,6 @@ import {
   SlidersHorizontal,
   ExternalLink,
   Trash2,
-  RefreshCw,
   Plus,
   Minus,
   MapPin,
@@ -235,18 +236,14 @@ export function Tenants() {
             <Plus size={16} />
             Create
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Refresh tenants"
+          <RefreshButton
+            label="Refresh tenants"
             onClick={() => {
               refreshTenants();
               if (isSample) toast.success("Tenant records refreshed");
               else toast.error("Workspace tenant API is not connected.");
             }}
-          >
-            <RefreshCw size={16} />
-          </Button>
+          />
         </PageActions>
       </div>
       <section className="panel" aria-label="Tenants">

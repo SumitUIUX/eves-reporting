@@ -1,7 +1,9 @@
 "use client";
 
+import { RefreshButton } from "./refresh-button";
+
 import type { ReactNode } from "react";
-import { Download, RefreshCw, X } from "lucide-react";
+import { Download, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { emptyTagFilters, type TagFilters } from "@/lib/eves/tag-filters";
 import type { ProjectTag } from "@/lib/eves/types";
@@ -100,15 +102,7 @@ export function ProjectTagToolbar({
             ? "Loading…"
             : `${resultCount} ${resultCount === 1 ? "tag" : "tags"}`}
         </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Refresh project tags"
-          onClick={onReload}
-          disabled={loading}
-        >
-          <RefreshCw size={15} />
-        </Button>
+        <RefreshButton label="Refresh project tags" onClick={onReload} refreshing={loading} />
         <Button
           variant="outline"
           disabled={!resultCount || loading}
