@@ -12,14 +12,15 @@ import type { ReportConfig, ReportFilters } from '@/lib/eves/report-config';
 import { changeFilter, dateChanged, datePresets, dateRangeError, dependentOptions, filterCount, periodLabel, presetRange } from '@/lib/eves/performance-filters';
 import styles from './report-filter-drawer.module.css';
 
-export function DateRangeFilter({ value, onChange }: { value: ReportFilters; onChange: (value: ReportFilters) => void }) {
+export function DateRangeFilter({ value, onChange, allowAll = false }: { value: ReportFilters; onChange: (value: ReportFilters) => void; allowAll?: boolean }) {
   const id = useId();
-  const error = dateRangeError(value);
+  const preset = value.preset ?? (allowAll && !value.from && !value.to ? "all" : "custom");
+  const error = allowAll && preset === "all" ? "" : dateRangeError(value);
   return <div className={styles.dateRange}>
     <label htmlFor={`${id}-preset`}>Date Range</label>
-    <Choice id={`${id}-preset`} label="Date Range" value={value.preset ?? 'custom'} options={datePresets}
-      onChange={preset => onChange({ ...value, preset, ...(preset !== 'custom' ? presetRange(preset) : {}) })} className="w-full" />
-    {value.preset === 'custom' && <div className={styles.dates}>
+    <Choice id={`${id}-preset`} label="Date Range" value={preset} options={allowAll ? [{ value: 'all', label: 'All dates' }, ...datePresets] : datePresets}
+      onChange={preset => onChange({ ...value, preset, ...(preset === 'all' ? { from: '', to: '' } : preset !== 'custom' ? presetRange(preset) : {}) })} className="w-full" />
+    {preset === 'custom' && <div className={styles.dates}>
       <div><label htmlFor={`${id}-from`}>From</label><ReportDatePicker id={`${id}-from`} label="From date" value={value.from} onChange={from => onChange({ ...value, from })} /></div>
       <div><label htmlFor={`${id}-to`}>To</label><ReportDatePicker id={`${id}-to`} label="To date" value={value.to} onChange={to => onChange({ ...value, to })} /></div>
     </div>}

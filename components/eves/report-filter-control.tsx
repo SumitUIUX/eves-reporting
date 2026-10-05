@@ -3,7 +3,8 @@
 import { useId, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ReportDatePicker } from "./report-date-picker";
+import { DateRangeFilter } from "./report-filter-drawer";
+import { dateRangeError } from "@/lib/eves/performance-filters";
 import { Switch } from "@/components/ui/switch";
 import { FilterPanel } from "./filter-panel";
 import {
@@ -39,8 +40,7 @@ export function ReportFilterControl({
     Object.values(applied.values).filter((value) =>
       Array.isArray(value) ? value.length > 0 : value !== "all",
     ).length +
-    Number(!!applied.from) +
-    Number(!!applied.to) +
+    Number(!!applied.from || !!applied.to) +
     Number(applied.errors);
 
   function changeOpen(next: boolean) {
@@ -54,8 +54,8 @@ export function ReportFilterControl({
 
   function apply(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (draft.from && draft.to && draft.from > draft.to) {
-      setError("The end date must be on or after the start date.");
+    if (config.dateColumn !== undefined && (draft.from || draft.to || draft.preset === "custom") && dateRangeError(draft)) {
+      setError(dateRangeError(draft));
       return;
     }
     onApply(draft);
@@ -138,41 +138,7 @@ export function ReportFilterControl({
             </div>
           );
         })}
-        {config.dateColumn !== undefined && (
-          <>
-            <div className={styles.field}>
-              <label htmlFor={`${id}-from`}>From date</label>
-              <ReportDatePicker
-                id={`${id}-from`}
-                label="From date"
-                value={draft.from}
-                onChange={(value) => {
-                  setDraft((previous) => ({
-                    ...previous,
-                    from: value,
-                  }));
-                  setError("");
-                }}
-              />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor={`${id}-to`}>To date</label>
-              <ReportDatePicker
-                id={`${id}-to`}
-                label="To date"
-                value={draft.to}
-                min={draft.from || undefined}
-                onChange={(value) => {
-                  setDraft((previous) => ({
-                    ...previous,
-                    to: value,
-                  }));
-                  setError("");
-                }}
-              />
-            </div>
-          </>
-        )}
+        {config.dateColumn !== undefined && <DateRangeFilter value={draft} allowAll onChange={value => { setDraft(value); setError(""); }} />}
         {kind === "sessions" && (
           <label className={styles.errorToggle}>
             <Switch

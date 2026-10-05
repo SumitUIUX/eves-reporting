@@ -298,7 +298,6 @@ function DashboardContent({
                   <ReportEntitySelector id="executive-site" label="Site" options={sites} selected={Array.isArray(draft.values.site) ? draft.values.site : []} onChange={site => setDraft(v => ({ ...v, values: { site } }))} />
                 </div>
                 <DateRangeFilter value={draft} onChange={setDraft} />
-                <p className="col-span-full text-xs text-muted-foreground">Available snapshot: {defaults.from} – {defaults.to}. Site summaries cover this full period. Only network revenue has daily records; scoped network KPIs are unavailable.</p>
               </div>
               <div className={filterStyles.footer}>
                 <Button type="button" variant="ghost" onClick={() => { setDraft(defaults); setApplied(defaults); }}><RotateCcw size={14} />Reset filters</Button>
