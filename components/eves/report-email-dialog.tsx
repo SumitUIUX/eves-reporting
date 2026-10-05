@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useState } from "react";
 import { Mail, CheckCircle2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,22 +11,23 @@ import styles from "./regulatory.module.css";
 const registeredEmail = "sumit@example.com";
 
 // Sample delivery preview: no email is sent and the account email is never changed.
-export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaultName }: {
-  onClose: () => void; agency: string; format: string; periodLabel: string; defaultName: string;
+export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaultName, ranges, selectedReports }: {
+  onClose: () => void; agency: string; format: string; periodLabel: string; defaultName: string; ranges: { from: string; to: string }[]; selectedReports: string[];
 }) {
+  const displayDate = (value: string) => new Date(value + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
   const [name, setName] = useState(defaultName);
   const [email, setEmail] = useState(registeredEmail);
   const [draftEmail, setDraftEmail] = useState(registeredEmail);
   const [editing, setEditing] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   return <Dialog open onOpenChange={open => { if (!open) onClose(); }}>
-    <DialogContent className={styles.emailDialog}>
+    <DialogContent className={`${styles.emailDialog} max-h-[90dvh] overflow-y-auto`}>
       <DialogHeader>
         <DialogTitle>{confirmed ? "Delivery preview" : "Email reports"}</DialogTitle>
         <DialogDescription>{confirmed ? "Review the destination for your report files." : "Choose where to receive all files in this export."}</DialogDescription>
       </DialogHeader>
       <div className={styles.emailSummary}>
-        <strong>{agency}</strong> · {format === "xlsx" ? "Excel" : "CSV"}<br />{periodLabel}
+        Agency: <strong>{agency}</strong> · {format === "xlsx" ? "Excel" : "CSV"}<br />{periodLabel}
       </div>
       {confirmed ? <>
         <div className="rounded-lg border p-4" role="status">
@@ -33,11 +35,20 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
           <p className="font-medium break-words">{name.trim()}</p>
           <p className="mt-2 text-sm text-muted-foreground">Delivery email</p>
           <p className="font-medium break-all">{email}</p>
+          <div className="mt-4 space-y-3 border-t pt-4 text-sm">
+            {ranges.map((range, index) => <dl key={`${range.from}-${range.to}-${index}`} className="grid grid-cols-2 gap-3">
+              <div><dt className="text-muted-foreground">From</dt><dd className="mt-1 font-medium">{displayDate(range.from)}</dd></div>
+              <div><dt className="text-muted-foreground">To</dt><dd className="mt-1 font-medium">{displayDate(range.to)}</dd></div>
+            </dl>)}
+            <div><p className="text-muted-foreground">Selected reports ({selectedReports.length})</p>
+              <ul className="mt-1 list-disc space-y-1 pl-5">{selectedReports.map(report => <li key={report}>{report}</li>)}</ul>
+            </div>
+          </div>
           <p className="mt-3 text-sm text-muted-foreground">Sample preview only. No email has been sent.</p>
         </div>
         <div className={styles.emailActions}>
           <Button variant="outline" onClick={() => setConfirmed(false)}>Back</Button>
-          <Button onClick={onClose}>Done</Button>
+          <Button onClick={() => { toast.info(`Sample delivery to ${email} confirmed. No email was sent.`); onClose(); }}><Mail size={15} />Send</Button>
         </div>
       </> : <>
         <div className={styles.field}>

@@ -445,6 +445,8 @@ export function Regulatory() {
         <ReportEmailDialog
           onClose={() => setEmailOpen(false)}
           agency={agency}
+          ranges={ranges}
+          selectedReports={prepared.map(report => report.name)}
           format={format}
           periodLabel={`${periodLabel} · ${delivery.days} days`}
           defaultName={`${agency}-${period === "Quarter" && quarters.length === 1 ? quarters[0] : period === "Months" && selectedMonths.length === 1 ? selectedMonths[0] : "Custom-Report"}-Regulatory-Report`}
