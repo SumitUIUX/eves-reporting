@@ -245,7 +245,7 @@ export interface ReportFilters {
 /** Calendar boundaries follow the reports' existing UTC timezone. */
 export function defaultReportRange(now = new Date(), dayOffset = 0) {
   const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + dayOffset)).toISOString().slice(0, 10);
-  return { from: date, to: date, preset: "custom" };
+  return { from: "2026-09-01", to: date, preset: "custom" };
 }
 export function defaultReportFilters(config?: ReportConfig, now = new Date()): ReportFilters {
   return { values: {}, errors: false, ...defaultReportRange(now, config?.defaultDayOffset ?? 0) };
