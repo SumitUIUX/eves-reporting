@@ -30,7 +30,7 @@ export function presetRange(preset: string, now = new Date()) {
   return { from: dateKey(from), to: dateKey(to) };
 }
 export function defaultPerformanceFilters(config: ReportConfig, now = new Date(), sample?: ReportDataset): ReportFilters {
-  return { values: {}, errors: false, ...defaultReportRange };
+  return { values: {}, errors: false, ...defaultReportRange(now, config.defaultDayOffset ?? 0) };
 }
 export function dateRangeError(filters: ReportFilters) {
   if (!filters.from || !filters.to) return 'Select both a From and To date.';

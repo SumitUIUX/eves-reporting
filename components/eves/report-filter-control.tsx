@@ -8,7 +8,7 @@ import { dateRangeError } from "@/lib/eves/performance-filters";
 import { Switch } from "@/components/ui/switch";
 import { FilterPanel } from "./filter-panel";
 import {
-  defaultReportFilters as emptyFilters,
+  defaultReportFilters,
   type ReportConfig,
   type ReportFilters,
 } from "@/lib/eves/report-config";
@@ -64,9 +64,9 @@ export function ReportFilterControl({
   }
 
   function reset() {
-    setDraft(emptyFilters);
+    setDraft(defaultReportFilters(config));
     setError("");
-    onApply(emptyFilters);
+    onApply(defaultReportFilters(config));
   }
 
   const form = (

@@ -10,6 +10,7 @@ export interface ReportConfig {
   short: string;
   defaultColumns: number[];
   filters: FilterDefinition[];
+  defaultDayOffset?: number;
   dateColumn?: number;
   dateStyle?: "dmy" | "month";
   numeric: number[];
@@ -69,6 +70,7 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
     numeric: [8, 9, 16, 18, 22, 24, 25, 27, 29],
   },
   uptime: {
+    defaultDayOffset: -1,
     title: "Uptime & reliability",
     description:
       "Monitor availability, identify downtime, and keep your network dependable.",
@@ -83,6 +85,7 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
     chart: "uptime",
   },
   events: {
+    defaultDayOffset: -1,
     title: "Uptime & reliability",
     description:
       "Monitor availability, identify downtime, and keep your network dependable.",
@@ -158,6 +161,7 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
     chart: "power",
   },
   tenantUptime: {
+    defaultDayOffset: -1,
     title: "Uptime & reliability",
     description:
       "Monitor connector uptime, downtime duration, event frequency, and SLA status.",
@@ -238,8 +242,14 @@ export interface ReportFilters {
   timeOfDay?: string;
   dayOfWeek?: string;
 }
-export const defaultReportRange = { from: "2026-09-01", to: "2026-09-30", preset: "custom" } as const;
-export const defaultReportFilters: ReportFilters = { values: {}, errors: false, ...defaultReportRange };
+/** Calendar boundaries follow the reports' existing UTC timezone. */
+export function defaultReportRange(now = new Date(), dayOffset = 0) {
+  const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + dayOffset)).toISOString().slice(0, 10);
+  return { from: date, to: date, preset: "custom" };
+}
+export function defaultReportFilters(config?: ReportConfig, now = new Date()): ReportFilters {
+  return { values: {}, errors: false, ...defaultReportRange(now, config?.defaultDayOffset ?? 0) };
+}
 export const emptyFilters: ReportFilters = {
   values: {},
   from: "",

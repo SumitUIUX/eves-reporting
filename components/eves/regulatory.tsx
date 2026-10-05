@@ -1,4 +1,5 @@
 "use client";
+import { defaultReportRange } from "@/lib/eves/report-config";
 import { useMemo, useState } from "react";
 import {
   Download,
@@ -62,11 +63,11 @@ export function Regulatory() {
   const [agency, setAgency] = useState("CIC"),
     [selected, setSelected] = useState<string[]>(["Charging Sessions"]),
     [funding, setFunding] = useState<string[]>([]),
-    [period, setPeriod] = useState<ReportingPeriod>("Quarter"),
+    [period, setPeriod] = useState<ReportingPeriod>("Custom range"),
     [quarters, setQuarters] = useState<string[]>(["2026-Q3"]),
     [selectedMonths, setMonths] = useState<string[]>(["2026-09"]),
-    [from, setFrom] = useState("2026-09-01"),
-    [to, setTo] = useState("2026-09-30"),
+    [from, setFrom] = useState(() => defaultReportRange().from),
+    [to, setTo] = useState(() => defaultReportRange().to),
     [format, setFormat] = useState("xlsx"),
     [busy, setBusy] = useState(false),
     [emailOpen, setEmailOpen] = useState(false),

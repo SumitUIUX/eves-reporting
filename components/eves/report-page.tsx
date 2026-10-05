@@ -49,7 +49,7 @@ import { defaultPerformanceFilters, isPerformanceReport, changeFilter } from "@/
 import { ReportFilterControl } from "./report-filter-control";
 import {
   reportConfig,
-  defaultReportFilters as emptyFilters,
+  defaultReportFilters,
   filterRows,
   metricsFor,
   num,
@@ -305,7 +305,7 @@ function ReportView({
   );
   const config = reportConfig[kind];
   const performance = isPerformanceReport(kind);
-  const [defaults] = useState(() => performance ? defaultPerformanceFilters(config, new Date(), source === "sample" ? data : undefined) : emptyFilters);
+  const defaults = defaultReportFilters(config);
   const [filterOpen, setFilterOpen] = useState(false);
   const [applied, setApplied] = useState<ReportFilters>(defaults),
     [search, setSearch] = useState(""),

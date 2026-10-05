@@ -245,7 +245,7 @@ function DashboardContent({
   refreshing: boolean;
   refresh: () => void;
 }) {
-  const defaults: ReportFilters = { values: {}, errors: false, ...defaultReportRange };
+  const defaults: ReportFilters = { values: {}, errors: false, ...defaultReportRange() };
   const [applied, setApplied] = useState(defaults);
   const [draft, setDraft] = useState(defaults);
   const [filtersOpen, setFiltersOpen] = useState(false);

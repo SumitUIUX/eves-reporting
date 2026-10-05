@@ -64,7 +64,7 @@ test('charts group hourly, daily, weekly, or monthly without losing year context
   assert.equal(f.timeBucket(t, '2026-01-01', '2026-09-07'), '2026-09');
 });
 
- test('sample defaults retain all Charging and Energy records regardless of the current date', async () => {
+ test('sample defaults use today even when sample records are historical', async () => {
   const { default: energy } = await vite.ssrLoadModule('/data/energy-demand.json');
   const energyData = { headers: [], rows: energy.map(r => [r.site_name, r.site_id, r.evse_id, String(r.port_id), r.interval_id, r.interval_start_datetime, r.interval_end_datetime, String(r.energy_delivered_kwh), String(r.peak_demand_kw), String(r.average_demand_kw), r.interval_duration, String(r.utilization_percent)]) };
   for (const [kind, data] of [['chargingPerformance', sessionData], ['energyDemand', energyData]]) {
@@ -72,9 +72,7 @@ test('charts group hourly, daily, weekly, or monthly without losing year context
     const defaults = f.defaultPerformanceFilters(config, new Date('2030-01-01'), data);
     assert.equal(defaults.preset, 'custom');
     const rows = filterRows(data, config, defaults);
-    assert.equal(rows.length, data.rows.length);
-    assert.ok(rows.length > 0);
-    assert.ok(metricsFor(kind, rows).length > 0);
+    assert.equal(rows.length, 0);
     assert.equal(filterRows(data, config, { ...defaults, from: '2030-01-01', to: '2030-01-02' }).length, 0);
     assert.equal(f.defaultPerformanceFilters(config, new Date('2030-01-01')).preset, 'custom');
   }
@@ -135,18 +133,18 @@ test('Revenue uses custom sample coverage and inclusive transaction date filteri
   const config = reportConfig.revenueTransaction;
   const defaults = f.defaultPerformanceFilters(config, new Date('2030-01-01'), data);
   assert.equal(defaults.preset, 'custom');
-  assert.equal(filterRows(data, config, defaults).length, records.length);
+  assert.equal(filterRows(data, config, defaults).length, 0);
   const oneDay = filterRows(data, config, { ...defaults, from: "2026-09-10", to: "2026-09-10" });
   assert.ok(oneDay.length > 0);
   assert.ok(oneDay.every(row => row[5].startsWith("2026-09-10")));
   assert.equal(filterRows(data, config, { ...defaults, from: '2030-01-01', to: '2030-01-02' }).length, 0);
 });
 
- test('every report shares the September custom default regardless of source or current date', () => {
+ test('report defaults roll over UTC day, month and year with uptime at T-1', () => {
   for (const config of Object.values(reportConfig)) {
     const defaults = f.defaultPerformanceFilters(config, new Date('2030-01-01'), { headers: [], rows: [] });
-    assert.equal(defaults.from, '2026-09-01');
-    assert.equal(defaults.to, '2026-09-30');
+    assert.equal(defaults.from, config.defaultDayOffset === -1 ? '2029-12-31' : '2030-01-01');
+    assert.equal(defaults.to, defaults.from);
     assert.equal(defaults.preset, 'custom');
   }
 });
