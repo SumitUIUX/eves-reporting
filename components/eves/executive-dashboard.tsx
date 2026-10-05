@@ -132,7 +132,6 @@ function MetricCard({
 
 function SectionHeading({
   title,
-  description,
 }: {
   title: string;
   description: string;
@@ -140,7 +139,6 @@ function SectionHeading({
   return (
     <div>
       <h2 className="text-base font-semibold">{title}</h2>
-      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
     </div>
   );
 }
@@ -319,8 +317,8 @@ function DashboardContent({
 
       {scoped ? <div className="space-y-4">
         <p role="status" className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">{selectedSites.length ? selectedSites.join(", ") : "All sites"} · Network KPIs and comparisons are unavailable for this scope in the current aggregate snapshot.</p>
-        {fullPeriod && matchingSites.length > 0 && <Card className="shadow-none"><CardHeader><CardTitle>Selected site summaries</CardTitle><CardDescription>Available site records for the full snapshot period</CardDescription></CardHeader><CardContent>{matchingSites.map((site, index) => <SiteRow key={site.site_id} site={site} rank={index + 1} />)}</CardContent></Card>}
-        {!selectedSites.length && scopedRevenue.length > 0 && <Card className="shadow-none"><CardHeader><CardTitle>Revenue</CardTitle><CardDescription>All sites · Selected date range</CardDescription></CardHeader><CardContent><ChartContainer config={{ revenue: { label: "Revenue", color: "var(--chart-1)" } }} className="h-64 w-full"><AreaChart data={scopedRevenue}><CartesianGrid vertical={false} /><XAxis dataKey="date" /><YAxis /><Tooltip formatter={value => currency.format(Number(value))} /><Area dataKey="revenue" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.15} /></AreaChart></ChartContainer></CardContent></Card>}
+        {fullPeriod && matchingSites.length > 0 && <Card className="shadow-none"><CardHeader><CardTitle>Selected site summaries</CardTitle></CardHeader><CardContent>{matchingSites.map((site, index) => <SiteRow key={site.site_id} site={site} rank={index + 1} />)}</CardContent></Card>}
+        {!selectedSites.length && scopedRevenue.length > 0 && <Card className="shadow-none"><CardHeader><CardTitle>Revenue</CardTitle></CardHeader><CardContent><ChartContainer config={{ revenue: { label: "Revenue", color: "var(--chart-1)" } }} className="h-64 w-full"><AreaChart data={scopedRevenue}><CartesianGrid vertical={false} /><XAxis dataKey="date" /><YAxis /><Tooltip formatter={value => currency.format(Number(value))} /><Area dataKey="revenue" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.15} /></AreaChart></ChartContainer></CardContent></Card>}
         {((selectedSites.length > 0 && (!fullPeriod || !matchingSites.length)) || (!selectedSites.length && !scopedRevenue.length)) && <DataEmpty><p>No data available for the selected filters.</p></DataEmpty>}
       </div> : <>
       <section aria-labelledby="charging-heading" className="space-y-4">
@@ -412,7 +410,7 @@ function DashboardContent({
           <Card className="gap-4 py-5 shadow-none">
             <CardHeader className="px-5">
               <CardTitle className="text-base">Revenue trend</CardTitle>
-              <CardDescription>Daily revenue during this period</CardDescription>
+
               {reportEnabled("revenue-financial") && (
                 <CardAction>
                   <PanelLink href="/reports/revenue-transaction" />
@@ -483,7 +481,7 @@ function DashboardContent({
           <Card className="gap-2 py-5 shadow-none">
             <CardHeader className="px-5">
               <CardTitle className="text-base">Top performing sites</CardTitle>
-              <CardDescription>Ranked by revenue</CardDescription>
+
               {reportEnabled("site-performance") && (
                 <CardAction>
                   <PanelLink href="/reports/site-performance" />
@@ -501,7 +499,7 @@ function DashboardContent({
         <Card className="gap-3 py-5 shadow-none">
           <CardHeader className="px-5">
             <CardTitle className="text-base">Underperforming sites</CardTitle>
-            <CardDescription>Sites with the lowest utilization</CardDescription>
+
             {reportEnabled("site-performance") && (
               <CardAction>
                 <PanelLink href="/reports/site-performance" />

@@ -45,7 +45,7 @@ import {
 import { ColumnVisibilityControl } from "./column-visibility-control";
 import { ReportChart } from "./report-chart";
 import { ReportFilterDrawer, ActiveFilterChips } from "./report-filter-drawer";
-import { defaultPerformanceFilters, isPerformanceReport, periodLabel, changeFilter } from "@/lib/eves/performance-filters";
+import { defaultPerformanceFilters, isPerformanceReport, changeFilter } from "@/lib/eves/performance-filters";
 import { ReportFilterControl } from "./report-filter-control";
 import {
   reportConfig,
@@ -359,7 +359,7 @@ function ReportView({
   return (
     <>
       <div className={styles.header}>
-        {performance && <div className="mr-auto min-w-0"><h1 className="text-lg font-semibold">{config.title}</h1><p className="mt-1 text-sm text-muted-foreground">{periodLabel(applied)}</p>{source === "sample" && config.dateColumn !== undefined && <p className="mt-1 text-xs text-muted-foreground">Sample records: {defaults.from} – {defaults.to}. Reset filters to show all sample records.</p>}</div>}
+        {performance && <div className="mr-auto min-w-0"><h1 className="text-lg font-semibold">{config.title}</h1></div>}
         <PageActions>
           {performance ? <ReportFilterDrawer key={JSON.stringify(applied)} kind={kind} config={config} data={data} applied={applied} defaults={defaults} onApply={apply} open={filterOpen} onOpenChange={setFilterOpen} /> : <ReportFilterControl
             kind={kind}
@@ -397,6 +397,7 @@ function ReportView({
           <Metric
             key={s.label}
             {...s}
+            note=""
             icon={[Activity, Zap, Clock3, Building2][i % 4]}
           />
         ))}

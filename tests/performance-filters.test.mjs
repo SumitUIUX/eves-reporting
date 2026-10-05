@@ -75,3 +75,27 @@ test('charts group hourly, daily, weekly, or monthly without losing year context
     assert.equal(f.defaultPerformanceFilters(config, new Date('2030-01-01')).preset, 'last7');
   }
 });
+
+test('every report filter targets supplied data and selects the matching rows', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const page = await readFile(new URL('../components/eves/report-page.tsx', import.meta.url), 'utf8');
+  const reference = JSON.parse(await readFile(new URL('../data/reference-reports.json', import.meta.url), 'utf8'));
+  const files = { chargingPerformance: 'charging-performance', sitePerformance: 'site-performance', chargerPerformance: 'charger-performance', energyDemand: 'energy-demand', tenantUptime: 'uptime-reliability', revenueTransaction: 'revenue-transaction' };
+  for (const [kind, config] of Object.entries(reportConfig)) {
+    let data = reference[kind];
+    if (files[kind]) {
+      const records = JSON.parse(await readFile(new URL(`../data/${files[kind]}.json`, import.meta.url), 'utf8'));
+      const block = page.match(new RegExp(`const ${kind}Fields = \\[([\\s\\S]*?)\\] as const`))[1];
+      const fields = [...block.matchAll(/\["([^"]+)",/g)].map(m => m[1]);
+      data = { headers: fields, rows: records.map(r => fields.map(k => typeof r[k] === 'boolean' ? r[k] ? 'Yes' : 'No' : String(r[k] ?? '—'))) };
+    } else data = { ...data, rows: data.rows.map(row => row.map(v => typeof v === 'boolean' ? v ? 'Yes' : 'No' : String(v ?? '—'))) };
+    for (const field of config.filters) {
+      assert.ok(field.column >= 0 && field.column < data.headers.length, `${kind}: ${field.label} has a real column`);
+      assert.equal(field.unavailable, undefined);
+      const value = data.rows.map(r => r[field.column]).find(v => v && v !== '—' && v !== '-');
+      assert.ok(value, `${kind}: ${field.label} has options`);
+      const filtered = filterRows(data, config, { values: { [field.column]: [value] }, from: '', to: '', errors: false });
+      assert.deepEqual(filtered, data.rows.filter(row => row[field.column] === value), `${kind}: ${field.label}`);
+    }
+  }
+});

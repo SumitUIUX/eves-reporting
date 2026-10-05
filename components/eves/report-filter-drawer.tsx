@@ -12,22 +12,18 @@ import type { ReportConfig, ReportFilters } from '@/lib/eves/report-config';
 import { changeFilter, dateChanged, datePresets, dateRangeError, dependentOptions, filterCount, periodLabel, presetRange } from '@/lib/eves/performance-filters';
 import styles from './report-filter-drawer.module.css';
 
-export function DateRangeFilter({ value, onChange, unavailable }: { value: ReportFilters; onChange: (value: ReportFilters) => void; unavailable?: boolean }) {
+export function DateRangeFilter({ value, onChange }: { value: ReportFilters; onChange: (value: ReportFilters) => void }) {
   const id = useId();
-  const error = !unavailable ? dateRangeError(value) : '';
+  const error = dateRangeError(value);
   return <div className={styles.dateRange}>
     <label htmlFor={`${id}-preset`}>Date Range</label>
-    <Choice id={`${id}-preset`} label="Date Range" value={unavailable ? 'unavailable' : value.preset ?? 'custom'} disabled={unavailable}
-      options={unavailable ? [{ value: 'unavailable', label: 'Reporting period unavailable' }] : datePresets}
+    <Choice id={`${id}-preset`} label="Date Range" value={value.preset ?? 'custom'} options={datePresets}
       onChange={preset => onChange({ ...value, preset, ...(preset !== 'custom' ? presetRange(preset) : {}) })} className="w-full" />
-    {unavailable ? <p className={styles.help}>This snapshot has no reporting dates. Date filtering requires dated records.</p> : <>
-      <p className={styles.help}>{periodLabel(value)}</p>
-      {value.preset === 'custom' && <div className={styles.dates}>
-        <div><label htmlFor={`${id}-from`}>From</label><ReportDatePicker id={`${id}-from`} label="From date" value={value.from} onChange={from => onChange({ ...value, from })} /></div>
-        <div><label htmlFor={`${id}-to`}>To</label><ReportDatePicker id={`${id}-to`} label="To date" value={value.to} onChange={to => onChange({ ...value, to })} /></div>
-      </div>}
-      {error && <p role="alert" className={styles.error}>{error}</p>}
-    </>}
+    {value.preset === 'custom' && <div className={styles.dates}>
+      <div><label htmlFor={`${id}-from`}>From</label><ReportDatePicker id={`${id}-from`} label="From date" value={value.from} onChange={from => onChange({ ...value, from })} /></div>
+      <div><label htmlFor={`${id}-to`}>To</label><ReportDatePicker id={`${id}-to`} label="To date" value={value.to} onChange={to => onChange({ ...value, to })} /></div>
+    </div>}
+    {error && <p role="alert" className={styles.error}>{error}</p>}
   </div>;
 }
 
@@ -41,14 +37,13 @@ export function ReportFilterDrawer({ kind, config, data, applied, defaults, onAp
   const updateOpen = (next: boolean) => { if (next) setDraft(applied); onOpenChange(next); };
   // Mount anew when opened externally (e.g. the empty-state action).
   const fields = config.filters;
-  const availableDates = config.dateColumn === undefined ? [] : data.rows.map(row => row[config.dateColumn!]?.slice(0, 10)).filter(Boolean).sort();
   function field(filter: typeof fields[number]) {
     const value = draft.values[filter.column] ?? 'all';
     const entity = ['Site', 'EVSE', 'Port'].includes(filter.label);
     const options = dependentOptions(data, config, filter.column, draft);
     return <div className={styles.field} key={filter.column}>
       <label htmlFor={`${id}-${filter.column}`}>{filter.label}</label>
-      {filter.unavailable ? <><Choice id={`${id}-${filter.column}`} label={filter.label} value="unavailable" disabled options={[{ value: 'unavailable', label: 'Unavailable in this data source' }]} onChange={() => {}} className="w-full" /><p className={styles.help}>{filter.unavailable}</p></> : entity ?
+      {entity ?
         <ReportEntitySelector id={`${id}-${filter.column}`} label={filter.label} options={options} selected={Array.isArray(value) ? value : value === 'all' ? [] : [value]} onChange={selected => setDraft(previous => changeFilter(data, config, previous, filter.column, selected))} /> :
         <Choice id={`${id}-${filter.column}`} label={filter.label} value={Array.isArray(value) ? 'all' : value} onChange={selected => setDraft(previous => changeFilter(data, config, previous, filter.column, selected))}
           options={[{ value: 'all', label: `All ${filter.label.toLowerCase()}` }, ...options.map(option => ({ value: option, label: filter.label.toLowerCase() === 'error status' ? option === 'Yes' ? 'Errored' : 'No errors' : option }))]} className="w-full" />}
@@ -58,11 +53,10 @@ export function ReportFilterDrawer({ kind, config, data, applied, defaults, onAp
     <form className={styles.form} onSubmit={event => { event.preventDefault(); if (!valid) return; onApply(draft); onOpenChange(false); }}>
       <div className={styles.fields}>
         {fields.filter(f => f.label === 'Site').map(field)}
-        <DateRangeFilter value={draft} onChange={setDraft} unavailable={config.dateColumn === undefined} />
-        {availableDates.length > 0 && <p className={`${styles.help} col-span-full`}>Available records: {availableDates[0]} – {availableDates[availableDates.length - 1]} (UTC).</p>}
+        {config.dateColumn !== undefined && <DateRangeFilter value={draft} onChange={setDraft} />}
         {fields.filter(f => f.label !== 'Site').map(field)}
         {kind === 'energyDemand' && <>
-          <div className={styles.field}><label htmlFor={`${id}-time`}>Time of Day</label><Choice id={`${id}-time`} label="Time of Day" value={draft.timeOfDay ?? 'all'} options={[{ value: 'all', label: 'All day' }, 'Morning', 'Afternoon', 'Evening', 'Night']} onChange={timeOfDay => setDraft(v => ({ ...v, timeOfDay }))} className="w-full" /><p className={styles.help}>UTC · Morning 06–12, afternoon 12–18, evening 18–22, night 22–06.</p></div>
+          <div className={styles.field}><label htmlFor={`${id}-time`}>Time of Day (UTC)</label><Choice id={`${id}-time`} label="Time of Day" value={draft.timeOfDay ?? 'all'} options={[{ value: 'all', label: 'All day' }, 'Morning', 'Afternoon', 'Evening', 'Night']} onChange={timeOfDay => setDraft(v => ({ ...v, timeOfDay }))} className="w-full" /></div>
           <div className={styles.field}><label htmlFor={`${id}-day`}>Day of Week</label><Choice id={`${id}-day`} label="Day of Week" value={draft.dayOfWeek ?? 'all'} options={[{ value: 'all', label: 'All' }, ...['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((label, i) => ({ value: String((i + 1) % 7), label }))]} onChange={dayOfWeek => setDraft(v => ({ ...v, dayOfWeek }))} className="w-full" /></div>
         </>}
       </div>

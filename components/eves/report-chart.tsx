@@ -118,7 +118,7 @@ export function ReportChart({
               : "Average uptime by site"}
         </h2>
         <span className="text-xs text-muted-foreground">
-          {period ? `${periodLabel(period)}${period.from ? " · " + granularityLabel(period.from, period.to) : ""}${uptimeChart ? " · SLA: 95%" : ""}` : uptimeChart ? "SLA threshold: 95%" : "Reference snapshot"}
+          {period?.from ? `${periodLabel(period)}${period.from ? " · " + granularityLabel(period.from, period.to) : ""}${uptimeChart ? " · SLA: 95%" : ""}` : uptimeChart ? "SLA threshold: 95%" : ""}
         </span>
       </div>
       <ChartContainer

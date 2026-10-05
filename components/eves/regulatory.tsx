@@ -30,13 +30,9 @@ import { resolveFundingTags } from "@/lib/eves/funding-tags";
 import { reportConfig, isoDate } from "@/lib/eves/report-config";
 import type { ReportDataset, ReportKind } from "@/lib/eves/types";
 import datasets from "@/data/reference-reports.json";
-import { createWorkbook, createZip } from "@/lib/eves/xlsx";
-import { csvText, downloadBlob } from "@/lib/eves/export";
+import { downloadExcel, createZip } from "@/lib/eves/xlsx";
+import { downloadCsv, csvText, downloadBlob } from "@/lib/eves/export";
 import { toast } from "sonner";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useTenant } from "./tenant-context";
-import { ExportHistory } from "./export-history";
-import { saveExport } from "@/lib/eves/export-history";
 const definitions: Record<
   string,
   { name: string; kind: ReportKind; excluded?: boolean }[]
@@ -79,9 +75,6 @@ export function Regulatory() {
     [emailOpen, setEmailOpen] = useState(false),
     [error, setError] = useState(""),
     [lastExport, setLastExport] = useState("");
-  const { active } = useTenant();
-  const [tab, setTab] = useState("reports");
-  const [historyRevision, setHistoryRevision] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draft, setDraft] = useState({ funding, period, quarters, selectedMonths, from, to });
   const draftPeriodOptions = draft.period === "Quarter" ? quarterOptions : monthOptions;
@@ -167,10 +160,8 @@ export function Regulatory() {
   }
   const prepared = reports
     .filter((r) => selected.includes(r.name))
-    .map(report => buildReport(report));
+    .map(buildReport);
   const rowCount = prepared.reduce((n, s) => n + s.data.rows.length, 0);
-  const historyScope = `${source}:${active.id}`;
-  const deliveryLabel = !delivery.valid ? "Choose a valid period" : delivery.delivery === "email" ? "Email required · service not connected" : "Direct download";
   async function generate() {
     setError("");
     if (!selected.length) {
@@ -220,29 +211,30 @@ export function Regulatory() {
           ],
         },
       };
-      let blob: Blob;
-      let filename: string;
-      const baseName = `eves-${agency.toLowerCase()}-reference`;
-      if (format === "xlsx") {
-        const bytes = createWorkbook([...prepared, manifest]);
-        blob = new Blob([bytes.buffer as ArrayBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-        filename = `${baseName}.xlsx`;
-      } else if (prepared.length === 1) {
-        blob = new Blob([csvText(prepared[0].data)], { type: "text/csv;charset=utf-8" });
-        filename = `${baseName}-${prepared[0].name.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}.csv`;
-      } else {
-        const files: Record<string, string> = { "README.csv": csvText(manifest.data) };
-        prepared.forEach(sheet => { files[sheet.name.replace(/[^a-zA-Z0-9]/g, "-") + ".csv"] = csvText(sheet.data); });
+      if (format === "xlsx")
+        downloadExcel(
+          [...prepared, manifest],
+          `eves-${agency.toLowerCase()}-reference`,
+        );
+      else if (prepared.length === 1)
+        downloadCsv(
+          prepared[0].data,
+          `eves-${agency.toLowerCase()}-${prepared[0].name.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}-reference`,
+        );
+      else {
+        const files: Record<string, string> = {
+          "README.csv": csvText(manifest.data),
+        };
+        prepared.forEach((s) => {
+          files[s.name.replace(/[^a-zA-Z0-9]/g, "-") + ".csv"] = csvText(
+            s.data,
+          );
+        });
         const bytes = createZip(files);
-        blob = new Blob([bytes.buffer as ArrayBuffer], { type: "application/zip" });
-        filename = `${baseName}.zip`;
-      }
-      downloadBlob(blob, filename);
-      try {
-        await saveExport({ id: crypto.randomUUID(), scope: historyScope, createdAt: new Date().toISOString(), agency, period: periodLabel, reports: prepared.map(report => report.name), records: rowCount, filename, blob, source, generatedBy: "You (this browser)" });
-        setHistoryRevision(value => value + 1);
-      } catch {
-        toast.warning("Report downloaded, but history could not be saved. Check browser storage availability.");
+        downloadBlob(
+          new Blob([bytes.buffer as ArrayBuffer], { type: "application/zip" }),
+          `eves-${agency.toLowerCase()}-reference.zip`,
+        );
       }
       setLastExport(
         `${prepared.length} ${prepared.length === 1 ? "report" : "reports"} · ${rowCount} records exported`,
@@ -256,14 +248,6 @@ export function Regulatory() {
   }
   return (
     <>
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="mb-5" aria-label="Regulatory reporting workspace">
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-          <TabsTrigger value="requirements">Requirements</TabsTrigger>
-        </TabsList>
-        <TabsContent value="reports">
-
       <div className="mb-6 flex justify-end">
         <FilterPanel title="Report filters" open={filtersOpen} onOpenChange={open => { if (open) setDraft({ funding, period, quarters, selectedMonths, from, to }); setFiltersOpen(open); }} activeCount={Number(funding.length > 0) + 1}>
           <form className={filterStyles.form} onSubmit={event => { event.preventDefault(); if (!draftDelivery.valid) return; applyScope(draft); setFiltersOpen(false); }}>
@@ -478,14 +462,7 @@ export function Regulatory() {
           </p>
         )}
       </section>
-      <div className="mt-5"><ReportingReference agency={agency} period={periodLabel} delivery={deliveryLabel} onView={() => setTab("requirements")} /></div>
-        </TabsContent>
-        <TabsContent value="history"><ExportHistory key={historyScope} scope={historyScope} revision={historyRevision} onCreate={() => setTab("reports")} /></TabsContent>
-        <TabsContent value="requirements">
-          <div className="mb-5 max-w-xs"><label className="mb-2 block text-sm font-medium" htmlFor="requirements-agency">Agency</label><Choice id="requirements-agency" label="Requirements agency" value={agency} options={["CIC", "CEC", "Cal-EvIP"]} onChange={value => changed(() => { setAgency(value); setSelected([]); setFunding([]); })} /></div>
-          <ReportingReference agency={agency} period={periodLabel} delivery={deliveryLabel} expanded />
-        </TabsContent>
-      </Tabs>
+      <ReportingReference />
       {emailOpen && (
         <ReportEmailDialog
           onClose={() => setEmailOpen(false)}

@@ -50,7 +50,7 @@ export function FilterPanel({
         <SheetContent side="right" className={`${styles.mobile} ${drawerClassName}`}>
           <SheetHeader className={styles.header}>
             <SheetTitle>{title}</SheetTitle>
-            <SheetDescription>Choose your scope, then apply.</SheetDescription>
+            <SheetDescription className="sr-only">Choose your scope, then apply.</SheetDescription>
           </SheetHeader>
           {children}
         </SheetContent>
