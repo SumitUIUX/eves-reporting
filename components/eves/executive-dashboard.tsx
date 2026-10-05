@@ -287,7 +287,8 @@ function DashboardContent({
 
   return (
     <div className="space-y-9">
-      <header className="flex justify-end">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <h2 id="charging-heading" className="text-base font-semibold">{scoped ? "Executive Overview" : "Charging"}</h2>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <FilterPanel title="Report filters" open={filtersOpen} onOpenChange={open => { if (open) setDraft(applied); setFiltersOpen(open); }} activeCount={Number(selectedSites.length > 0) + Number(!fullPeriod)}>
             <form className={filterStyles.form} onSubmit={event => { event.preventDefault(); if (dateRangeError(draft)) return; setApplied(draft); setFiltersOpen(false); }}>
@@ -321,13 +322,7 @@ function DashboardContent({
         {!selectedSites.length && scopedRevenue.length > 0 && <Card className="shadow-none"><CardHeader><CardTitle>Revenue</CardTitle></CardHeader><CardContent><ChartContainer config={{ revenue: { label: "Revenue", color: "var(--chart-1)" } }} className="h-64 w-full"><AreaChart data={scopedRevenue}><CartesianGrid vertical={false} /><XAxis dataKey="date" /><YAxis /><Tooltip formatter={value => currency.format(Number(value))} /><Area dataKey="revenue" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.15} /></AreaChart></ChartContainer></CardContent></Card>}
         {((selectedSites.length > 0 && (!fullPeriod || !matchingSites.length)) || (!selectedSites.length && !scopedRevenue.length)) && <DataEmpty><p>No data available for the selected filters.</p></DataEmpty>}
       </div> : <>
-      <section aria-labelledby="charging-heading" className="space-y-4">
-        <div id="charging-heading">
-          <SectionHeading
-            title="Charging"
-            description="Charging activity compared with the previous week."
-          />
-        </div>
+      <section aria-labelledby="charging-heading" className="!mt-4 space-y-4">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
             label="Sessions"
