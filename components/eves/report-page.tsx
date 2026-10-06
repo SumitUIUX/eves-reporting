@@ -1,6 +1,5 @@
 "use client";
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import {
   Download,
   ChevronDown,
@@ -45,7 +44,7 @@ import {
 import { ColumnVisibilityControl } from "./column-visibility-control";
 import { ReportChart } from "./report-chart";
 import { ReportFilterDrawer, ActiveFilterChips } from "./report-filter-drawer";
-import { defaultPerformanceFilters, isPerformanceReport, changeFilter } from "@/lib/eves/performance-filters";
+import { isPerformanceReport, changeFilter } from "@/lib/eves/performance-filters";
 import { ReportFilterControl } from "./report-filter-control";
 import {
   reportConfig,
@@ -281,7 +280,6 @@ function ReportView({
   showTabs: boolean;
 }) {
   const { source } = useDataSource();
-  const router = useRouter();
   const snapshot =
     kind === "chargingPerformance"
       ? chargingPerformanceData
@@ -391,12 +389,13 @@ function ReportView({
         </PageActions>
       </div>
       {performance && <ActiveFilterChips applied={applied} defaults={defaults} config={config} onChange={apply} />}
-      {performance && source !== "sample" ? <div className="panel p-10 text-center" role="alert"><p>Unable to load data.</p><p className="mt-2 text-sm text-muted-foreground">Workspace reporting is not connected.</p><Button className="mt-4" variant="outline" onClick={() => router.refresh()}>Try again</Button></div> : <>
+
       <div className="metrics report-metrics">
         {stats.map((s, i) => (
           <Metric
             key={s.label}
             {...s}
+            value={performance && source !== "sample" ? "—" : s.value}
             note=""
             icon={[Activity, Zap, Clock3, Building2][i % 4]}
           />
@@ -434,7 +433,6 @@ function ReportView({
             />
           </div>
         </div>
-        {rows.length ? (
           <Table className={`eves-table report-table ${performance ? "performance-table" : ""}`}>
             <TableHeader>
               <TableRow>
@@ -468,6 +466,12 @@ function ReportView({
               </TableRow>
             </TableHeader>
             <TableBody>
+              {!rows.length && <TableRow><TableCell colSpan={columns.length + 1}>
+                <DataEmpty message="No data available">
+                  {source === "sample" && <Button variant="outline" onClick={() => { if (performance) setFilterOpen(true); else { reset(); setSearch(""); } }}>Adjust filters</Button>}
+                </DataEmpty>
+              </TableCell></TableRow>}
+
               {rows
                 .slice((current - 1) * size, current * size)
                 .map((row, n) => (
@@ -529,19 +533,6 @@ function ReportView({
                 ))}
             </TableBody>
           </Table>
-        ) : (
-          <DataEmpty message={performance ? "No data available for the selected filters." : undefined}>
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (performance) setFilterOpen(true);
-                else { reset(); setSearch(""); }
-              }}
-            >
-              {performance ? "Adjust filters" : "Clear filters"}
-            </Button>
-          </DataEmpty>
-        )}
         <TablePagination
           total={rows.length}
           page={current}
@@ -550,7 +541,6 @@ function ReportView({
           setSize={setSize}
         />
       </section>
-      </>}
       <Sheet
         open={!!detail}
         onOpenChange={(v) => {

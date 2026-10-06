@@ -85,3 +85,15 @@ export async function loadExecutiveDashboard(
 ): Promise<ExecutiveDashboardData | null> {
   return source === "sample" ? sampleDashboard : null;
 }
+
+/** Preserve the dashboard schema without borrowing any sample measurements. */
+export function emptyExecutiveDashboard(): ExecutiveDashboardData {
+  const missing = { value: 0, available: false, change_percent: NaN };
+  return {
+    dashboard_period: { start_date: "", end_date: "" },
+    charging: { sessions: {...missing}, energy_delivered_kwh: {...missing}, revenue: {...missing}, average_session_duration: {...missing, value: "—"} },
+    infrastructure: { active_chargers: {...missing}, connector_count: {...missing}, utilization_percent: {...missing}, uptime_percent: {...missing} },
+    business: { revenue_trend: [], top_performing_sites: [], underperforming_sites: [] },
+    alerts_attention_required: { chargers_below_sla: { count: 0, sla_threshold_percent: 95, chargers: [] }, sites_with_declining_utilization: { count: 0, sites: [] }, high_downtime: { count: 0, events: [] } },
+  };
+}

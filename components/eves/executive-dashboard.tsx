@@ -1,4 +1,5 @@
 "use client";
+import { emptyExecutiveDashboard } from "@/lib/eves/dashboard-data";
 
 import { RefreshButton } from "./refresh-button";
 
@@ -161,7 +162,7 @@ function PanelLink({ href, label = "View report" }: { href: string; label?: stri
 function AttentionCard({ title, description, count, icon: Icon, href, children }: {
   title: string;
   description: string;
-  count: number;
+  count: number | string;
   icon: LucideIcon;
   href?: string;
   children: ReactNode;
@@ -240,10 +241,12 @@ function DashboardContent({
   data,
   refreshing,
   refresh,
+  empty = false,
 }: {
   data: ExecutiveDashboardData;
   refreshing: boolean;
   refresh: () => void;
+  empty?: boolean;
 }) {
   const defaults: ReportFilters = { values: {}, errors: false, ...defaultReportRange() };
   const [applied, setApplied] = useState(defaults);
@@ -252,8 +255,8 @@ function DashboardContent({
   const selectedSites = Array.isArray(applied.values.site) ? applied.values.site : [];
   const fullPeriod = applied.from === defaults.from && applied.to === defaults.to;
   const scoped = selectedSites.length > 0 || !fullPeriod;
-  const sites = executiveSites;
-  const filteredData = useMemo(() => filterExecutiveDashboard(data, applied), [data, applied]);
+  const sites = empty ? [] : executiveSites;
+  const filteredData = useMemo(() => empty ? data : filterExecutiveDashboard(data, applied), [data, applied, empty]);
   const { active } = useTenant();
   const reportEnabled = (reportId: string) =>
     !!active.components["Reports/Analytics"] && !!active.reports[reportId];
@@ -522,7 +525,7 @@ function DashboardContent({
           />
         </div>
         <div className="grid items-stretch gap-4 xl:grid-cols-3">
-          <AttentionCard title="Chargers below SLA" description={`${alerts.chargers_below_sla.sla_threshold_percent}% minimum · ${scoped ? "Asset snapshot" : "Last 7 days"}`} count={alerts.chargers_below_sla.count} icon={AlertTriangle} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
+          <AttentionCard title="Chargers below SLA" description={`${alerts.chargers_below_sla.sla_threshold_percent}% minimum · ${scoped ? "Asset snapshot" : "Last 7 days"}`} count={empty ? "—" : alerts.chargers_below_sla.count} icon={AlertTriangle} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
 
               {alerts.chargers_below_sla.chargers.map((charger) => (
                 <div key={charger.evse_id} className="space-y-2 py-4">
@@ -556,7 +559,7 @@ function DashboardContent({
               ))}
           </AttentionCard>
 
-          <AttentionCard title="Declining utilization" description={scoped ? "Snapshot comparison" : "Current vs previous week"} count={alerts.sites_with_declining_utilization.count} icon={TrendingDown} href={reportEnabled("site-performance") ? "/reports/site-performance" : undefined}>
+          <AttentionCard title="Declining utilization" description={scoped ? "Snapshot comparison" : "Current vs previous week"} count={empty ? "—" : alerts.sites_with_declining_utilization.count} icon={TrendingDown} href={reportEnabled("site-performance") ? "/reports/site-performance" : undefined}>
 
               {alerts.sites_with_declining_utilization.sites.map((site) => (
                 <div key={site.site_id} className="flex items-center justify-between gap-3 py-4">
@@ -574,7 +577,7 @@ function DashboardContent({
               ))}
           </AttentionCard>
 
-          <AttentionCard title="High downtime" description={scoped ? "Asset snapshot" : "Longest downtime durations"} count={alerts.high_downtime.count} icon={Clock3} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
+          <AttentionCard title="High downtime" description={scoped ? "Asset snapshot" : "Longest downtime durations"} count={empty ? "—" : alerts.high_downtime.count} icon={Clock3} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
 
               {alerts.high_downtime.events.map((event) => (
                 <div key={event.evse_id} className="py-4">
@@ -650,15 +653,7 @@ export function ExecutiveDashboard() {
       />
     );
   if (current.status === "empty")
-    return (
-      <Card className="shadow-none">
-        <DataEmpty>
-          <p className="text-sm text-muted-foreground">
-            Dashboard data is not available for the selected data source.
-          </p>
-        </DataEmpty>
-      </Card>
-    );
+    return <DashboardContent data={emptyExecutiveDashboard()} empty refreshing={false} refresh={() => setRefreshToken(token => token + 1)} />;
   return (
     <DashboardContent
       data={current.data}

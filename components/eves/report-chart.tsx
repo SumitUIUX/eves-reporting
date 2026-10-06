@@ -24,7 +24,7 @@ export function ReportChart({
   period?: ReportFilters;
 }) {
   if (kind === "throughput" || kind === "events") return null;
-  if (!rows.length) return <div className="chart-box"><h2 className="text-sm font-semibold">{kind === "sessions" || kind === "chargingPerformance" ? "Energy delivered over time" : kind === "revenueTransaction" ? "Net revenue over time" : kind === "energyDemand" ? "Average demand over time" : kind === "intervals" ? "Average power by interval" : "Average uptime"}</h2><div className="flex h-[205px] items-center justify-center text-sm text-muted-foreground">No data available for the selected filters.</div></div>;
+  if (!rows.length) return <div className="chart-box"><h2 className="text-sm font-semibold">{kind === "sessions" || kind === "chargingPerformance" ? "Energy delivered over time" : kind === "revenueTransaction" ? "Net revenue over time" : kind === "energyDemand" ? "Average demand over time" : kind === "intervals" ? "Average power by interval" : kind === "chargerPerformance" || kind === "tenantUptime" ? "Average uptime by connector" : "Average uptime by site"}</h2><div className="flex h-[205px] items-center justify-center text-sm text-muted-foreground">No data available</div></div>;
   const uptimeChart =
     kind === "uptime" ||
     kind === "sitePerformance" ||

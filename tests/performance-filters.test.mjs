@@ -148,3 +148,20 @@ test('Revenue uses custom sample coverage and inclusive transaction date filteri
     assert.equal(defaults.preset, 'custom');
   }
 });
+
+test('empty workspace dashboard retains every section without sample metrics or records', async () => {
+  const { emptyExecutiveDashboard } = await vite.ssrLoadModule('/lib/eves/dashboard-data.ts');
+  const data = emptyExecutiveDashboard();
+  for (const group of [data.charging, data.infrastructure]) {
+    assert.equal(Object.keys(group).length, 4);
+    for (const metric of Object.values(group)) {
+      assert.equal(metric.available, false);
+      assert.ok(Number.isNaN(metric.change_percent));
+      assert.equal(metric.previous_period_value, undefined);
+    }
+  }
+  for (const rows of Object.values(data.business)) assert.deepEqual(rows, []);
+  assert.deepEqual(data.alerts_attention_required.chargers_below_sla.chargers, []);
+  assert.deepEqual(data.alerts_attention_required.sites_with_declining_utilization.sites, []);
+  assert.deepEqual(data.alerts_attention_required.high_downtime.events, []);
+});
