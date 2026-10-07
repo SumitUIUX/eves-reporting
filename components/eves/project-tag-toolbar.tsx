@@ -44,7 +44,7 @@ export function ProjectTagToolbar({
         <RefreshButton label="Refresh project tags" onClick={onReload} refreshing={loading} />
         <Button
           variant="outline"
-          disabled={!resultCount || loading}
+          disabled={loading}
           onClick={onExport}
           aria-label="Export project tags"
           className={styles.export}

@@ -135,8 +135,8 @@ export function SearchInput({
 }
 export function DataEmpty({
   children,
-  compact = false,
-  message = "No records have been found",
+  compact = true,
+  message = "No records found",
 }: {
   children?: React.ReactNode;
   compact?: boolean;
@@ -144,16 +144,16 @@ export function DataEmpty({
 }) {
   return (
     <Empty
-      className={compact ? "gap-3 px-3 py-6 md:p-6" : "py-16"}
+      className={compact ? "gap-2 px-3 py-4 md:p-4" : "py-16"}
       role="status"
     >
-      <EmptyHeader>
+      <EmptyHeader className={compact ? "flex-row items-center gap-2" : undefined}>
         <EmptyMedia
           variant="icon"
-          className="relative mb-3 size-14 rounded-2xl bg-primary/5 text-primary/60 ring-1 ring-primary/10 before:absolute before:-inset-2 before:rounded-[22px] before:border before:border-primary/5"
+          className={compact ? "size-8 shrink-0 rounded-lg bg-primary/5 text-primary/60" : "relative mb-3 size-14 rounded-2xl bg-primary/5 text-primary/60 ring-1 ring-primary/10 before:absolute before:-inset-2 before:rounded-[22px] before:border before:border-primary/5"}
           aria-hidden="true"
         >
-          <Inbox className="size-7" strokeWidth={1.4} />
+          <Inbox className={compact ? "size-4" : "size-7"} strokeWidth={1.4} />
         </EmptyMedia>
         <EmptyTitle
           className={compact ? "text-sm font-normal" : "text-base font-normal"}

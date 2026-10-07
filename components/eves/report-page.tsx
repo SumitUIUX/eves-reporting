@@ -343,7 +343,7 @@ function ReportView({
         [{ name: config.short, data: d }],
         `eves-${kind}-reference`,
       );
-    toast.success(`${rows.length} reference records exported`);
+    toast.success(rows.length ? `${rows.length} records exported` : "Empty report exported with column headers");
   }
   return (
     <>
@@ -359,7 +359,7 @@ function ReportView({
           />}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button disabled={!rows.length}>
+              <Button>
                 <Download size={15} />
                 Export report
                 <ChevronDown size={13} />
@@ -453,8 +453,8 @@ function ReportView({
             </TableHeader>
             <TableBody>
               {!rows.length && <TableRow><TableCell colSpan={columns.length}>
-                <DataEmpty message="No data available">
-                  {source === "sample" && <Button variant="outline" onClick={() => { if (performance) setFilterOpen(true); else { reset(); setSearch(""); } }}>Adjust filters</Button>}
+                <DataEmpty compact message="No records found">
+                  {source === "sample" && <Button size="sm" variant="outline" onClick={() => { if (performance) setFilterOpen(true); else { reset(); setSearch(""); } }}>Adjust filters</Button>}
                 </DataEmpty>
               </TableCell></TableRow>}
 
