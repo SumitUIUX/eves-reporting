@@ -4,7 +4,6 @@ import {
   Download,
   ChevronDown,
   ArrowDownUp,
-  ArrowUpRight,
   Activity,
   Zap,
   Clock3,
@@ -25,15 +24,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 import {
   PageActions,
   Metric,
@@ -312,8 +303,7 @@ function ReportView({
     ),
     [page, setPage] = useState(1),
     [size, setSize] = useState(10),
-    [sort, setSort] = useState<{ column: number; asc: boolean } | null>(null),
-    [detail, setDetail] = useState<string[] | null>(null);
+    [sort, setSort] = useState<{ column: number; asc: boolean } | null>(null);
   const rows = useMemo(() => {
     const filtered = filterRows(data, config, applied, search);
     if (sort)
@@ -375,9 +365,6 @@ function ReportView({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>
-                Export all {rows.length} matching rows
-              </DropdownMenuLabel>
               <DropdownMenuItem onSelect={() => exportReport("csv")}>
                 CSV spreadsheet
               </DropdownMenuItem>
@@ -433,7 +420,7 @@ function ReportView({
             />
           </div>
         </div>
-          <Table className={`eves-table report-table ${performance ? "performance-table" : ""}`}>
+          <Table className={`eves-table report-table no-row-actions ${performance ? "performance-table" : ""}`}>
             <TableHeader>
               <TableRow>
                 {columns.map((i) => (
@@ -460,13 +447,11 @@ function ReportView({
                     </button>
                   </TableHead>
                 ))}
-                <TableHead>
-                  <span className="sr-only">Details</span>
-                </TableHead>
+
               </TableRow>
             </TableHeader>
             <TableBody>
-              {!rows.length && <TableRow><TableCell colSpan={columns.length + 1}>
+              {!rows.length && <TableRow><TableCell colSpan={columns.length}>
                 <DataEmpty message="No data available">
                   {source === "sample" && <Button variant="outline" onClick={() => { if (performance) setFilterOpen(true); else { reset(); setSearch(""); } }}>Adjust filters</Button>}
                 </DataEmpty>
@@ -518,17 +503,7 @@ function ReportView({
                         )}
                       </TableCell>
                     ))}
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="w-7"
-                        onClick={() => setDetail(row)}
-                        aria-label={`View record ${row[0]}`}
-                      >
-                        <ArrowUpRight size={15} />
-                      </Button>
-                    </TableCell>
+
                   </TableRow>
                 ))}
             </TableBody>
@@ -541,30 +516,7 @@ function ReportView({
           setSize={setSize}
         />
       </section>
-      <Sheet
-        open={!!detail}
-        onOpenChange={(v) => {
-          if (!v) setDetail(null);
-        }}
-      >
-        <SheetContent className="sm:max-w-[580px] w-full overflow-auto p-7">
-          <SheetHeader className="p-0 mb-8">
-            <SheetTitle>Record details</SheetTitle>
-            <SheetDescription>
-              All available fields · reference data
-            </SheetDescription>
-          </SheetHeader>
-          <dl className="detail-grid">
-            {detail &&
-              data.headers.map((h, i) => (
-                <div key={i}>
-                  <dt>{h}</dt>
-                  <dd>{detail[i] || "—"}</dd>
-                </div>
-              ))}
-          </dl>
-        </SheetContent>
-      </Sheet>
+
     </>
   );
 }

@@ -205,11 +205,6 @@ export function ProjectTags() {
     <>
       <div className={headerStyles.header}>
         <PageActions>
-          <ProjectTagFilterControl
-            tags={tags}
-            applied={filters}
-            onApply={changeFilters}
-          />
           <Button
             onClick={() => setEditor("new")}
             disabled={loading || !!error}
@@ -219,30 +214,24 @@ export function ProjectTags() {
           </Button>
         </PageActions>
       </div>
-      <div className="metrics">
+      <div className="metrics project-tag-metrics">
         <Metric
           label="Total project tags"
           value={pending ? "—" : tags.length}
-          note="Across your workspace"
+          note="" tooltip="Across your workspace"
           icon={Tags}
         />
         <Metric
           label="Funding agency tags"
           value={pending ? "—" : funding}
-          note="Projects linked to funding"
+          note="" tooltip="Projects linked to funding"
           icon={Landmark}
         />
         <Metric
           label="Zone tags"
           value={pending ? "—" : tags.length - funding}
-          note="Geographic reporting groups"
+          note="" tooltip="Geographic reporting groups"
           icon={MapPin}
-        />
-        <Metric
-          label="Sites mapped"
-          value={pending ? "—" : sites}
-          note="Unique sites across all tags"
-          icon={Building2}
         />
       </div>
       <section className="panel" aria-label="Project tags">
@@ -366,12 +355,9 @@ export function ProjectTags() {
                           )}
                         </span>
                         <div>
-                          <button
-                            className="project-name hover:text-primary text-left"
-                            onClick={() => setEditor(t)}
-                          >
+                          <span className="project-name">
                             {t.name}
-                          </button>
+                          </span>
                           <div className="project-id">
                             {t.type === "Zone"
                               ? "Geographic zone"

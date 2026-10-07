@@ -77,6 +77,7 @@ export function TagEditor({
   };
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!dirty || saving) return;
     const result = tagInputSchema.safeParse(form);
     if (!result.success) {
       const next: Partial<Record<TagField, string>> = {};
@@ -118,11 +119,7 @@ export function TagEditor({
             <DialogTitle>
               {tag ? "Edit project tag" : "Create a project tag"}
             </DialogTitle>
-            <DialogDescription>
-              {isSample
-                ? "Sample workspace. Changes are saved in this browser only."
-                : "Group your charging infrastructure by funding agency or zone."}
-            </DialogDescription>
+            <DialogDescription className="sr-only">Configure the project tag.</DialogDescription>
           </DialogHeader>
           <form onSubmit={submit} className="dialog-body">
             <div className="form-grid">
@@ -255,7 +252,7 @@ export function TagEditor({
               >
                 Cancel
               </Button>
-              <Button disabled={saving} type="submit">
+              <Button disabled={saving || !dirty} type="submit">
                 <Saving
                   saving={saving}
                   label={tag ? "Save changes" : "Create tag"}

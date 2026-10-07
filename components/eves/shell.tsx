@@ -430,7 +430,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
           </main>
         </TabsContent>
       </Tabs>
-      <Toaster position="bottom-right" richColors />
+      <Toaster position="top-right" richColors />
     </SidebarProvider>
   );
 }

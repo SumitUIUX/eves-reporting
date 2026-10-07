@@ -56,7 +56,7 @@ test("calendar quarters and multiple months require email, using actual day coun
   assert.equal(evaluateReportDelivery(months, "Months").delivery, "email");
 });
 
-test("93-day inclusive limit also prevents disjoint selections from bypassing the cap", () => {
+test("custom spans remain capped while multiple calendar periods support email delivery", () => {
   assert.deepEqual(custom("2026-07-01", "2026-10-01"), {
     valid: true,
     days: 93,
@@ -71,7 +71,8 @@ test("93-day inclusive limit also prevents disjoint selections from bypassing th
     ],
     "Months",
   );
-  assert.equal(disjoint.valid, false);
+  assert.equal(disjoint.valid, true);
+  assert.equal(disjoint.delivery, "email");
   const quarters = getReportRanges({
     period: "Quarter",
     quarters: ["2026-Q2", "2026-Q3"],
@@ -79,7 +80,7 @@ test("93-day inclusive limit also prevents disjoint selections from bypassing th
     from: "",
     to: "",
   });
-  assert.equal(evaluateReportDelivery(quarters, "Quarter").valid, false);
+  assert.equal(evaluateReportDelivery(quarters, "Quarter").valid, true);
 });
 
 test("dates reject empty, reversed and impossible ranges and account for leap years", () => {

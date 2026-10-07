@@ -14,3 +14,15 @@ test('real session snapshot values serialize into Excel and CSV exports', async 
   assert.equal(bytes[0], 0x50);
   assert.match(csvText(snapshots.sessions), /"false"/);
 });
+
+
+test('empty exports preserve column headers in CSV and Excel', async () => {
+  const { createWorkbook } = await vite.ssrLoadModule('/lib/eves/xlsx.ts');
+  const { csvText } = await vite.ssrLoadModule('/lib/eves/export.ts');
+  const data = { headers: ['Site ID', 'Energy (kWh)'], rows: [] };
+  assert.match(csvText(data), /Site ID/);
+  assert.match(csvText(data), /Energy \(kWh\)/);
+  const bytes = createWorkbook([{ name: 'Empty report', data }]);
+  assert.equal(bytes[0], 0x50);
+  assert.ok(bytes.length > 100);
+});

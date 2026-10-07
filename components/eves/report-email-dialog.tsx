@@ -24,7 +24,7 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
     <DialogContent className={`${styles.emailDialog} max-h-[90dvh] overflow-y-auto`}>
       <DialogHeader>
         <DialogTitle>{confirmed ? "Delivery preview" : "Email reports"}</DialogTitle>
-        <DialogDescription>{confirmed ? "Review the destination for your report files." : "Choose where to receive all files in this export."}</DialogDescription>
+        <DialogDescription className={confirmed ? "sr-only" : undefined}>{confirmed ? "Report delivery details" : "Choose where to receive all files in this export."}</DialogDescription>
       </DialogHeader>
       <div className={styles.emailSummary}>
         Agency: <strong>{agency}</strong> · {format === "xlsx" ? "Excel" : "CSV"}<br />{periodLabel}
@@ -33,7 +33,7 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
         <div className="rounded-lg border p-4" role="status">
           <CheckCircle2 className="mb-3 size-6 text-primary" aria-hidden="true" />
           <p className="font-medium break-words">{name.trim()}</p>
-          <p className="mt-2 text-sm text-muted-foreground">Delivery email</p>
+          <p className="mt-2 text-sm text-muted-foreground">Delivery emails</p>
           <p className="font-medium break-all">{email}</p>
           <div className="mt-4 space-y-3 border-t pt-4 text-sm">
             {ranges.map((range, index) => <dl key={`${range.from}-${range.to}-${index}`} className="grid grid-cols-2 gap-3">
@@ -44,15 +44,15 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
               <ul className="mt-1 list-disc space-y-1 pl-5">{selectedReports.map(report => <li key={report}>{report}</li>)}</ul>
             </div>
           </div>
-          <p className="mt-3 text-sm text-muted-foreground">Sample preview only. No email has been sent.</p>
+
         </div>
         <div className={styles.emailActions}>
           <Button variant="outline" onClick={() => setConfirmed(false)}>Back</Button>
-          <Button onClick={() => { toast.info(`Sample delivery to ${email} confirmed. No email was sent.`); onClose(); }}><Mail size={15} />Send</Button>
+          <Button onClick={() => { toast.success("Delivery preview confirmed"); onClose(); }}><Mail size={15} />Send</Button>
         </div>
       </> : <>
         <div className={styles.field}>
-          <label htmlFor="email-report-name">Report name</label>
+          <label htmlFor="email-report-name">Subject</label>
           <Input id="email-report-name" value={name} maxLength={120} onChange={e => setName(e.target.value)} />
         </div>
         <div className="rounded-lg border p-4">
@@ -60,13 +60,13 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
             <span className="flex items-center gap-2 text-sm font-medium"><Mail size={16} aria-hidden="true" />Send files to</span>
             {!editing && <Button type="button" variant="link" size="sm" onClick={() => { setDraftEmail(email); setEditing(true); }}>Change email</Button>}
           </div>
-          {editing ? <form onSubmit={e => { e.preventDefault(); setEmail(draftEmail.trim()); setEditing(false); }}>
-            <label htmlFor="report-delivery-email" className="mb-2 block text-sm">Email address</label>
-            <Input id="report-delivery-email" type="email" required autoFocus maxLength={254} value={draftEmail} onChange={e => setDraftEmail(e.target.value)} autoComplete="email" />
-            <p className="mt-2 text-xs text-muted-foreground">For this export only. Your registered email stays the same.</p>
+          {editing ? <form onSubmit={e => { e.preventDefault(); setEmail([...new Set(draftEmail.split(",").map(value => value.trim()).filter(Boolean))].join(", ")); setEditing(false); }}>
+            <label htmlFor="report-delivery-email" className="mb-2 block text-sm">Email addresses</label>
+            <Input id="report-delivery-email" type="email" multiple required autoFocus maxLength={2000} value={draftEmail} onChange={e => setDraftEmail(e.target.value.replace(/;/g, ","))} autoComplete="email" />
+            <p className="mt-2 text-xs text-muted-foreground">Separate addresses with commas. Applies to this export only.</p>
             <div className="mt-3 flex justify-end gap-2">
               <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
-              <Button type="submit" size="sm">Use this email</Button>
+              <Button type="submit" size="sm">Use these emails</Button>
             </div>
           </form> : <>
             <p className="break-all font-medium">{email}</p>

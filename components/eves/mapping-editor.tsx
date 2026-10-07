@@ -105,7 +105,7 @@ function ChargerPicker({
           disabled={disabled}
           aria-label={`Edit chargers for ${site.name}`}
         >
-          {selected.length} of {site.chargers.length} chargers · Edit
+          {selected.length} of {site.chargers.length} chargers
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -168,7 +168,7 @@ function ChargerPicker({
             Cancel
           </Button>
           <Button
-            disabled={!draft.length}
+            disabled={!draft.length || (draft.length === selected.length && draft.every(id => selected.includes(id)))}
             onClick={() => {
               onSave(
                 site.chargers.filter((charger) => draft.includes(charger)),
@@ -359,8 +359,8 @@ export function MappingEditor({
       >
         <DialogContent className={styles.manager} aria-busy={saving}>
           <DialogHeader className={styles.header}>
-            <DialogTitle>View Mapped Sites</DialogTitle>
-            <DialogDescription>Mapped sites for {tag.name}</DialogDescription>
+            <DialogTitle>Mapped Sites</DialogTitle>
+            <DialogDescription className="sr-only">Manage site and charger mappings.</DialogDescription>
           </DialogHeader>
           <div className={styles.toolbar}>
             <span className={styles.selectionHint}>
@@ -429,12 +429,6 @@ export function MappingEditor({
               <DataEmpty />
             )}
           </div>
-          <p className={styles.inventoryNote}>
-            {isSample
-              ? "Sample workspace. Changes are saved in this browser only. "
-              : "Reference site inventory. "}
-            Charger numbers are selection labels, not live device IDs.
-          </p>
           {error && (
             <p className="form-error" role="alert">
               {error}

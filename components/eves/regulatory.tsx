@@ -162,7 +162,6 @@ export function Regulatory() {
       setError(delivery.error);
       return;
     }
-    if (!rowCount) return;
     if (delivery.delivery === "email") {
       setEmailOpen(true);
       return;
@@ -399,14 +398,14 @@ export function Regulatory() {
                 .{" "}
                 {delivery.delivery === "download"
                   ? "Instant download is enabled."
-                  : "Email delivery to your registered email is required."}
+                  : "The reports will be delivered via email."}
               </>
             ) : (
               delivery.error
             )}
           </span>
         </div>
-        {selected.length > 0 && !rowCount && <DataEmpty />}
+        {selected.length > 0 && !rowCount && <p className="text-sm text-muted-foreground" role="status">No records found. The export will include column headers.</p>}
         {error && (
           <p className={`form-error ${styles.exportError}`} role="alert">
             {error}
@@ -414,15 +413,14 @@ export function Regulatory() {
         )}
         <div className={styles.footer}>
           <p>
-            {prepared.length} {prepared.length === 1 ? "report" : "reports"} ·{" "}
-            {rowCount} matching records
+            {prepared.length} {prepared.length === 1 ? "report" : "reports"}
             {format === "csv" && selected.length > 1
               ? " · Multiple CSV reports are packaged as ZIP."
               : ""}
           </p>
           <Button
             onClick={generate}
-            disabled={busy || !selected.length || !delivery.valid || !rowCount || (funding.length > 0 && (loading || !!tagError))}
+            disabled={busy || !selected.length || !delivery.valid || (funding.length > 0 && (loading || !!tagError))}
           >
             {busy ? (
               <LoaderCircle className="animate-spin" size={15} />

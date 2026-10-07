@@ -1,4 +1,6 @@
 "use client";
+import { InfoTip } from "./shared";
+import { comparisonPeriod } from "@/lib/eves/comparison-period";
 import { emptyExecutiveDashboard } from "@/lib/eves/dashboard-data";
 
 import { RefreshButton } from "./refresh-button";
@@ -106,19 +108,21 @@ function MetricCard({
   value,
   metric,
   previous,
+  comparison,
   icon: Icon,
 }: {
   label: string;
   value: string;
   metric: DashboardMetric<number | string>;
   previous: string;
+  comparison: string;
   icon: LucideIcon;
 }) {
   return (
     <Card className="gap-3 py-5 shadow-none">
       <CardHeader className="grid grid-cols-[1fr_auto] gap-3 px-5">
         <div className="space-y-2">
-          <CardDescription>{label}</CardDescription>
+          <CardDescription className="flex items-center gap-2">{label}<InfoTip text={`${metric.note ? metric.note + ". " : ""}${comparison} ${Number.isFinite(metric.change_percent) ? "Change is relative to that period." : "No comparable historical data is available; no change is shown."}`} /></CardDescription>
           <CardTitle className="text-2xl tracking-tight tabular-nums">
             {metric.available === false ? "—" : value}
           </CardTitle>
@@ -128,7 +132,7 @@ function MetricCard({
         </span>
       </CardHeader>
       <CardContent className="flex items-center justify-between gap-3 px-5 text-xs">
-        <span className="text-muted-foreground">{metric.note ?? (Number.isFinite(metric.change_percent) ? previous : "")}</span>
+        <span className="text-muted-foreground">{Number.isFinite(metric.change_percent) ? previous : ""}</span>
         <Trend value={metric.change_percent} />
       </CardContent>
     </Card>
@@ -173,12 +177,12 @@ function AttentionCard({ title, description, count, icon: Icon, href, children }
       <div className="flex items-start gap-3 border-b bg-muted/20 px-5 py-5">
         <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/5 text-primary"><Icon className="size-5" aria-hidden="true" /></span>
         <div className="min-w-0 flex-1">
-          <CardTitle className="text-base leading-6">{title}</CardTitle>
-          <CardDescription className="mt-1 text-xs leading-5">{description}</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-base leading-6">{title}<InfoTip text={description} /></CardTitle>
+
         </div>
         {href ? <Link href={href} className={`${badgeClass} transition-colors hover:bg-primary/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`} aria-label={`${count} ${title.toLowerCase()}; view report`}>{count}</Link> : <span className={badgeClass} aria-label={`${count} ${title.toLowerCase()}`}>{count}</span>}
       </div>
-      <CardContent className="flex-1 divide-y px-5">{Children.count(children) ? children : <p className="py-8 text-sm text-muted-foreground">No matching records</p>}</CardContent>
+      <CardContent className="flex-1 divide-y px-5">{Children.count(children) ? children : <p className="py-8 text-sm text-muted-foreground">{title === "Declining utilization" ? "No comparison data available" : "No matching records"}</p>}</CardContent>
       {href && <div className="flex justify-start border-t bg-muted/10 px-5 py-4"><PanelLink href={href} /></div>}
     </Card>
   );
@@ -252,6 +256,8 @@ function DashboardContent({
   const [applied, setApplied] = useState(defaults);
   const [draft, setDraft] = useState(defaults);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const previousPeriod = comparisonPeriod(applied.from, applied.to);
+  const comparison = previousPeriod ? `Comparison period: ${previousPeriod.from} to ${previousPeriod.to} (UTC). Full months compare with the previous calendar month; other selections use the preceding equal-length period.` : "Choose a valid period for comparison.";
   const selectedSites = Array.isArray(applied.values.site) ? applied.values.site : [];
   const fullPeriod = applied.from === defaults.from && applied.to === defaults.to;
   const scoped = selectedSites.length > 0 || !fullPeriod;
@@ -312,6 +318,7 @@ function DashboardContent({
       <section aria-labelledby="charging-heading" className="!mt-4 space-y-4">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
+            comparison={comparison}
             label="Sessions"
             value={integer.format(charging.sessions.value)}
             metric={charging.sessions}
@@ -319,6 +326,7 @@ function DashboardContent({
             icon={BatteryCharging}
           />
           <MetricCard
+            comparison={comparison}
             label="Energy delivered"
             value={`${decimal.format(charging.energy_delivered_kwh.value)} kWh`}
             metric={charging.energy_delivered_kwh}
@@ -326,6 +334,7 @@ function DashboardContent({
             icon={Zap}
           />
           <MetricCard
+            comparison={comparison}
             label="Revenue"
             value={currency.format(charging.revenue.value)}
             metric={charging.revenue}
@@ -333,6 +342,7 @@ function DashboardContent({
             icon={DollarSign}
           />
           <MetricCard
+            comparison={comparison}
             label="Avg session duration"
             value={charging.average_session_duration.value}
             metric={charging.average_session_duration}
@@ -351,6 +361,7 @@ function DashboardContent({
         </div>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
+            comparison={comparison}
             label="Active chargers"
             value={`${infrastructure.active_chargers.value}/${infrastructure.active_chargers.total}`}
             metric={infrastructure.active_chargers}
@@ -358,6 +369,7 @@ function DashboardContent({
             icon={Server}
           />
           <MetricCard
+            comparison={comparison}
             label="Connector count"
             value={`${infrastructure.connector_count.value}/${infrastructure.connector_count.total}`}
             metric={infrastructure.connector_count}
@@ -365,6 +377,7 @@ function DashboardContent({
             icon={PlugZap}
           />
           <MetricCard
+            comparison={comparison}
             label="Utilization"
             value={`${infrastructure.utilization_percent.value.toFixed(1)}%`}
             metric={infrastructure.utilization_percent}
@@ -372,6 +385,7 @@ function DashboardContent({
             icon={Gauge}
           />
           <MetricCard
+            comparison={comparison}
             label="Uptime"
             value={`${infrastructure.uptime_percent.value.toFixed(1)}%`}
             metric={infrastructure.uptime_percent}
@@ -391,7 +405,7 @@ function DashboardContent({
         <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
           <Card className="gap-4 py-5 shadow-none">
             <CardHeader className="px-5">
-              <CardTitle className="text-base">Revenue trend</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base">Revenue trend<InfoTip text={`Revenue recorded within ${applied.from} to ${applied.to} (UTC).`} /></CardTitle>
 
               {reportEnabled("revenue-financial") && (
                 <CardAction>
@@ -462,7 +476,7 @@ function DashboardContent({
 
           <Card className="gap-2 py-5 shadow-none">
             <CardHeader className="px-5">
-              <CardTitle className="text-base">Top performing sites</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base">Top performing sites<InfoTip text="Sites ranked by revenue within the selected period. This ranking is not a previous-period comparison." /></CardTitle>
 
               {reportEnabled("site-performance") && (
                 <CardAction>
@@ -481,7 +495,7 @@ function DashboardContent({
 
         <Card className="gap-3 py-5 shadow-none">
           <CardHeader className="px-5">
-            <CardTitle className="text-base">Underperforming sites</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base">Underperforming sites<InfoTip text="Sites with utilization below the 60% threshold, ranked lowest first. This is a threshold comparison, not a decline from the previous period. Utilization comes from the available inventory snapshot; dated utilization history is not available." /></CardTitle>
 
             {reportEnabled("site-performance") && (
               <CardAction>
@@ -501,7 +515,7 @@ function DashboardContent({
                     </p>
                     <p className="text-xs text-muted-foreground">Utilization</p>
                   </div>
-                  <TrendingDown className="size-5 text-destructive/70" aria-hidden="true" />
+
                 </div>
                 <div className="mt-4 flex justify-between border-t pt-3 text-xs">
                   <span className="text-muted-foreground">
@@ -525,7 +539,7 @@ function DashboardContent({
           />
         </div>
         <div className="grid items-stretch gap-4 xl:grid-cols-3">
-          <AttentionCard title="Chargers below SLA" description={`${alerts.chargers_below_sla.sla_threshold_percent}% minimum · ${scoped ? "Asset snapshot" : "Last 7 days"}`} count={empty ? "—" : alerts.chargers_below_sla.count} icon={AlertTriangle} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
+          <AttentionCard title="Chargers below SLA" description={`${alerts.chargers_below_sla.sla_threshold_percent}% minimum · Asset snapshot; no dated uptime history`} count={empty ? "—" : alerts.chargers_below_sla.count} icon={AlertTriangle} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
 
               {alerts.chargers_below_sla.chargers.map((charger) => (
                 <div key={charger.evse_id} className="space-y-2 py-4">
@@ -559,7 +573,7 @@ function DashboardContent({
               ))}
           </AttentionCard>
 
-          <AttentionCard title="Declining utilization" description={scoped ? "Snapshot comparison" : "Current vs previous week"} count={empty ? "—" : alerts.sites_with_declining_utilization.count} icon={TrendingDown} href={reportEnabled("site-performance") ? "/reports/site-performance" : undefined}>
+          <AttentionCard title="Declining utilization" description={`${comparison} Dated utilization history is unavailable, so a period-specific decline cannot be calculated.`} count="—" icon={TrendingDown} href={reportEnabled("site-performance") ? "/reports/site-performance" : undefined}>
 
               {alerts.sites_with_declining_utilization.sites.map((site) => (
                 <div key={site.site_id} className="flex items-center justify-between gap-3 py-4">
@@ -577,7 +591,7 @@ function DashboardContent({
               ))}
           </AttentionCard>
 
-          <AttentionCard title="High downtime" description={scoped ? "Asset snapshot" : "Longest downtime durations"} count={empty ? "—" : alerts.high_downtime.count} icon={Clock3} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
+          <AttentionCard title="High downtime" description="Longest downtime durations in the available asset snapshot; no dated downtime history" count={empty ? "—" : alerts.high_downtime.count} icon={Clock3} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
 
               {alerts.high_downtime.events.map((event) => (
                 <div key={event.evse_id} className="py-4">

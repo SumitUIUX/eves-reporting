@@ -38,27 +38,32 @@ import type { LucideIcon } from "lucide-react";
 export function PageActions({ children }: { children: React.ReactNode }) {
   return <div className="page-actions">{children}</div>;
 }
+export function InfoTip({ text }: { text: string }) {
+  return <Tooltip><TooltipTrigger asChild><button type="button" aria-label={text} className="inline-flex text-muted-foreground"><Info size={14} /></button></TooltipTrigger><TooltipContent className="max-w-xs">{text}</TooltipContent></Tooltip>;
+}
 export function Metric({
   label,
   value,
   note,
+  tooltip,
   icon: Icon,
 }: {
   label: string;
   value: string | number;
   note: string;
+  tooltip?: string;
   icon: LucideIcon;
 }) {
   return (
     <div className="metric">
       <div className="metric-top">
-        <span>{label}</span>
+        <span className="inline-flex items-center gap-2">{label}{tooltip && <InfoTip text={tooltip} />}</span>
         <span className="metric-icon">
           <Icon size={16} />
         </span>
       </div>
       <div className="metric-value">{value}</div>
-      <div className="metric-bottom">{note}</div>
+      {note && <div className="metric-bottom">{note}</div>}
     </div>
   );
 }

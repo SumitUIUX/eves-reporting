@@ -61,7 +61,7 @@ export type ReportDelivery =
     };
 
 // Count unique calendar days inclusively, independent of timezone and DST.
-// The full span is capped too, so disjoint selections cannot bypass the limit.
+// Custom ranges are capped; named months and quarters support longer email exports.
 export function evaluateReportDelivery(
   ranges: ReportRange[],
   period: ReportingPeriod,
@@ -96,7 +96,7 @@ export function evaluateReportDelivery(
     0,
   );
   const spanDays = merged.at(-1)!.end - merged[0].start + 1;
-  if (spanDays > MAX_REPORT_DAYS)
+  if (period === "Custom range" && spanDays > MAX_REPORT_DAYS)
     return invalid(
       `Choose a reporting span of ${MAX_REPORT_DAYS} days or less. Your selection spans ${spanDays} days.`,
       days,
