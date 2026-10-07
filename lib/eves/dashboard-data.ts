@@ -52,6 +52,7 @@ export type ExecutiveDashboardData = {
       }>;
     };
     sites_with_declining_utilization: {
+      available?: boolean;
       count: number;
       sites: Array<{
         site_id: string;

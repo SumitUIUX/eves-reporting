@@ -1,3 +1,4 @@
+import { sampleUtilizationHistory, compareUtilization } from "./utilization-comparison";
 import { rollingSampleDataset } from "./sample-report-data";
 import sessions from '@/data/charging-performance.json';
 import assets from '@/data/charger-performance.json';
@@ -29,7 +30,7 @@ export function filterExecutiveDashboard(base: ExecutiveDashboardData, filters: 
   for (const r of rows) { const day = rollingNow && filters.from === filters.to ? r.session_start_datetime.slice(0,13) + ':00:00Z' : r.session_start_datetime.slice(0,10); revenue.set(day, (revenue.get(day) ?? 0) + r.total_transaction_amount); }
   const below = scopedUptime.filter(r=>r.uptime_percent < base.alerts_attention_required.chargers_below_sla.sla_threshold_percent);
   const byEvse = [...new Set(below.map(r=>r.evse_id))].map(id=>{const ports = scopedUptime.filter(r=>r.evse_id === id); return {evse_id:id,site_name:ports[0].site_name,uptime_percent:avg(ports.map(r=>r.uptime_percent))};}).filter(r=>r.uptime_percent < base.alerts_attention_required.chargers_below_sla.sla_threshold_percent);
-  const declining: ExecutiveDashboardData["alerts_attention_required"]["sites_with_declining_utilization"]["sites"] = [];
+  const declining = compareUtilization(rollingNow ? sampleUtilizationHistory(siteRecords, rollingNow) : [], filters.from, filters.to, selected);
   const downtime = scopedUptime.filter(r=>r.downtime_event_count > 0).sort((a,b)=>seconds(b.total_downtime_duration)-seconds(a.total_downtime_duration)).slice(0,3).map(r=>({evse_id:`${r.evse_id} / ${r.port_id}`,site_name:r.site_name,downtime_duration:r.total_downtime_duration,downtime_events:r.downtime_event_count,primary_reason:r.most_common_downtime_reason}));
   return {
     dashboard_period:{start_date:filters.from,end_date:filters.to},
@@ -41,6 +42,6 @@ export function filterExecutiveDashboard(base: ExecutiveDashboardData, filters: 
       uptime_percent:metric(avg(scopedUptime.map(r=>r.uptime_percent)),'Asset snapshot',!!scopedUptime.length),
     },
     business:{revenue_trend:[...revenue].sort(([a],[b])=>a.localeCompare(b)).map(([date,revenue])=>({date,revenue})),top_performing_sites:siteSummaries.filter(s=>s.sessions > 0).sort((a,b)=>b.revenue-a.revenue).slice(0,5),underperforming_sites:siteSummaries.filter(s=>s.utilization_percent < 60).sort((a,b)=>a.utilization_percent-b.utilization_percent).slice(0,5)},
-    alerts_attention_required:{chargers_below_sla:{count:byEvse.length,sla_threshold_percent:base.alerts_attention_required.chargers_below_sla.sla_threshold_percent,chargers:byEvse},sites_with_declining_utilization:{count:declining.length,sites:declining},high_downtime:{count:downtime.length,events:downtime}},
+    alerts_attention_required:{chargers_below_sla:{count:byEvse.length,sla_threshold_percent:base.alerts_attention_required.chargers_below_sla.sla_threshold_percent,chargers:byEvse},sites_with_declining_utilization:declining,high_downtime:{count:downtime.length,events:downtime}},
   };
 }

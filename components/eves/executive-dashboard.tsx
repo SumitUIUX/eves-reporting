@@ -163,9 +163,11 @@ function PanelLink({ href, label = "View report" }: { href: string; label?: stri
   );
 }
 
-function AttentionCard({ title, description, count, icon: Icon, href, children }: {
+function AttentionCard({ title, description, count, icon: Icon, href, children, subtext, emptyMessage }: {
   title: string;
   description: string;
+  subtext?: string;
+  emptyMessage?: string;
   count: number | string;
   icon: LucideIcon;
   href?: string;
@@ -178,11 +180,12 @@ function AttentionCard({ title, description, count, icon: Icon, href, children }
         <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/5 text-primary"><Icon className="size-5" aria-hidden="true" /></span>
         <div className="min-w-0 flex-1">
           <CardTitle className="flex items-center gap-2 text-base leading-6">{title}<InfoTip text={description} /></CardTitle>
+          {subtext && <p className="mt-1 text-xs leading-5 text-muted-foreground">{subtext}</p>}
 
         </div>
         {href ? <Link href={href} className={`${badgeClass} transition-colors hover:bg-primary/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`} aria-label={`${count} ${title.toLowerCase()}; view report`}>{count}</Link> : <span className={badgeClass} aria-label={`${count} ${title.toLowerCase()}`}>{count}</span>}
       </div>
-      <CardContent className="flex-1 divide-y px-5">{Children.count(children) ? children : <p className="py-8 text-sm text-muted-foreground">{title === "Declining utilization" ? "No comparison data available" : "No matching records"}</p>}</CardContent>
+      <CardContent className="flex-1 divide-y px-5">{Children.count(children) ? children : <p className="py-8 text-sm text-muted-foreground">{emptyMessage ?? "No matching records"}</p>}</CardContent>
       {href && <div className="flex justify-start border-t bg-muted/10 px-5 py-4"><PanelLink href={href} /></div>}
     </Card>
   );
@@ -257,7 +260,7 @@ function DashboardContent({
   const [draft, setDraft] = useState(defaults);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const previousPeriod = comparisonPeriod(applied.from, applied.to);
-  const comparison = previousPeriod ? `Comparison period: ${previousPeriod.from} to ${previousPeriod.to} (UTC). Full months compare with the previous calendar month; other selections use the preceding equal-length period.` : "Choose a valid period for comparison.";
+  const comparison = previousPeriod ? `Comparison period: ${previousPeriod.from} to ${previousPeriod.to} (UTC). Compared with the immediately preceding equal-length period.` : "Choose a valid period for comparison.";
   const selectedSites = Array.isArray(applied.values.site) ? applied.values.site : [];
   const fullPeriod = applied.from === defaults.from && applied.to === defaults.to;
   const scoped = selectedSites.length > 0 || !fullPeriod;
@@ -573,7 +576,10 @@ function DashboardContent({
               ))}
           </AttentionCard>
 
-          <AttentionCard title="Declining utilization" description={`${comparison} Dated utilization history is unavailable, so a period-specific decline cannot be calculated.`} count="—" icon={TrendingDown} href={reportEnabled("site-performance") ? "/reports/site-performance" : undefined}>
+          <AttentionCard title="Declining utilization" description={`${comparison} Average daily utilization is compared using the same site selection. Decreases are percentage points (pp). ${empty ? "Both periods need complete daily history." : "Illustrative daily history in Sample Data."}`}
+            subtext={previousPeriod ? `${date(applied.from, {month:"short",day:"numeric",year:"numeric"})} – ${date(applied.to, {month:"short",day:"numeric",year:"numeric"})} vs ${date(previousPeriod.from, {month:"short",day:"numeric",year:"numeric"})} – ${date(previousPeriod.to, {month:"short",day:"numeric",year:"numeric"})} · UTC` : "Select a valid date range"}
+            emptyMessage={alerts.sites_with_declining_utilization.available ? "No sites with declining utilization" : "Not enough data to compare"}
+            count={alerts.sites_with_declining_utilization.available ? alerts.sites_with_declining_utilization.count : "—"} icon={TrendingDown} href={reportEnabled("site-performance") ? "/reports/site-performance" : undefined}>
 
               {alerts.sites_with_declining_utilization.sites.map((site) => (
                 <div key={site.site_id} className="flex items-center justify-between gap-3 py-4">
@@ -585,7 +591,7 @@ function DashboardContent({
                     </p>
                   </div>
                   <span className="text-xs font-semibold tabular-nums text-destructive">
-                    {site.change_percent.toFixed(1)}%
+                    ↓ {Math.abs(site.change_percent).toFixed(1)} pp
                   </span>
                 </div>
               ))}

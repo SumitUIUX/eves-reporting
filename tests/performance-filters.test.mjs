@@ -169,9 +169,28 @@ test('empty workspace dashboard retains every section without sample metrics or 
   assert.deepEqual(data.alerts_attention_required.high_downtime.events, []);
 });
 
- test('comparison windows use the previous calendar month or preceding equal-length days', async () => {
+ test('comparison windows always use preceding equal-length days', async () => {
   const { comparisonPeriod } = await vite.ssrLoadModule('/lib/eves/comparison-period.ts');
-  assert.deepEqual(comparisonPeriod('2026-09-01', '2026-09-30'), { from: '2026-08-01', to: '2026-08-31' });
+  assert.deepEqual(comparisonPeriod('2026-09-01', '2026-09-30'), { from: '2026-08-02', to: '2026-08-31' });
   assert.deepEqual(comparisonPeriod('2026-01-01', '2026-01-31'), { from: '2025-12-01', to: '2025-12-31' });
   assert.deepEqual(comparisonPeriod('2026-09-10', '2026-09-16'), { from: '2026-09-03', to: '2026-09-09' });
+});
+
+
+test('utilization compares complete two-day and seven-day windows, scopes sites, and handles missing history', async () => {
+  const { comparisonPeriod } = await vite.ssrLoadModule('/lib/eves/comparison-period.ts');
+  const { compareUtilization, sampleUtilizationHistory } = await vite.ssrLoadModule('/lib/eves/utilization-comparison.ts');
+  assert.deepEqual(comparisonPeriod('2026-10-06','2026-10-07'),{from:'2026-10-04',to:'2026-10-05'});
+  assert.deepEqual(comparisonPeriod('2026-10-01','2026-10-07'),{from:'2026-09-24',to:'2026-09-30'});
+  const history=[60,60,50,50].map((utilization,i)=>({site_id:'a',site_name:'Site A',date:`2026-10-0${i+4}`,utilization}));
+  const result=compareUtilization(history,'2026-10-06','2026-10-07');
+  assert.equal(result.available,true);
+  assert.equal(result.sites[0].change_percent,-10);
+  assert.equal(compareUtilization(history.slice(1),'2026-10-06','2026-10-07').available,false);
+  assert.equal(compareUtilization(history,'2026-10-06','2026-10-07',['Other site']).count,0);
+  const growing=history.map(row=>({...row,utilization:100-row.utilization}));
+  assert.deepEqual(compareUtilization(growing,'2026-10-06','2026-10-07'),{available:true,count:0,sites:[]});
+  const demo=sampleUtilizationHistory([{site_id:'a',site_name:'A',utilization_percent:60},{site_id:'b',site_name:'B',utilization_percent:55}],new Date('2026-10-07T12:00Z'));
+  assert.ok(compareUtilization(demo,'2026-10-01','2026-10-07',['B']).count>0);
+  assert.equal(compareUtilization([], '2026-10-06','2026-10-07').available,false);
 });
