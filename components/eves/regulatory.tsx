@@ -1,4 +1,5 @@
 "use client";
+import { rollingSampleDataset } from "@/lib/eves/sample-report-data";
 import { defaultReportRange } from "@/lib/eves/report-config";
 import { useMemo, useState } from "react";
 import {
@@ -113,7 +114,7 @@ export function Regulatory() {
     const snapshot =
       datasets[report.kind as keyof typeof datasets] as ReportDataset;
     const data =
-      source === "sample" ? snapshot : { headers: snapshot.headers, rows: [] };
+      source === "sample" ? rollingSampleDataset(snapshot, reportConfig[report.kind]) : { headers: snapshot.headers, rows: [] };
     const config = reportConfig[report.kind];
     const fundedSites = new Set(
       tags

@@ -82,8 +82,8 @@ type LoadState =
   | { source: string; token: number; status: "error" };
 
 function date(value: string, options?: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat("en-US", options).format(
-    new Date(`${value}T00:00:00`),
+  return new Intl.DateTimeFormat("en-US", { ...options, timeZone: "UTC" }).format(
+    new Date(value.includes("T") ? value : `${value}T00:00:00Z`),
   );
 }
 
@@ -262,7 +262,7 @@ function DashboardContent({
   const fullPeriod = applied.from === defaults.from && applied.to === defaults.to;
   const scoped = selectedSites.length > 0 || !fullPeriod;
   const sites = empty ? [] : executiveSites;
-  const filteredData = useMemo(() => empty ? data : filterExecutiveDashboard(data, applied), [data, applied, empty]);
+  const filteredData = useMemo(() => empty ? data : filterExecutiveDashboard(data, applied, new Date()), [data, applied, empty]);
   const { active } = useTenant();
   const reportEnabled = (reportId: string) =>
     !!active.components["Reports/Analytics"] && !!active.reports[reportId];
@@ -286,7 +286,7 @@ function DashboardContent({
     () =>
       business.revenue_trend.map((point) => ({
         ...point,
-        label: date(point.date, { month: "short", day: "numeric" }),
+        label: date(point.date, applied.from === applied.to ? { hour: "2-digit", minute: "2-digit", hour12: false } : { month: "short", day: "numeric" }),
       })),
     [business.revenue_trend],
   );

@@ -1,3 +1,4 @@
+import { rollingSampleDataset } from "./sample-report-data";
 import sessions from '@/data/charging-performance.json';
 import assets from '@/data/charger-performance.json';
 import siteRecords from '@/data/site-performance.json';
@@ -12,10 +13,12 @@ const avg = (values: number[]) => values.length ? values.reduce((a,b) => a+b, 0)
 const metric = (value: number, note?: string, available = true): DashboardMetric => ({ value, change_percent: NaN, note, available });
 
 /** Dated charging measures use session records; undated asset measures remain explicitly labelled snapshots. */
-export function filterExecutiveDashboard(base: ExecutiveDashboardData, filters: ReportFilters): ExecutiveDashboardData {
+export function filterExecutiveDashboard(base: ExecutiveDashboardData, filters: ReportFilters, rollingNow?: Date): ExecutiveDashboardData {
   const selected = Array.isArray(filters.values.site) ? filters.values.site : [];
   const match = (r: {site_name: string}) => !selected.length || selected.includes(r.site_name);
-  const rows = sessions.filter(r => match(r) && r.session_start_datetime.slice(0,10) >= filters.from && r.session_start_datetime.slice(0,10) <= filters.to);
+  const sessionKeys = Object.keys(sessions[0]) as (keyof typeof sessions[number])[];
+  const sampleSessions = rollingNow ? rollingSampleDataset({ headers: sessionKeys, rows: sessions.map(row => sessionKeys.map(key => String(row[key] ?? ""))) }, { dateColumn: sessionKeys.indexOf('session_start_datetime') } as import('./report-config').ReportConfig, rollingNow).rows.map(row => Object.fromEntries(sessionKeys.map((key, index) => [key, typeof sessions[0][key] === 'number' ? Number(row[index]) : row[index]])) as unknown as typeof sessions[number]) : sessions;
+  const rows = sampleSessions.filter(r => match(r) && r.session_start_datetime.slice(0,10) >= filters.from && r.session_start_datetime.slice(0,10) <= filters.to);
   const scopedAssets = assets.filter(match);
   const scopedUptime = uptime.filter(match);
   const siteSummaries = siteRecords.filter(match).map(site => {
@@ -23,7 +26,7 @@ export function filterExecutiveDashboard(base: ExecutiveDashboardData, filters: 
     return {site_id: site.site_id, site_name: site.site_name, sessions: records.length, energy_delivered_kwh: records.reduce((n,r)=>n+r.energy_consumed_kwh,0), revenue: records.reduce((n,r)=>n+r.total_transaction_amount,0), utilization_percent: site.utilization_percent};
   });
   const revenue = new Map<string, number>();
-  for (const r of rows) { const day = r.session_start_datetime.slice(0,10); revenue.set(day, (revenue.get(day) ?? 0) + r.total_transaction_amount); }
+  for (const r of rows) { const day = rollingNow && filters.from === filters.to ? r.session_start_datetime.slice(0,13) + ':00:00Z' : r.session_start_datetime.slice(0,10); revenue.set(day, (revenue.get(day) ?? 0) + r.total_transaction_amount); }
   const below = scopedUptime.filter(r=>r.uptime_percent < base.alerts_attention_required.chargers_below_sla.sla_threshold_percent);
   const byEvse = [...new Set(below.map(r=>r.evse_id))].map(id=>{const ports = scopedUptime.filter(r=>r.evse_id === id); return {evse_id:id,site_name:ports[0].site_name,uptime_percent:avg(ports.map(r=>r.uptime_percent))};}).filter(r=>r.uptime_percent < base.alerts_attention_required.chargers_below_sla.sla_threshold_percent);
   const declining: ExecutiveDashboardData["alerts_attention_required"]["sites_with_declining_utilization"]["sites"] = [];

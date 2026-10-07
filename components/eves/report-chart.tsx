@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 import { timeBucket, periodLabel, granularityLabel } from "@/lib/eves/performance-filters";
-import { num, isoDate, type ReportFilters } from "@/lib/eves/report-config";
+import { num, isoDate, timestampKey, type ReportFilters } from "@/lib/eves/report-config";
 import type { ReportKind } from "@/lib/eves/types";
 export function ReportChart({
   kind,
@@ -33,7 +33,11 @@ export function ReportChart({
   const grouped = new Map<string, { value: number; count: number }>();
   for (const row of rows) {
     const key =
-      period?.from && (kind === "chargingPerformance" || kind === "energyDemand")
+      period?.from && kind === "sessions"
+        ? timeBucket(timestampKey(row[12], "dmy") + "Z", period.from, period.to)
+        : period?.from && kind === "revenueTransaction"
+        ? timeBucket(row[5], period.from, period.to)
+        : period?.from && (kind === "chargingPerformance" || kind === "energyDemand")
         ? timeBucket(row[kind === "chargingPerformance" ? 6 : 5], period.from, period.to)
         : kind === "revenueTransaction"
         ? isoDate(row[5])

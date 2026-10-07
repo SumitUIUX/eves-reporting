@@ -1,4 +1,5 @@
 "use client";
+import { rollingSampleDataset } from "@/lib/eves/sample-report-data";
 import { useState, useMemo } from "react";
 import {
   Download,
@@ -288,9 +289,9 @@ function ReportView({
   const data = useMemo(
     () =>
       source === "sample"
-        ? snapshot
+        ? rollingSampleDataset(snapshot, reportConfig[kind])
         : { headers: snapshot.headers, rows: [] },
-    [source, snapshot],
+    [source, snapshot, kind],
   );
   const config = reportConfig[kind];
   const performance = isPerformanceReport(kind);
@@ -398,7 +399,7 @@ function ReportView({
           </Tabs>
         </div>
       )}
-      <ReportChart kind={kind} rows={rows} period={performance ? applied : undefined} />
+      <ReportChart kind={kind} rows={rows} period={applied} />
       <section className="panel">
         <div className="table-toolbar">
           <div className="toolbar-left">
