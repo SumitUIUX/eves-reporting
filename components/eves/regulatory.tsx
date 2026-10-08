@@ -145,7 +145,7 @@ export function Regulatory() {
         const date = isoDate(row[config.dateColumn], config.dateStyle);
         return ranges.some((r) => date >= r.from && date <= r.to);
       }
-      return ranges.some((r) => r.from <= "2026-09-01" && r.to >= "2026-09-07");
+      return true; // Undated reports export the available snapshot, identified in metadata.
     });
     return { name: report.name, data: { headers: data.headers, rows } };
   }
@@ -174,16 +174,16 @@ export function Regulatory() {
         data: {
           headers: ["Field", "Value"],
           rows: [
-            ["Workspace", "EVES reference workspace"],
+            ["Workspace", source === "sample" ? "Sample workspace" : "Current workspace"],
             ["Agency", agency],
             [
               "Funding scope",
-              "Selected reference tag names and mapped sites. Individual charger labels cannot be matched to live device IDs.",
+              "Selected project tags and their mapped sites; all sites when no tag is selected.",
             ],
             ["Periods", ranges.map((r) => r.from + " to " + r.to).join("; ")],
             [
               "Data source",
-              "Snapshot of original EVES reporting UI, captured September 7, 2026",
+              source === "sample" ? "Sample data" : "Workspace data",
             ],
             [
               "Submission status",
@@ -191,25 +191,25 @@ export function Regulatory() {
             ],
             [
               "Summary period",
-              "Throughput and uptime are fixed reference summaries. Included only when the entire Sep 1–7, 2026 period is selected.",
+              "Throughput and uptime contain the available undated snapshot; other reports use the selected dates.",
             ],
             [
               "Contact information",
-              "No contact records were available in the original interface. Inventory fields only.",
+              "Inventory fields only; contact records are not available.",
             ],
-            ["Delivery", "Downloaded to this device. No email was sent."],
+            ["Delivery", "Downloaded to this device."],
           ],
         },
       };
       if (format === "xlsx")
         downloadExcel(
           [...prepared, manifest],
-          `eves-${agency.toLowerCase()}-reference`,
+          `eves-${agency.toLowerCase()}-${source}`,
         );
       else if (prepared.length === 1)
         downloadCsv(
           prepared[0].data,
-          `eves-${agency.toLowerCase()}-${prepared[0].name.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}-reference`,
+          `eves-${agency.toLowerCase()}-${prepared[0].name.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}-${source}`,
         );
       else {
         const files: Record<string, string> = {
@@ -223,13 +223,13 @@ export function Regulatory() {
         const bytes = createZip(files);
         downloadBlob(
           new Blob([bytes.buffer as ArrayBuffer], { type: "application/zip" }),
-          `eves-${agency.toLowerCase()}-reference.zip`,
+          `eves-${agency.toLowerCase()}-${source}.zip`,
         );
       }
       setLastExport(
         `${prepared.length} ${prepared.length === 1 ? "report" : "reports"} · ${rowCount} records exported`,
       );
-      toast.success("Reference report downloaded");
+      toast.success(rowCount ? "Report download started" : "Empty report downloaded with column headers");
     } catch {
       setError("The export could not be created. Please try again.");
     } finally {

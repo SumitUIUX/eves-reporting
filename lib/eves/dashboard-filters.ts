@@ -1,3 +1,4 @@
+import { comparisonPeriod } from './comparison-period';
 import { sampleUtilizationHistory, compareUtilization } from "./utilization-comparison";
 import { rollingSampleDataset } from "./sample-report-data";
 import sessions from '@/data/charging-performance.json';
@@ -20,6 +21,19 @@ export function filterExecutiveDashboard(base: ExecutiveDashboardData, filters: 
   const sessionKeys = Object.keys(sessions[0]) as (keyof typeof sessions[number])[];
   const sampleSessions = rollingNow ? rollingSampleDataset({ headers: sessionKeys, rows: sessions.map(row => sessionKeys.map(key => String(row[key] ?? ""))) }, { dateColumn: sessionKeys.indexOf('session_start_datetime') } as import('./report-config').ReportConfig, rollingNow).rows.map(row => Object.fromEntries(sessionKeys.map((key, index) => [key, typeof sessions[0][key] === 'number' ? Number(row[index]) : row[index]])) as unknown as typeof sessions[number]) : sessions;
   const rows = sampleSessions.filter(r => match(r) && r.session_start_datetime.slice(0,10) >= filters.from && r.session_start_datetime.slice(0,10) <= filters.to);
+  const previous = comparisonPeriod(filters.from, filters.to);
+  const coverage = sampleSessions.map(row => row.session_start_datetime.slice(0,10)).sort();
+  // Sample rolling history has a known daily coverage window. Never infer history for workspace data.
+  const comparable = !!rollingNow && !!previous && previous.from >= coverage[0] && filters.to <= coverage.at(-1)!;
+  const priorRows = comparable ? sampleSessions.filter(row => match(row) && row.session_start_datetime.slice(0,10) >= previous!.from && row.session_start_datetime.slice(0,10) <= previous!.to) : [];
+  const comparedMetric = (current: number, prior: number, note?: string): DashboardMetric => ({
+    value: current, available: true, note,
+    previous_period_value: comparable ? prior : undefined,
+    change_percent: comparable && prior > 0 ? (current-prior)/prior*100 : NaN,
+  });
+  const total = (values: typeof rows, key: 'energy_consumed_kwh' | 'total_transaction_amount') => values.reduce((sum,row) => sum+row[key],0);
+  const currentDuration = avg(rows.map(row => seconds(row.session_duration)));
+  const priorDuration = avg(priorRows.map(row => seconds(row.session_duration)));
   const scopedAssets = assets.filter(match);
   const scopedUptime = uptime.filter(match);
   const siteSummaries = siteRecords.filter(match).map(site => {
@@ -34,9 +48,14 @@ export function filterExecutiveDashboard(base: ExecutiveDashboardData, filters: 
   const downtime = scopedUptime.filter(r=>r.downtime_event_count > 0).sort((a,b)=>seconds(b.total_downtime_duration)-seconds(a.total_downtime_duration)).slice(0,3).map(r=>({evse_id:`${r.evse_id} / ${r.port_id}`,site_name:r.site_name,downtime_duration:r.total_downtime_duration,downtime_events:r.downtime_event_count,primary_reason:r.most_common_downtime_reason}));
   return {
     dashboard_period:{start_date:filters.from,end_date:filters.to},
-    charging:{sessions:metric(rows.length),energy_delivered_kwh:metric(rows.reduce((n,r)=>n+r.energy_consumed_kwh,0)),revenue:metric(rows.reduce((n,r)=>n+r.total_transaction_amount,0)),average_session_duration:{value:rows.length ? duration(avg(rows.map(r=>seconds(r.session_duration)))) : '—',change_percent:NaN}},
+    charging:{
+      sessions:comparedMetric(rows.length,priorRows.length),
+      energy_delivered_kwh:comparedMetric(total(rows,'energy_consumed_kwh'),total(priorRows,'energy_consumed_kwh')),
+      revenue:comparedMetric(total(rows,'total_transaction_amount'),total(priorRows,'total_transaction_amount')),
+      average_session_duration:{...comparedMetric(currentDuration,priorDuration),value:rows.length ? duration(currentDuration) : '—',previous_period_value:comparable && priorRows.length ? duration(priorDuration) : undefined},
+    },
     infrastructure:{
-      active_chargers:{...metric(new Set(rows.map(r=>r.evse_id)).size,'Chargers with sessions / inventory'),total:new Set(scopedAssets.map(r=>r.evse_id)).size},
+      active_chargers:{...comparedMetric(new Set(rows.map(r=>r.evse_id)).size,new Set(priorRows.map(r=>r.evse_id)).size,'Chargers used during the selected period / total inventory'),total:new Set(scopedAssets.map(r=>r.evse_id)).size},
       connector_count:{...metric(new Set(scopedAssets.map(r=>`${r.evse_id}/${r.port_id}`)).size,'Inventory snapshot'),total:new Set(scopedAssets.map(r=>`${r.evse_id}/${r.port_id}`)).size},
       utilization_percent:metric(avg(scopedAssets.map(r=>r.utilization_percent)),'Asset snapshot',!!scopedAssets.length),
       uptime_percent:metric(avg(scopedUptime.map(r=>r.uptime_percent)),'Asset snapshot',!!scopedUptime.length),

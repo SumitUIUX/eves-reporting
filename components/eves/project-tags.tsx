@@ -233,13 +233,6 @@ export function ProjectTags() {
           note="" tooltip="Geographic reporting groups"
           icon={MapPin}
         />
-        <Metric
-          label="Sites mapped"
-          value={pending ? "—" : new Set(tags.flatMap(tag => Object.keys(tag.mappings))).size}
-          note=""
-          tooltip="Unique sites across all project tags"
-          icon={Building2}
-        />
       </div>
       <section className="panel" aria-label="Project tags">
         <ProjectTagToolbar

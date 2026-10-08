@@ -295,6 +295,7 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
   const sum = (i: number) => rows.reduce((a, r) => a + num(r[i]), 0),
     unique = (i: number) => new Set(rows.map((r) => r[i])).size;
   const avg = (i: number) => (rows.length ? sum(i) / rows.length : 0);
+  const money = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const f = (n: number) =>
     n.toLocaleString("en-US", { maximumFractionDigits: 2 });
   if (kind === "sessions")
@@ -320,7 +321,7 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
       },
       {
         label: "Total revenue",
-        value: "$" + f(sum(23)),
+        value: "$" + money(sum(23)),
         note: `${rows.filter((r) => r[19] === "Yes").length} sessions with errors`,
       },
     ];
@@ -347,7 +348,7 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
       },
       {
         label: "Total revenue",
-        value: "$" + f(sum(16)),
+        value: "$" + money(sum(16)),
         note: `Across ${f(unique(0))} sites`,
       },
     ];
@@ -454,17 +455,17 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
       },
       {
         label: "Gross revenue",
-        value: "$" + f(sum(13)),
+        value: "$" + money(sum(13)),
         note: "Before fees and taxes",
       },
       {
         label: "Net revenue",
-        value: "$" + f(sum(14)),
+        value: "$" + money(sum(14)),
         note: "After fees and taxes",
       },
       {
         label: "Processing & platform fees",
-        value: "$" + f(sum(10) + sum(11)),
+        value: "$" + money(sum(10) + sum(11)),
         note: `Across ${f(unique(0))} sites`,
       },
     ];
@@ -525,7 +526,7 @@ export function metricsFor(kind: ReportKind, rows: string[][]) {
     return [
       {
         label: "Average uptime",
-        value: rows.length ? f(avg(13)) + "%" : "—",
+        value: rows.length ? f(avg(15)) + "%" : "—",
         note: "Unweighted connector average",
       },
       {

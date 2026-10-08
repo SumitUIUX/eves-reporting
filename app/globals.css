@@ -1019,6 +1019,6 @@ svg {
 .performance-table tr > th:first-child,
 .performance-table:not(.no-row-actions) tr > th:last-child { z-index: 5; }
 
-.project-tag-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.project-tag-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 1024px) { .project-tag-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .project-tag-metrics { grid-template-columns: 1fr; } }

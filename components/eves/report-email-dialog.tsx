@@ -2,7 +2,7 @@
 
 import { toast } from "sonner";
 import { useState } from "react";
-import { Mail, CheckCircle2 } from "lucide-react";
+import { Mail, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import styles from "./regulatory.module.css";
 
 const registeredEmail = "sumit@example.com";
 
-// Sample delivery preview: no email is sent and the account email is never changed.
+// Email delivery is not connected: no email is sent and the account email is never changed.
 export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaultName, ranges, selectedReports }: {
   onClose: () => void; agency: string; format: string; periodLabel: string; defaultName: string; ranges: { from: string; to: string }[]; selectedReports: string[];
 }) {
@@ -23,7 +23,7 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
   return <Dialog open onOpenChange={open => { if (!open) onClose(); }}>
     <DialogContent className={`${styles.emailDialog} max-h-[90dvh] overflow-y-auto`}>
       <DialogHeader>
-        <DialogTitle>{confirmed ? "Delivery preview" : "Email reports"}</DialogTitle>
+        <DialogTitle>{confirmed ? "Delivery preview" : "Email report preview"}</DialogTitle>
         <DialogDescription className={confirmed ? "sr-only" : undefined}>{confirmed ? "Report delivery details" : "Choose where to receive all files in this export."}</DialogDescription>
       </DialogHeader>
       <div className={styles.emailSummary}>
@@ -31,7 +31,7 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
       </div>
       {confirmed ? <>
         <div className="rounded-lg border p-4" role="status">
-          <CheckCircle2 className="mb-3 size-6 text-primary" aria-hidden="true" />
+          <FileText className="mb-3 size-6 text-primary" aria-hidden="true" />
           <p className="font-medium break-words">{name.trim()}</p>
           <p className="mt-2 text-sm text-muted-foreground">Delivery emails</p>
           <p className="font-medium break-all">{email}</p>
@@ -48,7 +48,7 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
         </div>
         <div className={styles.emailActions}>
           <Button variant="outline" onClick={() => setConfirmed(false)}>Back</Button>
-          <Button onClick={() => { toast.success("Delivery preview confirmed"); onClose(); }}><Mail size={15} />Send</Button>
+          <Button onClick={() => { toast.success("Email preview confirmed"); onClose(); }}><Mail size={15} />Confirm preview</Button>
         </div>
       </> : <>
         <div className={styles.field}>
@@ -70,12 +70,12 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
             </div>
           </form> : <>
             <p className="break-all font-medium">{email}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{email === registeredEmail ? "Registered email" : "For this export only"}</p>
-            {email !== registeredEmail && <Button type="button" variant="link" size="sm" className="mt-2 px-0" onClick={() => setEmail(registeredEmail)}>Use registered email</Button>}
+            <p className="mt-1 text-xs text-muted-foreground">{email === registeredEmail ? "Example email" : "For this export only"}</p>
+            {email !== registeredEmail && <Button type="button" variant="link" size="sm" className="mt-2 px-0" onClick={() => setEmail(registeredEmail)}>Use example email</Button>}
           </>}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-xs text-muted-foreground">Sample delivery preview</span>
+          <span className="text-xs text-muted-foreground">Email delivery is not connected</span>
           <div className={styles.emailActions}>
             <Button variant="outline" onClick={onClose}>Cancel</Button>
             <Button disabled={editing || !name.trim()} onClick={() => setConfirmed(true)}><Mail size={15} />Preview delivery</Button>

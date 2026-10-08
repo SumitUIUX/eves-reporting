@@ -23,6 +23,7 @@ interface ReportFilterControlProps {
   data: ReportDataset;
   applied: ReportFilters;
   onApply: (filters: ReportFilters) => void;
+  open: boolean; onOpenChange: (open: boolean) => void;
 }
 
 export function ReportFilterControl({
@@ -30,9 +31,8 @@ export function ReportFilterControl({
   config,
   data,
   applied,
-  onApply,
+  onApply, open, onOpenChange,
 }: ReportFilterControlProps) {
-  const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(applied);
   const [error, setError] = useState("");
   const id = useId();
@@ -40,7 +40,7 @@ export function ReportFilterControl({
     Object.values(applied.values).filter((value) =>
       Array.isArray(value) ? value.length > 0 : value !== "all",
     ).length +
-    Number(!!applied.from || !!applied.to) +
+    Number(config.dateColumn !== undefined && (applied.from !== defaultReportFilters(config).from || applied.to !== defaultReportFilters(config).to)) +
     Number(applied.errors);
 
   function changeOpen(next: boolean) {
@@ -49,7 +49,7 @@ export function ReportFilterControl({
       setDraft(applied);
       setError("");
     }
-    setOpen(next);
+    onOpenChange(next);
   }
 
   function apply(event: React.FormEvent<HTMLFormElement>) {
@@ -60,13 +60,12 @@ export function ReportFilterControl({
     }
     onApply(draft);
     setError("");
-    setOpen(false);
+    onOpenChange(false);
   }
 
   function reset() {
     setDraft(defaultReportFilters(config));
     setError("");
-    onApply(defaultReportFilters(config));
   }
 
   const form = (

@@ -122,7 +122,7 @@ function MetricCard({
     <Card className="gap-3 py-5 shadow-none">
       <CardHeader className="grid grid-cols-[1fr_auto] gap-3 px-5">
         <div className="space-y-2">
-          <CardDescription className="flex items-center gap-2">{label}<InfoTip text={`${metric.note ? metric.note + ". " : ""}${comparison} ${Number.isFinite(metric.change_percent) ? "Change is relative to that period." : "No comparable historical data is available; no change is shown."}`} /></CardDescription>
+          <CardDescription className="flex items-center gap-2">{label}<InfoTip text={metric.note?.toLowerCase().includes("snapshot") ? "Latest available snapshot; historical comparison unavailable." : `${metric.note ? metric.note + ". " : ""}${comparison}${metric.previous_period_value !== undefined && !Number.isFinite(metric.change_percent) ? " Previous value is zero; percentage change is not defined." : metric.previous_period_value === undefined ? " Not enough history to compare." : ""}`} /></CardDescription>
           <CardTitle className="text-2xl tracking-tight tabular-nums">
             {metric.available === false ? "—" : value}
           </CardTitle>
@@ -260,7 +260,7 @@ function DashboardContent({
   const [draft, setDraft] = useState(defaults);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const previousPeriod = comparisonPeriod(applied.from, applied.to);
-  const comparison = previousPeriod ? `Comparison period: ${previousPeriod.from} to ${previousPeriod.to} (UTC). Compared with the immediately preceding equal-length period.` : "Choose a valid period for comparison.";
+  const comparison = previousPeriod ? `Compared with ${previousPeriod.from} to ${previousPeriod.to} (UTC), the preceding equal-length period.` : "Choose a valid period for comparison.";
   const selectedSites = Array.isArray(applied.values.site) ? applied.values.site : [];
   const fullPeriod = applied.from === defaults.from && applied.to === defaults.to;
   const scoped = selectedSites.length > 0 || !fullPeriod;
@@ -309,7 +309,7 @@ function DashboardContent({
                 <DateRangeFilter value={draft} onChange={setDraft} />
               </div>
               <div className={filterStyles.footer}>
-                <Button type="button" variant="ghost" onClick={() => { setDraft(defaults); setApplied(defaults); }}><RotateCcw size={14} />Reset filters</Button>
+                <Button type="button" variant="ghost" onClick={() => { setDraft(defaults); }}><RotateCcw size={14} />Reset filters</Button>
                 <Button type="submit" disabled={!!dateRangeError(draft)}>Apply filters</Button>
               </div>
             </form>
@@ -365,16 +365,16 @@ function DashboardContent({
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
             comparison={comparison}
-            label="Active chargers"
+            label="Chargers used"
             value={`${infrastructure.active_chargers.value}/${infrastructure.active_chargers.total}`}
             metric={infrastructure.active_chargers}
-            previous="Active / total chargers"
+            previous={`Previous: ${infrastructure.active_chargers.previous_period_value ?? "—"} chargers used`}
             icon={Server}
           />
           <MetricCard
             comparison={comparison}
-            label="Connector count"
-            value={`${infrastructure.connector_count.value}/${infrastructure.connector_count.total}`}
+            label="Total connectors"
+            value={String(infrastructure.connector_count.value)}
             metric={infrastructure.connector_count}
             previous="Active / total connectors"
             icon={PlugZap}
@@ -498,7 +498,7 @@ function DashboardContent({
 
         <Card className="gap-3 py-5 shadow-none">
           <CardHeader className="px-5">
-            <CardTitle className="flex items-center gap-2 text-base">Underperforming sites<InfoTip text="Sites with utilization below the 60% threshold, ranked lowest first. This is a threshold comparison, not a decline from the previous period. Utilization comes from the available inventory snapshot; dated utilization history is not available." /></CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base">Sites below utilization target<InfoTip text="Below the 60% utilization target, lowest first. Based on the latest available snapshot." /></CardTitle>
 
             {reportEnabled("site-performance") && (
               <CardAction>
@@ -567,7 +567,7 @@ function DashboardContent({
                           0,
                           alerts.chargers_below_sla.sla_threshold_percent -
                             charger.uptime_percent,
-                        ).toFixed(1)}%
+                        ).toFixed(1)} pp
                       </span>
                       <p className="mt-0.5 text-xs">Below SLA</p>
                     </div>
@@ -577,11 +577,11 @@ function DashboardContent({
           </AttentionCard>
 
           <AttentionCard title="Declining utilization" description={`${comparison} Average daily utilization is compared using the same site selection. Decreases are percentage points (pp). ${empty ? "Both periods need complete daily history." : "Illustrative daily history in Sample Data."}`}
-            subtext={previousPeriod ? `${date(applied.from, {month:"short",day:"numeric",year:"numeric"})} – ${date(applied.to, {month:"short",day:"numeric",year:"numeric"})} vs ${date(previousPeriod.from, {month:"short",day:"numeric",year:"numeric"})} – ${date(previousPeriod.to, {month:"short",day:"numeric",year:"numeric"})} · UTC` : "Select a valid date range"}
+            subtext={previousPeriod ? `${date(applied.from, {month:"short",day:"numeric",year:applied.from.slice(0,4) !== previousPeriod?.from.slice(0,4) ? "numeric" : undefined})} – ${date(applied.to, {month:"short",day:"numeric",year:applied.from.slice(0,4) !== previousPeriod?.from.slice(0,4) ? "numeric" : undefined})} vs ${date(previousPeriod.from, {month:"short",day:"numeric",year:applied.from.slice(0,4) !== previousPeriod?.from.slice(0,4) ? "numeric" : undefined})} – ${date(previousPeriod.to, {month:"short",day:"numeric",year:applied.from.slice(0,4) !== previousPeriod?.from.slice(0,4) ? "numeric" : undefined})} · UTC` : "Select a valid date range"}
             emptyMessage={alerts.sites_with_declining_utilization.available ? "No sites with declining utilization" : "Not enough data to compare"}
             count={alerts.sites_with_declining_utilization.available ? alerts.sites_with_declining_utilization.count : "—"} icon={TrendingDown} href={reportEnabled("site-performance") ? "/reports/site-performance" : undefined}>
 
-              {alerts.sites_with_declining_utilization.sites.map((site) => (
+              {alerts.sites_with_declining_utilization.sites.slice(0, 3).map((site) => (
                 <div key={site.site_id} className="flex items-center justify-between gap-3 py-4">
                   <div className="min-w-0">
                     <p className="text-sm font-medium leading-5">{site.site_name}</p>

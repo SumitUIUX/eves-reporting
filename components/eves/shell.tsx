@@ -300,8 +300,8 @@ function DataSourceMenu() {
         <DropdownMenuSeparator />
         <p className="px-3 py-2 text-xs leading-relaxed text-muted-foreground">
           {isSample
-            ? "Sample data loads from the local sample files on every screen."
-            : "Workspace data uses the connected APIs. Screens without an API stay empty."}
+            ? "Explore reports with sample data."
+            : "View available data from your workspace."}
         </p>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -337,11 +337,11 @@ function ReportView({
   }
   function exportReport(format: "csv" | "xlsx") {
     const d = { headers: data.headers, rows };
-    if (format === "csv") downloadCsv(d, `eves-${kind}-reference`);
+    if (format === "csv") downloadCsv(d, `eves-${kind}-${source}`);
     else
       downloadExcel(
         [{ name: config.short, data: d }],
-        `eves-${kind}-reference`,
+        `eves-${kind}-${source}`,
       );
     toast.success(rows.length ? `${rows.length} records exported` : "Empty report exported with column headers");
   }
@@ -356,6 +356,7 @@ function ReportView({
             data={data}
             applied={applied}
             onApply={apply}
+            open={filterOpen} onOpenChange={setFilterOpen}
           />}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -383,7 +384,7 @@ function ReportView({
           <Metric
             key={s.label}
             {...s}
-            value={performance && source !== "sample" ? "—" : s.value}
+            value={source !== "sample" ? "—" : s.value}
             note=""
             icon={[Activity, Zap, Clock3, Building2][i % 4]}
           />
@@ -454,7 +455,7 @@ function ReportView({
             <TableBody>
               {!rows.length && <TableRow><TableCell colSpan={columns.length}>
                 <DataEmpty compact message="No records found">
-                  {source === "sample" && <Button size="sm" variant="outline" onClick={() => { if (performance) setFilterOpen(true); else { reset(); setSearch(""); } }}>Adjust filters</Button>}
+                  {source === "sample" && <Button size="sm" variant="outline" onClick={() => { setFilterOpen(true); }}>Adjust filters</Button>}
                 </DataEmpty>
               </TableCell></TableRow>}
 

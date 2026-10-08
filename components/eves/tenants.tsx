@@ -213,9 +213,9 @@ export function Tenants() {
         name: draft.name.trim(),
         subdomain: draft.subdomain.trim(),
         createdOn: draft.createdOn || now,
-        createdBy: draft.createdBy || "Tenant View",
+        createdBy: draft.createdBy || "Super Admin",
         changedOn: now,
-        changedBy: "Tenant View",
+        changedBy: "Super Admin",
       })
     ) {
       toast.success("Tenant saved");

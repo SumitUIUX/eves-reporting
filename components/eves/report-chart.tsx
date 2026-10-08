@@ -123,7 +123,7 @@ export function ReportChart({
               : "Average uptime by site"}
         </h2>
         <span className="text-xs text-muted-foreground">
-          {period?.from ? `${periodLabel(period)}${period.from ? " · " + granularityLabel(period.from, period.to) : ""}${uptimeChart ? " · SLA: 95%" : ""}` : uptimeChart ? "SLA threshold: 95%" : ""}
+          {uptimeChart ? "Latest available snapshot · SLA: 95%" : period?.from ? `${periodLabel(period)} · ${granularityLabel(period.from, period.to)}` : ""}
         </span>
       </div>
       <ChartContainer
@@ -186,6 +186,7 @@ export function ReportChart({
               tickLine={false}
               axisLine={false}
               tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+              tickFormatter={(value) => /^\d{4}-\d{2}-\d{2}T/.test(String(value)) ? String(value).slice(11, 16) : /^\d{4}-\d{2}-\d{2}$/.test(String(value)) ? new Date(String(value) + "T00:00:00Z").toLocaleDateString("en-US", {month:"short",day:"numeric",timeZone:"UTC"}) : String(value)}
               minTickGap={25}
             />
             <YAxis

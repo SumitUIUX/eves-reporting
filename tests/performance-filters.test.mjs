@@ -194,3 +194,27 @@ test('utilization compares complete two-day and seven-day windows, scopes sites,
   assert.ok(compareUtilization(demo,'2026-10-01','2026-10-07',['B']).count>0);
   assert.equal(compareUtilization([], '2026-10-06','2026-10-07').available,false);
 });
+
+test('Executive charging comparisons use complete preceding periods and identical site scope', async () => {
+  const { filterExecutiveDashboard } = await vite.ssrLoadModule('/lib/eves/dashboard-filters.ts');
+  const { default: base } = await vite.ssrLoadModule('/data/report-dashboard.json');
+  const now = new Date('2026-10-08T12:00:00Z');
+  const filters = { values: { site: ['Downtown EV Charging Hub'] }, errors:false, from:'2026-10-06', to:'2026-10-07' };
+  const result = filterExecutiveDashboard(base, filters, now);
+  assert.equal(result.charging.sessions.value, 6);
+  assert.equal(result.charging.sessions.previous_period_value, 6);
+  assert.equal(result.charging.sessions.change_percent, 0);
+  assert.equal(result.charging.average_session_duration.previous_period_value, result.charging.average_session_duration.value);
+  assert.equal(result.infrastructure.active_chargers.previous_period_value, 1);
+  assert.ok(Number.isNaN(result.infrastructure.uptime_percent.change_percent), 'Do not fabricate snapshot history');
+  const unavailable = filterExecutiveDashboard(base, {...filters,from:'2026-07-08',to:'2026-07-08'},now);
+  assert.equal(unavailable.charging.sessions.previous_period_value, undefined);
+  assert.ok(Number.isNaN(unavailable.charging.sessions.change_percent));
+});
+
+test('Master uptime averages percentage values, never excluded downtime durations', async () => {
+  const { metricsFor } = await vite.ssrLoadModule('/lib/eves/report-config.ts');
+  const rows = [90,96].map(value => {const row=Array(35).fill('0'); row[13]='3h 6m'; row[15]=`${value}%`;return row;});
+  assert.equal(metricsFor('uptime', rows)[0].value, '93%');
+  assert.equal(metricsFor('uptime', [])[0].value, '—');
+});
