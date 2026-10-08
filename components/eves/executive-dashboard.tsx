@@ -1,4 +1,6 @@
 "use client";
+import { reportLink } from "@/lib/eves/report-link-context";
+import { compactPeriod } from "@/lib/eves/report-display";
 import { InfoTip } from "./shared";
 import { comparisonPeriod } from "@/lib/eves/comparison-period";
 import { emptyExecutiveDashboard } from "@/lib/eves/dashboard-data";
@@ -260,7 +262,7 @@ function DashboardContent({
   const [draft, setDraft] = useState(defaults);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const previousPeriod = comparisonPeriod(applied.from, applied.to);
-  const comparison = previousPeriod ? `Compared with ${previousPeriod.from} to ${previousPeriod.to} (UTC), the preceding equal-length period.` : "Choose a valid period for comparison.";
+  const comparison = previousPeriod ? `Previous: ${compactPeriod(previousPeriod.from,previousPeriod.to,true)} · UTC.` : "Choose a valid period for comparison.";
   const selectedSites = Array.isArray(applied.values.site) ? applied.values.site : [];
   const fullPeriod = applied.from === defaults.from && applied.to === defaults.to;
   const scoped = selectedSites.length > 0 || !fullPeriod;
@@ -307,6 +309,7 @@ function DashboardContent({
                   <ReportEntitySelector id="executive-site" label="Site" options={sites} selected={Array.isArray(draft.values.site) ? draft.values.site : []} onChange={site => setDraft(v => ({ ...v, values: { site } }))} />
                 </div>
                 <DateRangeFilter value={draft} onChange={setDraft} />
+                <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">Comparison method</summary><p className="mt-2">The selected dates are compared with the immediately preceding period of the same number of days, using the same sites. Today is a partial calendar day. Sample Data uses illustrative daily history. Undated inventory metrics use the latest available snapshot.</p></details>
               </div>
               <div className={filterStyles.footer}>
                 <Button type="button" variant="ghost" onClick={() => { setDraft(defaults); }}><RotateCcw size={14} />Reset filters</Button>
@@ -412,7 +415,7 @@ function DashboardContent({
 
               {reportEnabled("revenue-financial") && (
                 <CardAction>
-                  <PanelLink href="/reports/revenue-transaction" />
+                  <PanelLink href={reportLink("/reports/revenue-transaction", applied)} />
                 </CardAction>
               )}
             </CardHeader>
@@ -483,7 +486,7 @@ function DashboardContent({
 
               {reportEnabled("site-performance") && (
                 <CardAction>
-                  <PanelLink href="/reports/site-performance" />
+                  <PanelLink href={reportLink("/reports/site-performance", applied, "top-sites", topSites.map(site=>site.site_name))} />
                 </CardAction>
               )}
             </CardHeader>
@@ -502,7 +505,7 @@ function DashboardContent({
 
             {reportEnabled("site-performance") && (
               <CardAction>
-                <PanelLink href="/reports/site-performance" />
+                <PanelLink href={reportLink("/reports/site-performance", applied, "below-target", underperforming.map(site=>site.site_name))} />
               </CardAction>
             )}
           </CardHeader>
@@ -542,7 +545,7 @@ function DashboardContent({
           />
         </div>
         <div className="grid items-stretch gap-4 xl:grid-cols-3">
-          <AttentionCard title="Chargers below SLA" description={`${alerts.chargers_below_sla.sla_threshold_percent}% minimum · Asset snapshot; no dated uptime history`} count={empty ? "—" : alerts.chargers_below_sla.count} icon={AlertTriangle} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
+          <AttentionCard title="Chargers below SLA" description={`${alerts.chargers_below_sla.sla_threshold_percent}% minimum · Asset snapshot; no dated uptime history`} count={empty ? "—" : alerts.chargers_below_sla.count} icon={AlertTriangle} href={reportEnabled("tenant-uptime-reliability") ? reportLink("/reports/tenant-uptime-reliability", applied, "below-sla", [], alerts.chargers_below_sla.chargers.map(charger=>charger.evse_id)) : undefined}>
 
               {alerts.chargers_below_sla.chargers.map((charger) => (
                 <div key={charger.evse_id} className="space-y-2 py-4">
@@ -576,10 +579,10 @@ function DashboardContent({
               ))}
           </AttentionCard>
 
-          <AttentionCard title="Declining utilization" description={`${comparison} Average daily utilization is compared using the same site selection. Decreases are percentage points (pp). ${empty ? "Both periods need complete daily history." : "Illustrative daily history in Sample Data."}`}
-            subtext={previousPeriod ? `${date(applied.from, {month:"short",day:"numeric",year:applied.from.slice(0,4) !== previousPeriod?.from.slice(0,4) ? "numeric" : undefined})} – ${date(applied.to, {month:"short",day:"numeric",year:applied.from.slice(0,4) !== previousPeriod?.from.slice(0,4) ? "numeric" : undefined})} vs ${date(previousPeriod.from, {month:"short",day:"numeric",year:applied.from.slice(0,4) !== previousPeriod?.from.slice(0,4) ? "numeric" : undefined})} – ${date(previousPeriod.to, {month:"short",day:"numeric",year:applied.from.slice(0,4) !== previousPeriod?.from.slice(0,4) ? "numeric" : undefined})} · UTC` : "Select a valid date range"}
+          <AttentionCard title="Declining utilization" description={`${comparison} Change in percentage points (pp).`}
+            subtext={previousPeriod ? `${compactPeriod(applied.from, applied.to, applied.from.slice(0,4)!==previousPeriod.from.slice(0,4))} vs ${compactPeriod(previousPeriod.from, previousPeriod.to, applied.from.slice(0,4)!==previousPeriod.from.slice(0,4))} · UTC${applied.from<=defaults.to && applied.to>=defaults.to ? " · Includes today (partial day)" : ""}` : "Select a valid date range"}
             emptyMessage={alerts.sites_with_declining_utilization.available ? "No sites with declining utilization" : "Not enough data to compare"}
-            count={alerts.sites_with_declining_utilization.available ? alerts.sites_with_declining_utilization.count : "—"} icon={TrendingDown} href={reportEnabled("site-performance") ? "/reports/site-performance" : undefined}>
+            count={alerts.sites_with_declining_utilization.available ? alerts.sites_with_declining_utilization.count : "—"} icon={TrendingDown} href={reportEnabled("site-performance") ? reportLink("/reports/site-performance", applied, "declining", alerts.sites_with_declining_utilization.sites.map(site=>site.site_name)) : undefined}>
 
               {alerts.sites_with_declining_utilization.sites.slice(0, 3).map((site) => (
                 <div key={site.site_id} className="flex items-center justify-between gap-3 py-4">
@@ -597,7 +600,7 @@ function DashboardContent({
               ))}
           </AttentionCard>
 
-          <AttentionCard title="High downtime" description="Longest downtime durations in the available asset snapshot; no dated downtime history" count={empty ? "—" : alerts.high_downtime.count} icon={Clock3} href={reportEnabled("tenant-uptime-reliability") ? "/reports/tenant-uptime-reliability" : undefined}>
+          <AttentionCard title="High downtime" description="Longest downtime durations in the available asset snapshot; no dated downtime history" count={empty ? "—" : alerts.high_downtime.count} icon={Clock3} href={reportEnabled("tenant-uptime-reliability") ? reportLink("/reports/tenant-uptime-reliability", applied, "downtime", [], alerts.high_downtime.events.map(event=>event.evse_id)) : undefined}>
 
               {alerts.high_downtime.events.map((event) => (
                 <div key={event.evse_id} className="py-4">

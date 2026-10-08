@@ -218,3 +218,26 @@ test('Master uptime averages percentage values, never excluded downtime duration
   assert.equal(metricsFor('uptime', rows)[0].value, '93%');
   assert.equal(metricsFor('uptime', [])[0].value, '—');
 });
+
+test('Executive links preserve site/date selection and exact alert scope', async () => {
+  const {reportLink,readReportContext,contextFilters,scopeReportRows}=await vite.ssrLoadModule('/lib/eves/report-link-context.ts');
+  const filters={values:{site:['Site A','Site B']},from:'2026-10-01',to:'2026-10-07',errors:false};
+  const url=new URL(reportLink('/reports/tenant-uptime-reliability',filters,'below-sla',[],['EVSE-A']),'https://example.test');
+  const context=readReportContext(url.searchParams);
+  const applied=contextFilters(reportConfig.tenantUptime,{...filters,values:{}},context);
+  assert.deepEqual(applied.values[0],['Site A','Site B']);
+  assert.equal(applied.from,'2026-10-01'); assert.equal(applied.to,'2026-10-07');
+  assert.deepEqual(scopeReportRows([['Site A','ID','EVSE-A','1'],['Site B','ID','EVSE-B','1']],context),[['Site A','ID','EVSE-A','1']]);
+  assert.deepEqual(scopeReportRows([['Site A']],{...context,alert:'declining',scopeSites:[]}),[]);
+  assert.deepEqual(scopeReportRows([['Site A'],['Site B']],{...context,alert:'declining',scopeSites:['Site B']}),[['Site B']]);
+  assert.equal(readReportContext(new URLSearchParams('from=2026-02-31&to=2026-03-01')).from,undefined);
+});
+
+test('Report display shortens dates without changing original timestamps', async () => {
+  const {readableTimestamp,compactPeriod}=await vite.ssrLoadModule('/lib/eves/report-display.ts');
+  assert.equal(compactPeriod('2026-10-06','2026-10-07'),'Oct 6–7');
+  assert.equal(compactPeriod('2026-10-07','2026-10-07'),'Oct 7');
+  assert.ok(readableTimestamp('2026-10-08T08:15:22.000Z').includes('08:15'));
+  assert.ok(readableTimestamp('2026-10-08T08:15:22.000Z').endsWith('UTC'));
+  assert.equal(readableTimestamp('EVSE-123'),null);
+});

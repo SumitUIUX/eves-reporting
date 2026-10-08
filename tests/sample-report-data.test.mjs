@@ -41,3 +41,17 @@ test('executive demo totals reconcile with current-day session fixtures and have
  assert.ok(result.business.revenue_trend.length>1);
  assert.equal(result.charging.revenue.value,sessions.reduce((sum,r)=>sum+r.total_transaction_amount,0));
 });
+
+test('Infrastructure sample throughput reconciles session counts and energy without altering inventory',()=>{
+ const input=snapshots.throughput, before=JSON.stringify(input);
+ const result=rollingSampleDataset(input,reportConfig.throughput);
+ assert.equal(result.rows.length,input.rows.length);
+ result.rows.forEach((row,i)=>{
+  assert.deepEqual(row.slice(0,20),input.rows[i].slice(0,20));
+  assert.ok(Number(row[24])>0);
+  assert.ok(Number(row[22])>0);
+  assert.ok(Math.abs(Number(row[22])-Number(row[24])*Number(row[25]))<0.01);
+  assert.ok(Number(row[27])<=Math.min(Number(row[16]),Number(row[18])));
+ });
+ assert.equal(JSON.stringify(input),before);
+});

@@ -85,7 +85,7 @@ export function ReportingReference() {
                   )}
                   <td>{report.name}</td>
                   <td>{"frequency" in report ? report.frequency : group.frequency}</td>
-                  <td>{group.format}</td>
+                  <td>{group.format === "TBC" ? "Format not confirmed" : group.format}</td>
                   <td>
                     {group.agency === "CEC" ? (
                       <>
@@ -99,7 +99,7 @@ export function ReportingReference() {
                         </a>
                       </>
                     ) : (
-                      "TBC"
+                      "Submission method not confirmed"
                     )}
                   </td>
                 </tr>

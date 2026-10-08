@@ -1,6 +1,9 @@
 "use client";
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
+import { alertLabels, contextFilters, readReportContext, scopeReportRows, type ReportLinkContext } from "@/lib/eves/report-link-context";
+import { readableTimestamp } from "@/lib/eves/report-display";
 import { rollingSampleDataset } from "@/lib/eves/sample-report-data";
-import { useState, useMemo } from "react";
+import { Suspense, useState, useMemo } from "react";
 import {
   Download,
   ChevronDown,
@@ -245,14 +248,20 @@ const revenueTransactionData: ReportDataset = {
   ),
 };
 
-export function ReportPage({ kind: initialKind }: { kind: ReportKind }) {
+export function ReportPage({kind}:{kind:ReportKind}) {
+  return <Suspense fallback={null}><ReportRoute kind={kind}/></Suspense>;
+}
+function ReportRoute({ kind: initialKind }: { kind: ReportKind }) {
+  const params=useSearchParams();
+  const context=readReportContext(new URLSearchParams(params.toString()));
   const { source } = useDataSource();
   const [view, setView] = useState("summary");
   const kind =
     initialKind === "uptime" && view === "events" ? "events" : initialKind;
   return (
     <ReportView
-      key={`${kind}-${source}`}
+      key={`${kind}-${source}-${params.toString()}`}
+      context={context}
       kind={kind}
       view={view}
       setView={setView}
@@ -264,14 +273,18 @@ function ReportView({
   kind,
   view,
   setView,
-  showTabs,
+  showTabs, context,
 }: {
   kind: ReportKind;
   view: string;
   setView: (v: string) => void;
   showTabs: boolean;
+  context: ReportLinkContext;
 }) {
   const { source } = useDataSource();
+  const router=useRouter();
+  const path=usePathname();
+  const params=useSearchParams();
   const snapshot =
     kind === "chargingPerformance"
       ? chargingPerformanceData
@@ -297,7 +310,7 @@ function ReportView({
   const performance = isPerformanceReport(kind);
   const defaults = defaultReportFilters(config);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [applied, setApplied] = useState<ReportFilters>(defaults),
+  const [applied, setApplied] = useState<ReportFilters>(()=>contextFilters(config, defaults, context)),
     [search, setSearch] = useState(""),
     [columns, setColumns] = useState<number[]>(() =>
       data.headers.map((_, index) => index),
@@ -306,7 +319,7 @@ function ReportView({
     [size, setSize] = useState(10),
     [sort, setSort] = useState<{ column: number; asc: boolean } | null>(null);
   const rows = useMemo(() => {
-    const filtered = filterRows(data, config, applied, search);
+    const filtered = scopeReportRows(filterRows(data, config, applied, search), context);
     if (sort)
       filtered.sort((a, b) => {
         let result = 0;
@@ -323,7 +336,7 @@ function ReportView({
         return result * (sort.asc ? 1 : -1);
       });
     return filtered;
-  }, [data, config, applied, search, sort, kind]);
+  }, [data, config, applied, search, sort, kind, context]);
   const stats = metricsFor(kind, rows);
   const current = Math.min(page, Math.max(1, Math.ceil(rows.length / size)));
   function apply(filters: ReportFilters) {
@@ -379,6 +392,8 @@ function ReportView({
       </div>
       {performance && <ActiveFilterChips applied={applied} defaults={defaults} config={config} onChange={apply} />}
 
+      {source === "workspace" && <p role="status" className="mb-4 text-sm text-muted-foreground">Workspace report data is not connected.</p>}
+      {context.alert && <div className="mb-4 flex items-center gap-3 text-sm"><span>{alertLabels[context.alert]}</span><Button size="sm" variant="ghost" onClick={()=>{const next=new URLSearchParams(params.toString());['alert','scopeSite','scopeAsset'].forEach(key=>next.delete(key));router.replace(`${path}?${next}`);}}>Clear alert scope</Button></div>}
       <div className="metrics report-metrics">
         {stats.map((s, i) => (
           <Metric
@@ -501,7 +516,7 @@ function ReportView({
                             {row[i]}
                           </span>
                         ) : (
-                          row[i]
+                          readableTimestamp(row[i]) ? <time dateTime={row[i]} title={row[i]}>{readableTimestamp(row[i])}</time> : row[i]
                         )}
                       </TableCell>
                     ))}

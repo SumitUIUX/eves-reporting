@@ -6,6 +6,19 @@ const DAY = 86400000;
  * Keep durations, site relationships and source fixtures intact. Never use for workspace data.
  */
 export function rollingSampleDataset(data: ReportDataset, config: ReportConfig, now = new Date()): ReportDataset {
+  if (config.short === "Infrastructure") {
+    // Illustrative sample throughput; preserve every inventory identifier and relationship.
+    return {headers:data.headers,rows:data.rows.map((row,index)=>{
+      if (Number(row[24]) > 0) return row;
+      const copy=[...row], count=4+index%8, minutes=30+(index%5)*10;
+      const capacity=Math.min(Number(row[16]),Number(row[18]));
+      const averageEnergy=Number((capacity*0.55*minutes/60).toFixed(2));
+      const clock=(total:number)=>`${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}:00`;
+      copy[22]=(averageEnergy*count).toFixed(2); copy[23]=clock(minutes*count); copy[24]=String(count);
+      copy[25]=averageEnergy.toFixed(2); copy[26]=clock(minutes); copy[27]=(capacity*0.85).toFixed(2);
+      return copy;
+    })};
+  }
   if (config.dateColumn === undefined) return data;
   const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   const idColumns = data.headers.map((h, i) => /^(session|interval|downtime event)[ _]?id$/i.test(h) ? i : -1).filter(i => i >= 0);

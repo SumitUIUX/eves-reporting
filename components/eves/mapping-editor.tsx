@@ -105,7 +105,7 @@ function ChargerPicker({
           disabled={disabled}
           aria-label={`Edit chargers for ${site.name}`}
         >
-          {selected.length} of {site.chargers.length} chargers
+          {selected.length} of {site.chargers.length} {site.chargers.length === 1 ? "charger" : "chargers"}
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -259,7 +259,7 @@ function SitePicker({
                   <strong>{site.name}</strong>
                   <small>
                     {site.area && `Area: ${site.area} · `}
-                    {site.chargers.length} chargers
+                    {site.chargers.length} {site.chargers.length === 1 ? "charger" : "chargers"}
                   </small>
                 </span>
               </label>

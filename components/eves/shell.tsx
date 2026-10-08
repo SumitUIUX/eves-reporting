@@ -301,7 +301,7 @@ function DataSourceMenu() {
         <p className="px-3 py-2 text-xs leading-relaxed text-muted-foreground">
           {isSample
             ? "Explore reports with sample data."
-            : "View available data from your workspace."}
+            : "View your workspace data."}
         </p>
       </DropdownMenuContent>
     </DropdownMenu>

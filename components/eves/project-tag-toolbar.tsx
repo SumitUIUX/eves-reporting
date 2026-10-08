@@ -36,7 +36,7 @@ export function ProjectTagToolbar({
         <SearchInput
           value={filters.search}
           onChange={(search) => onChange({ ...filters, search })}
-          placeholder="search by site name or site ID"
+          placeholder="Search by project / zone name"
         />
       </div>
       <div className={styles.actions}>

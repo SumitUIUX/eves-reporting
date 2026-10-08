@@ -400,14 +400,14 @@ export function ProjectTags() {
                         <span className="mapping-count">
                           <Building2 />
                           <strong>{Object.keys(t.mappings).length}</strong>{" "}
-                          sites
+                          {Object.keys(t.mappings).length === 1 ? "site" : "sites"}
                         </span>
                         <span className="mapping-count">
                           <Link2 />
                           <strong>
                             {Object.values(t.mappings).flat().length}
                           </strong>{" "}
-                          chargers
+                          {Object.values(t.mappings).flat().length === 1 ? "charger" : "chargers"}
                         </span>
                       </button>
                     </TableCell>
