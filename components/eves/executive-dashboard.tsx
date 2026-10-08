@@ -13,9 +13,7 @@ import { Children, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Activity,
   AlertTriangle,
-  ArrowDownRight,
   ArrowRight,
-  ArrowUpRight,
   BatteryCharging,
   Clock3,
   DollarSign,
@@ -89,22 +87,6 @@ function date(value: string, options?: Intl.DateTimeFormatOptions) {
   );
 }
 
-function Trend({ value }: { value: number }) {
-  if (!Number.isFinite(value)) return null;
-  const rising = value >= 0;
-  const Icon = rising ? ArrowUpRight : ArrowDownRight;
-  return (
-    <span
-      className={`inline-flex items-center gap-1 font-medium ${
-        rising ? "text-emerald-700" : "text-destructive"
-      }`}
-    >
-      <Icon className="size-3.5" aria-hidden="true" />
-      {Math.abs(value).toFixed(1)}%
-    </span>
-  );
-}
-
 function MetricCard({
   label,
   value,
@@ -135,7 +117,6 @@ function MetricCard({
       </CardHeader>
       <CardContent className="flex items-center justify-between gap-3 px-5 text-xs">
         <span className="text-muted-foreground">{Number.isFinite(metric.change_percent) ? previous : ""}</span>
-        <Trend value={metric.change_percent} />
       </CardContent>
     </Card>
   );
