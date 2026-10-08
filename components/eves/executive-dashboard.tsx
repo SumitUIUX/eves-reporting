@@ -91,14 +91,12 @@ function MetricCard({
   label,
   value,
   metric,
-  previous,
   comparison,
   icon: Icon,
 }: {
   label: string;
   value: string;
   metric: DashboardMetric<number | string>;
-  previous: string;
   comparison: string;
   icon: LucideIcon;
 }) {
@@ -115,9 +113,6 @@ function MetricCard({
           <Icon className="size-4.5" aria-hidden="true" />
         </span>
       </CardHeader>
-      <CardContent className="flex items-center justify-between gap-3 px-5 text-xs">
-        <span className="text-muted-foreground">{Number.isFinite(metric.change_percent) ? previous : ""}</span>
-      </CardContent>
     </Card>
   );
 }
@@ -309,7 +304,6 @@ function DashboardContent({
             label="Sessions"
             value={integer.format(charging.sessions.value)}
             metric={charging.sessions}
-            previous={`Previous: ${integer.format(charging.sessions.previous_period_value ?? 0)}`}
             icon={BatteryCharging}
           />
           <MetricCard
@@ -317,7 +311,6 @@ function DashboardContent({
             label="Energy delivered"
             value={`${decimal.format(charging.energy_delivered_kwh.value)} kWh`}
             metric={charging.energy_delivered_kwh}
-            previous={`Previous: ${decimal.format(charging.energy_delivered_kwh.previous_period_value ?? 0)} kWh`}
             icon={Zap}
           />
           <MetricCard
@@ -325,7 +318,6 @@ function DashboardContent({
             label="Revenue"
             value={currency.format(charging.revenue.value)}
             metric={charging.revenue}
-            previous={`Previous: ${currency.format(charging.revenue.previous_period_value ?? 0)}`}
             icon={DollarSign}
           />
           <MetricCard
@@ -333,7 +325,6 @@ function DashboardContent({
             label="Avg session duration"
             value={charging.average_session_duration.value}
             metric={charging.average_session_duration}
-            previous={`Previous: ${charging.average_session_duration.previous_period_value ?? "—"}`}
             icon={Clock3}
           />
         </div>
@@ -352,7 +343,6 @@ function DashboardContent({
             label="Chargers used"
             value={`${infrastructure.active_chargers.value}/${infrastructure.active_chargers.total}`}
             metric={infrastructure.active_chargers}
-            previous={`Previous: ${infrastructure.active_chargers.previous_period_value ?? "—"} chargers used`}
             icon={Server}
           />
           <MetricCard
@@ -360,7 +350,6 @@ function DashboardContent({
             label="Total connectors"
             value={String(infrastructure.connector_count.value)}
             metric={infrastructure.connector_count}
-            previous="Active / total connectors"
             icon={PlugZap}
           />
           <MetricCard
@@ -368,7 +357,6 @@ function DashboardContent({
             label="Utilization"
             value={`${infrastructure.utilization_percent.value.toFixed(1)}%`}
             metric={infrastructure.utilization_percent}
-            previous={`Previous: ${infrastructure.utilization_percent.previous_period_value?.toFixed(1) ?? "—"}%`}
             icon={Gauge}
           />
           <MetricCard
@@ -376,7 +364,6 @@ function DashboardContent({
             label="Uptime"
             value={`${infrastructure.uptime_percent.value.toFixed(1)}%`}
             metric={infrastructure.uptime_percent}
-            previous={`Previous: ${infrastructure.uptime_percent.previous_period_value?.toFixed(1) ?? "—"}%`}
             icon={Activity}
           />
         </div>
