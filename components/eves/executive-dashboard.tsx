@@ -124,7 +124,7 @@ function MetricCard({
     <Card className="gap-3 py-5 shadow-none">
       <CardHeader className="grid grid-cols-[1fr_auto] gap-3 px-5">
         <div className="space-y-2">
-          <CardDescription className="flex items-center gap-2">{label}<InfoTip text={metric.note?.toLowerCase().includes("snapshot") ? "Latest available snapshot; historical comparison unavailable." : `${metric.note ? metric.note + ". " : ""}${comparison}${metric.previous_period_value !== undefined && !Number.isFinite(metric.change_percent) ? " Previous value is zero; percentage change is not defined." : metric.previous_period_value === undefined ? " Not enough history to compare." : ""}`} /></CardDescription>
+          <CardDescription className="flex items-center gap-2">{label}<InfoTip text={metric.note?.toLowerCase().includes("snapshot") ? "Latest snapshot · No previous-period data." : `${metric.note ? metric.note + ". " : ""}${comparison}${metric.previous_period_value !== undefined && !Number.isFinite(metric.change_percent) ? " Previous value is zero; percentage change is not defined." : metric.previous_period_value === undefined ? " Not enough history to compare." : ""}`} /></CardDescription>
           <CardTitle className="text-2xl tracking-tight tabular-nums">
             {metric.available === false ? "—" : value}
           </CardTitle>
@@ -545,7 +545,7 @@ function DashboardContent({
           />
         </div>
         <div className="grid items-stretch gap-4 xl:grid-cols-3">
-          <AttentionCard title="Chargers below SLA" description={`${alerts.chargers_below_sla.sla_threshold_percent}% minimum · Asset snapshot; no dated uptime history`} count={empty ? "—" : alerts.chargers_below_sla.count} icon={AlertTriangle} href={reportEnabled("tenant-uptime-reliability") ? reportLink("/reports/tenant-uptime-reliability", applied, "below-sla", [], alerts.chargers_below_sla.chargers.map(charger=>charger.evse_id)) : undefined}>
+          <AttentionCard title="Chargers below SLA" description={`Latest available uptime data · ${alerts.chargers_below_sla.sla_threshold_percent}% minimum.`} count={empty ? "—" : alerts.chargers_below_sla.count} icon={AlertTriangle} href={reportEnabled("tenant-uptime-reliability") ? reportLink("/reports/tenant-uptime-reliability", applied, "below-sla", [], alerts.chargers_below_sla.chargers.map(charger=>charger.evse_id)) : undefined}>
 
               {alerts.chargers_below_sla.chargers.map((charger) => (
                 <div key={charger.evse_id} className="space-y-2 py-4">
@@ -600,7 +600,7 @@ function DashboardContent({
               ))}
           </AttentionCard>
 
-          <AttentionCard title="High downtime" description="Longest downtime durations in the available asset snapshot; no dated downtime history" count={empty ? "—" : alerts.high_downtime.count} icon={Clock3} href={reportEnabled("tenant-uptime-reliability") ? reportLink("/reports/tenant-uptime-reliability", applied, "downtime", [], alerts.high_downtime.events.map(event=>event.evse_id)) : undefined}>
+          <AttentionCard title="High downtime" description="Chargers with the longest recorded downtime. Based on the latest available snapshot." count={empty ? "—" : alerts.high_downtime.count} icon={Clock3} href={reportEnabled("tenant-uptime-reliability") ? reportLink("/reports/tenant-uptime-reliability", applied, "downtime", [], alerts.high_downtime.events.map(event=>event.evse_id)) : undefined}>
 
               {alerts.high_downtime.events.map((event) => (
                 <div key={event.evse_id} className="py-4">

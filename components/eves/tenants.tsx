@@ -241,7 +241,7 @@ export function Tenants() {
             onClick={() => {
               refreshTenants();
               if (isSample) toast.success("Tenant records refreshed");
-              else toast.error("Workspace tenant API is not connected.");
+              else toast.error("Tenant data isn’t connected yet.");
             }}
           />
         </PageActions>
@@ -251,7 +251,7 @@ export function Tenants() {
           <SearchInput
             value={query}
             onChange={changeQuery}
-            placeholder="search by site name or site ID"
+            placeholder="Search by tenant name or subdomain"
           />
         </div>
         {rows.length ? (

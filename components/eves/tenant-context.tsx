@@ -117,7 +117,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const tenants = records.filter(t => !t.deleted);
   function persist(next: Tenant[]) {
     if (source !== "sample") {
-      toast.error("Workspace tenant API is not connected.");
+      toast.error("Tenant data isn’t connected yet.");
       return false;
     }
     try { localStorage.setItem(sampleKey, JSON.stringify(next)); } catch { toast.error("Unable to save. Please enable browser storage and try again."); return false; }

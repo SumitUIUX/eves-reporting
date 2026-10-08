@@ -393,7 +393,7 @@ function ReportView({
       {performance && <ActiveFilterChips applied={applied} defaults={defaults} config={config} onChange={apply} />}
 
       {source === "workspace" && <p role="status" className="mb-4 text-sm text-muted-foreground">Workspace report data is not connected.</p>}
-      {context.alert && <div className="mb-4 flex items-center gap-3 text-sm"><span>{alertLabels[context.alert]}</span><Button size="sm" variant="ghost" onClick={()=>{const next=new URLSearchParams(params.toString());['alert','scopeSite','scopeAsset'].forEach(key=>next.delete(key));router.replace(`${path}?${next}`);}}>Clear alert scope</Button></div>}
+      {context.alert && <div className="mb-4 flex items-center gap-3 text-sm"><span>{alertLabels[context.alert]}</span><Button size="sm" variant="ghost" onClick={()=>{const next=new URLSearchParams(params.toString());['alert','scopeSite','scopeAsset'].forEach(key=>next.delete(key));router.replace(`${path}?${next}`);}}>Clear alert filter</Button></div>}
       <div className="metrics report-metrics">
         {stats.map((s, i) => (
           <Metric

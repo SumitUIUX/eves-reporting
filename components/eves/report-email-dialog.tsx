@@ -24,7 +24,7 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
     <DialogContent className={`${styles.emailDialog} max-h-[90dvh] overflow-y-auto`}>
       <DialogHeader>
         <DialogTitle>{confirmed ? "Delivery preview" : "Email report preview"}</DialogTitle>
-        <DialogDescription className={confirmed ? "sr-only" : undefined}>{confirmed ? "Report delivery details" : "Choose where to receive all files in this export."}</DialogDescription>
+        <DialogDescription className={confirmed ? "sr-only" : undefined}>{confirmed ? "Report delivery details" : "Preview the recipients and files for this export. No email will be sent."}</DialogDescription>
       </DialogHeader>
       <div className={styles.emailSummary}>
         Agency: <strong>{agency}</strong> · {format === "xlsx" ? "Excel" : "CSV"}<br />{periodLabel}
@@ -33,7 +33,7 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
         <div className="rounded-lg border p-4" role="status">
           <FileText className="mb-3 size-6 text-primary" aria-hidden="true" />
           <p className="font-medium break-words">{name.trim()}</p>
-          <p className="mt-2 text-sm text-muted-foreground">Delivery emails</p>
+          <p className="mt-2 text-sm text-muted-foreground">Preview recipients</p>
           <p className="font-medium break-all">{email}</p>
           <div className="mt-4 space-y-3 border-t pt-4 text-sm">
             {ranges.map((range, index) => <dl key={`${range.from}-${range.to}-${index}`} className="grid grid-cols-2 gap-3">
@@ -57,7 +57,7 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
         </div>
         <div className="rounded-lg border p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <span className="flex items-center gap-2 text-sm font-medium"><Mail size={16} aria-hidden="true" />Send files to</span>
+            <span className="flex items-center gap-2 text-sm font-medium"><Mail size={16} aria-hidden="true" />Preview recipients</span>
             {!editing && <Button type="button" variant="link" size="sm" onClick={() => { setDraftEmail(email); setEditing(true); }}>Change email</Button>}
           </div>
           {editing ? <form onSubmit={e => { e.preventDefault(); setEmail([...new Set(draftEmail.split(",").map(value => value.trim()).filter(Boolean))].join(", ")); setEditing(false); }}>
