@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useStoredSelection } from "@/lib/eves/use-stored-selection";
 import sampleTenantRows from "@/data/tenants.json";
 import { useDataSource, type DataSource } from "@/lib/eves/data-source";
 
@@ -107,11 +108,15 @@ const seeded = sampleSeed();
 
 export function TenantProvider({ children }: { children: React.ReactNode }) {
   const { source, selectSource } = useDataSource();
-  const [tenantView, setTenantView] = useState(false);
+  const [tenantView, setTenantView, viewReady] = useStoredSelection("eves-tenant-view-v1", false, (value): value is boolean => typeof value === "boolean");
   const [records, setRecords] = useState(seeded);
-  const [activeId, selectTenant] = useState(seeded[0]?.id ?? "");
+  const [activeId, selectTenant, tenantReady] = useStoredSelection("eves-active-tenant-v1", seeded[0]?.id ?? "", (value): value is string => typeof value === "string");
+  const [recordsReady, setRecordsReady] = useState(false);
   useEffect(() => {
-    const id = window.setTimeout(() => setRecords(source === "sample" ? readSample() : []), 0);
+    const id = window.setTimeout(() => {
+      setRecords(source === "sample" ? readSample() : []);
+      setRecordsReady(true);
+    }, 0);
     return () => window.clearTimeout(id);
   }, [source]);
   const tenants = records.filter(t => !t.deleted);
@@ -125,6 +130,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   }
   function saveTenant(tenant: Tenant) { return persist(records.some(t => t.id === tenant.id) ? records.map(t => t.id === tenant.id ? tenant : t) : [...records, tenant]); }
   function refreshTenants() { setRecords(source === "sample" ? readSample() : []); }
+  // Do not mount route guards with the default role or un-restored permissions.
+  if (!viewReady || !tenantReady || !recordsReady) return null;
   return <TenantContext.Provider value={{ tenantView, setTenantView, source, selectSource, tenants, active: tenants.find(t => t.id === activeId) ?? tenants[0] ?? { ...blankTenant(), name: "No tenant selected", regulatory: false, master: false }, selectTenant, saveTenant, refreshTenants, deleteTenant: id => persist(records.map(t => t.id === id ? { ...t, deleted: true } : t)), restoreTenant: id => { persist(records.map(t => t.id === id ? { ...t, deleted: false } : t)); } }}>{children}</TenantContext.Provider>;
 }
 export function useTenant() { const value = useContext(TenantContext); if (!value) throw new Error("TenantProvider is required"); return value; }
