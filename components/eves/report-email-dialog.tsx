@@ -10,7 +10,7 @@ import styles from "./regulatory.module.css";
 
 const registeredEmail = "sumit@example.com";
 
-// Email delivery is not connected: no email is sent and the account email is never changed.
+// Demo delivery: simulate success without sending email or changing account details.
 export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaultName, ranges, selectedReports }: {
   onClose: () => void; agency: string; format: string; periodLabel: string; defaultName: string; ranges: { from: string; to: string }[]; selectedReports: string[];
 }) {
@@ -61,10 +61,9 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
           </div>
 
         </div>
-        <p className="text-xs text-muted-foreground">Email delivery is not connected. No email will be sent.</p>
         <div className={styles.emailActions}>
           <Button variant="outline" onClick={() => setConfirmed(false)}>Back</Button>
-          <Button onClick={() => { toast.error("Email delivery isn’t connected yet. No email was sent."); }}><Mail size={15} />Send email</Button>
+          <Button onClick={() => { toast.success(`Demo: Reports sent to ${emails.length} ${emails.length === 1 ? "recipient" : "recipients"}`); onClose(); }}><Mail size={15} />Send email</Button>
         </div>
       </> : <>
         <div className={styles.field}>
@@ -94,8 +93,7 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
             </div>
           </form>}
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-xs text-muted-foreground">Email delivery is not connected</span>
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <div className={styles.emailActions}>
             <Button variant="outline" onClick={onClose}>Cancel</Button>
             <Button disabled={editing || !name.trim() || !emails.length} onClick={() => setConfirmed(true)}><Mail size={15} />Preview delivery</Button>
