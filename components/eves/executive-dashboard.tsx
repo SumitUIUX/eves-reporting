@@ -1,5 +1,6 @@
 "use client";
 import { reportLink } from "@/lib/eves/report-link-context";
+import { executiveInventory } from "@/lib/eves/executive-inventory";
 import { compactPeriod } from "@/lib/eves/report-display";
 import { InfoTip } from "./shared";
 import { comparisonPeriod } from "@/lib/eves/comparison-period";
@@ -16,6 +17,7 @@ import {
   ArrowRight,
   BatteryCharging,
   Clock3,
+  CreditCard,
   DollarSign,
   Gauge,
   PlugZap,
@@ -93,18 +95,22 @@ function MetricCard({
   metric,
   comparison,
   icon: Icon,
+  children,
+  tooltip,
 }: {
   label: string;
   value: string;
   metric: DashboardMetric<number | string>;
   comparison: string;
   icon: LucideIcon;
+  children?: ReactNode;
+  tooltip?: string;
 }) {
   return (
     <Card className="gap-3 py-5 shadow-none">
       <CardHeader className="grid grid-cols-[1fr_auto] gap-3 px-5">
         <div className="space-y-2">
-          <CardDescription className="flex items-center gap-2">{label}<InfoTip text={metric.note?.toLowerCase().includes("snapshot") ? "Latest snapshot · No previous-period data." : `${metric.note ? metric.note + ". " : ""}${comparison}${metric.previous_period_value !== undefined && !Number.isFinite(metric.change_percent) ? " Previous value is zero; percentage change is not defined." : metric.previous_period_value === undefined ? " Not enough history to compare." : ""}`} /></CardDescription>
+          <CardDescription className="flex items-center gap-2">{label}<InfoTip text={tooltip ?? (metric.note?.toLowerCase().includes("snapshot") ? "Latest snapshot · No previous-period data." : `${metric.note ? metric.note + ". " : ""}${comparison}${metric.previous_period_value !== undefined && !Number.isFinite(metric.change_percent) ? " Previous value is zero; percentage change is not defined." : metric.previous_period_value === undefined ? " Not enough history to compare." : ""}`)} /></CardDescription>
           <CardTitle className="text-2xl tracking-tight tabular-nums">
             {metric.available === false ? "—" : value}
           </CardTitle>
@@ -113,6 +119,7 @@ function MetricCard({
           <Icon className="size-4.5" aria-hidden="true" />
         </span>
       </CardHeader>
+      {children && <CardContent className="px-5 text-xs text-muted-foreground">{children}</CardContent>}
     </Card>
   );
 }
@@ -243,6 +250,7 @@ function DashboardContent({
   const fullPeriod = applied.from === defaults.from && applied.to === defaults.to;
   const scoped = selectedSites.length > 0 || !fullPeriod;
   const sites = empty ? [] : executiveSites;
+  const inventory = useMemo(() => executiveInventory(selectedSites), [selectedSites.join("|")]);
   const filteredData = useMemo(() => empty ? data : filterExecutiveDashboard(data, applied, new Date()), [data, applied, empty]);
   const { active } = useTenant();
   const reportEnabled = (reportId: string) =>
@@ -275,7 +283,7 @@ function DashboardContent({
   return (
     <div className="space-y-9">
       <header className="flex flex-wrap items-center justify-between gap-4">
-        <h2 id="charging-heading" className="text-base font-semibold">Charging</h2>
+        <h2 id="infrastructure-heading" className="text-base font-semibold">Infrastructure</h2>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <FilterPanel title="Report filters" open={filtersOpen} onOpenChange={open => { if (open) setDraft(applied); setFiltersOpen(open); }} activeCount={Number(selectedSites.length > 0) + Number(!fullPeriod)}>
             <form className={filterStyles.form} onSubmit={event => { event.preventDefault(); if (dateRangeError(draft)) return; setApplied(draft); setFiltersOpen(false); }}>
@@ -297,8 +305,22 @@ function DashboardContent({
         </div>
       </header>
 
-      <section aria-labelledby="charging-heading" className="!mt-4 space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-labelledby="infrastructure-heading" className="!mt-4 space-y-4">
+        <div className="grid gap-4 md:grid-cols-3">
+          <MetricCard comparison={comparison} label="Total chargers" tooltip="Installed chargers across the selected sites." value={integer.format(inventory.chargers)} metric={{value:inventory.chargers,change_percent:NaN,note:"Inventory snapshot",available:!empty}} icon={Server} />
+          <MetricCard comparison={comparison} label="Total connectors" tooltip="Installed connector ports, grouped by power and connector type." value={integer.format(inventory.connectors)} metric={{value:inventory.connectors,change_percent:NaN,note:"Inventory snapshot",available:!empty}} icon={PlugZap}>
+            {!empty && <div className="space-y-2">
+              <div className="flex flex-wrap gap-x-4 gap-y-1">{Object.entries(inventory.power).map(([type,count]) => <span key={type}>{type}: <strong className="text-foreground">{count}</strong></span>)}</div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1">{Object.entries(inventory.types).map(([type,count]) => <span key={type}>{type}: <strong className="text-foreground">{count}</strong></span>)}</div>
+            </div>}
+          </MetricCard>
+          <MetricCard comparison={comparison} label="Payment terminals" tooltip="Installed payment terminal count is not available." value="—" metric={{value:0,change_percent:NaN,available:false,note:"Installed payment terminal count is not available"}} icon={CreditCard} />
+        </div>
+      </section>
+
+      <section aria-labelledby="charging-heading" className="space-y-4">
+        <h2 id="charging-heading" className="text-base font-semibold">Charging and Utilization</h2>
+        <div className="grid gap-4 md:grid-cols-3">
           <MetricCard
             comparison={comparison}
             label="Sessions"
@@ -326,31 +348,6 @@ function DashboardContent({
             value={charging.average_session_duration.value}
             metric={charging.average_session_duration}
             icon={Clock3}
-          />
-        </div>
-      </section>
-
-      <section aria-labelledby="infrastructure-heading" className="space-y-4">
-        <div id="infrastructure-heading">
-          <SectionHeading
-            title="Infrastructure"
-            description="Availability and use compared with the previous week."
-          />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard
-            comparison={comparison}
-            label="Chargers used"
-            value={`${infrastructure.active_chargers.value}/${infrastructure.active_chargers.total}`}
-            metric={infrastructure.active_chargers}
-            icon={Server}
-          />
-          <MetricCard
-            comparison={comparison}
-            label="Total connectors"
-            value={String(infrastructure.connector_count.value)}
-            metric={infrastructure.connector_count}
-            icon={PlugZap}
           />
           <MetricCard
             comparison={comparison}

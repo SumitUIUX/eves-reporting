@@ -241,3 +241,16 @@ test('Report display shortens dates without changing original timestamps', async
   assert.ok(readableTimestamp('2026-10-08T08:15:22.000Z').endsWith('UTC'));
   assert.equal(readableTimestamp('EVSE-123'),null);
 });
+
+test('Executive installed inventory counts reconcile with connector breakdowns and site selection', async () => {
+  const { executiveInventory } = await vite.ssrLoadModule('/lib/eves/executive-inventory.ts');
+  const { default: assets } = await vite.ssrLoadModule('/data/charger-performance.json');
+  for (const sites of [[], [assets[0].site_name], ['Missing site']]) {
+    const scoped = assets.filter(row => !sites.length || sites.includes(row.site_name));
+    const result = executiveInventory(sites);
+    assert.equal(result.chargers, new Set(scoped.map(row => row.evse_id)).size);
+    assert.equal(result.connectors, new Set(scoped.map(row => row.evse_id + '/' + row.port_id)).size);
+    assert.equal(Object.values(result.types).reduce((a,b) => a+b,0), result.connectors);
+    assert.equal(Object.values(result.power).reduce((a,b) => a+b,0), result.connectors);
+  }
+});
