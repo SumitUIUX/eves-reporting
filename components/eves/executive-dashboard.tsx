@@ -310,11 +310,11 @@ function DashboardContent({
           <MetricCard comparison={comparison} label="Total chargers" tooltip="Installed chargers across the selected sites." value={integer.format(inventory.chargers)} metric={{value:inventory.chargers,change_percent:NaN,note:"Inventory snapshot",available:!empty}} icon={Server} />
           <MetricCard comparison={comparison} label="Total connectors" tooltip="Installed connector ports, grouped by power and connector type." value={integer.format(inventory.connectors)} metric={{value:inventory.connectors,change_percent:NaN,note:"Inventory snapshot",available:!empty}} icon={PlugZap}>
             {!empty && <div className="space-y-2">
-              <div className="flex flex-wrap gap-x-4 gap-y-1">{Object.entries(inventory.power).map(([type,count]) => <span key={type}>{type}: <strong className="text-foreground">{count}</strong></span>)}</div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1">{Object.entries(inventory.power).map(([type,count]) => <span key={type} className="inline-flex items-baseline gap-2"><span className="text-sm">{type}</span><strong className="text-xl font-semibold tabular-nums text-foreground">{count}</strong></span>)}</div>
               <div className="flex flex-wrap gap-x-4 gap-y-1">{Object.entries(inventory.types).map(([type,count]) => <span key={type}>{type}: <strong className="text-foreground">{count}</strong></span>)}</div>
             </div>}
           </MetricCard>
-          <MetricCard comparison={comparison} label="Payment terminals" tooltip="Installed payment terminal count is not available." value="—" metric={{value:0,change_percent:NaN,available:false,note:"Installed payment terminal count is not available"}} icon={CreditCard} />
+          <MetricCard comparison={comparison} label="Payment terminals" tooltip="Installed payment terminals across the selected sites." value={integer.format(inventory.paymentTerminals)} metric={{value:inventory.paymentTerminals,change_percent:NaN,available:!empty,note:"Inventory snapshot"}} icon={CreditCard} />
         </div>
       </section>
 

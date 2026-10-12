@@ -1,0 +1,12 @@
+[
+  {
+    "terminal_id": "DEMO-PT-001",
+    "site_id": "SITE-CA-001",
+    "site_name": "Downtown EV Charging Hub"
+  },
+  {
+    "terminal_id": "DEMO-PT-002",
+    "site_id": "SITE-CA-004",
+    "site_name": "Airport EV Station"
+  }
+]
