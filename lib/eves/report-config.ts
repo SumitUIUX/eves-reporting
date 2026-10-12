@@ -1,3 +1,4 @@
+import { normalizeConnector } from "./connector-types";
 import type { ReportKind, ReportDataset } from "./types";
 export interface FilterDefinition {
   label: string;
@@ -266,9 +267,11 @@ export function filterRows(
     (row) =>
       Object.entries(filters.values).every(
         ([column, value]) => {
+          const connector = config.filters.some(field => field.column === Number(column) && field.label === "Connector type");
+          const normalize = (text: string) => connector ? normalizeConnector(text) : text;
           if (Array.isArray(value))
-            return !value.length || value.includes(row[Number(column)]);
-          return !value || value === "all" || row[Number(column)] === value;
+            return !value.length || value.some(item => normalize(item) === normalize(row[Number(column)]));
+          return !value || value === "all" || normalize(row[Number(column)]) === normalize(value);
         },
       ) &&
       (!filters.errors || row[19] === "Yes") &&

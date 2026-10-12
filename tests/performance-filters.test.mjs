@@ -254,3 +254,22 @@ test('Executive installed inventory counts reconcile with connector breakdowns a
     assert.equal(Object.values(result.power).reduce((a,b) => a+b,0), result.connectors);
   }
 });
+
+test('Connector catalog includes all seven types and matches aliases without substituting missing records', async () => {
+  const { connectorTypes } = await vite.ssrLoadModule('/lib/eves/connector-types.ts');
+  assert.equal(connectorTypes.length, 7);
+  for (const config of Object.values(reportConfig)) {
+    const field = config.filters.find(field => field.label === 'Connector type');
+    if (!field) continue;
+    const rows = ['J1772', 'Mennekes (Type 2)', 'CCS Combo (Type 1)', 'CCS2', 'CHAdeMO', 'GB/T', 'NACS'].map(value => {
+      const row = Array(40).fill('');
+      row[field.column] = value;
+      return row;
+    });
+    for (const type of connectorTypes) {
+      const result = filterRows({headers:[], rows}, config, {values:{[field.column]:type.value},from:'',to:'',errors:false});
+      assert.equal(result.length, 1, config.short + ': ' + type.value);
+    }
+    assert.equal(filterRows({headers:[], rows:rows.slice(0,1)}, config, {values:{[field.column]:'NACS'},from:'',to:'',errors:false}).length, 0);
+  }
+});

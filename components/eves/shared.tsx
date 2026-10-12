@@ -1,4 +1,6 @@
 "use client";
+import { connectorTypes, normalizeConnector } from "@/lib/eves/connector-types";
+import { ConnectorIcon } from "./connector-icon";
 import {
   Info,
   Search,
@@ -88,8 +90,15 @@ export function Choice({
   describedBy?: string;
   disabled?: boolean;
 }) {
+  const connector = label.toLowerCase() === "connector type";
+  const choiceOptions = connector ? [
+    { value: "all", label: "All connector types" },
+    ...connectorTypes,
+    ...options.map(option => typeof option === "string" ? {value:option,label:option} : option)
+      .filter(option => option.value !== "all" && !connectorTypes.some(type => type.value === normalizeConnector(option.value))),
+  ] : options;
   return (
-    <Select value={value} onValueChange={onChange} disabled={disabled}>
+    <Select value={connector ? normalizeConnector(value) : value} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger
         id={id}
         aria-label={label}
@@ -100,11 +109,11 @@ export function Choice({
         <SelectValue />
       </SelectTrigger>
       <SelectContent position="popper">
-        {options.map((o) => {
+        {choiceOptions.map((o) => {
           const v = typeof o === "string" ? o : o.value;
           return (
             <SelectItem value={v} key={v}>
-              {typeof o === "string" ? o : o.label}
+              {connector ? <span className="inline-flex items-center gap-2"><ConnectorIcon type={v} /><span>{typeof o === "string" ? o : o.label}</span></span> : typeof o === "string" ? o : o.label}
             </SelectItem>
           );
         })}
