@@ -21,6 +21,9 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
   const [draftEmail, setDraftEmail] = useState("");
   const [editing, setEditing] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [showAllEmails, setShowAllEmails] = useState(false);
+  const visibleEmails = showAllEmails ? emails : emails.slice(0, 3);
+  const recipientToggle = emails.length > 3 ? <Button type="button" variant="link" size="sm" className="mt-1 px-0" aria-expanded={showAllEmails} onClick={() => setShowAllEmails(value => !value)}>{showAllEmails ? "Show less" : `+${emails.length - 3} more`}</Button> : null;
   const addEmails = () => {
     const entries = draftEmail.split(/[,;\s]+/).map(value => value.trim()).filter(Boolean);
     const invalid = entries.filter(value => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
@@ -49,7 +52,8 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
           <FileText className="mb-3 size-6 text-primary" aria-hidden="true" />
           <p className="font-medium break-words">{name.trim()}</p>
           <p className="mt-2 text-sm font-medium" aria-live="polite">{emails.length} {emails.length === 1 ? "recipient" : "recipients"}</p>
-          <ul className="mt-2 max-h-40 overflow-y-auto space-y-1 text-sm">{emails.map(email => <li key={email.toLowerCase()} className="break-all">{email}</li>)}</ul>
+          <ul className="mt-2 max-h-40 overflow-y-auto space-y-1 text-sm">{visibleEmails.map(email => <li key={email.toLowerCase()} className="break-all">{email}</li>)}</ul>
+          {recipientToggle}
           <div className="mt-4 space-y-3 border-t pt-4 text-sm">
             {ranges.map((range, index) => <dl key={`${range.from}-${range.to}-${index}`} className="grid grid-cols-2 gap-3">
               <div><dt className="text-muted-foreground">From</dt><dd className="mt-1 font-medium">{displayDate(range.from)}</dd></div>
@@ -76,11 +80,12 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
             {!editing && <Button type="button" variant="link" size="sm" onClick={() => { setEmailError(""); setEditing(true); }}><Plus size={15} />Add email</Button>}
           </div>
           <ul className="max-h-48 overflow-y-auto space-y-2">
-            {emails.map(email => <li key={email.toLowerCase()} className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-2 text-sm">
+            {visibleEmails.map(email => <li key={email.toLowerCase()} className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-2 text-sm">
               <span className="min-w-0 break-all">{email}</span>
               <Button type="button" variant="ghost" size="icon" className="size-7 shrink-0" aria-label={`Remove ${email}`} onClick={() => setEmails(current => current.filter(value => value !== email))}><X size={14} /></Button>
             </li>)}
           </ul>
+          {recipientToggle}
           {!emails.length && <p className="text-sm text-muted-foreground">Add at least one recipient.</p>}
           {editing && <form className="mt-4" noValidate onSubmit={e => { e.preventDefault(); addEmails(); }}>
             <label htmlFor="report-delivery-email" className="mb-2 block text-sm">Email addresses</label>
@@ -96,7 +101,7 @@ export function ReportEmailDialog({ onClose, agency, format, periodLabel, defaul
         <div className="flex flex-wrap items-center justify-end gap-3">
           <div className={styles.emailActions}>
             <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button disabled={editing || !name.trim() || !emails.length} onClick={() => setConfirmed(true)}><Mail size={15} />Preview delivery</Button>
+            <Button disabled={editing || !name.trim() || !emails.length} onClick={() => { setShowAllEmails(false); setConfirmed(true); }}><Mail size={15} />Preview delivery</Button>
           </div>
         </div>
       </>}
