@@ -164,6 +164,7 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
     chart: "power",
   },
   tenantUptime: {
+    periodAggregate: true,
     defaultDayOffset: -1,
     title: "Uptime & reliability",
     description:

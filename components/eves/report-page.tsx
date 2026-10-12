@@ -2,6 +2,7 @@
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { reportLink, alertLabels, contextFilters, readReportContext, scopeReportRows, type ReportLinkContext } from "@/lib/eves/report-link-context";
 import { readableTimestamp } from "@/lib/eves/report-display";
+import { uptimePeriodDataset } from "@/lib/eves/uptime-period-data";
 import { sitePeriodDataset } from "@/lib/eves/site-period-data";
 import { rollingSampleDataset } from "@/lib/eves/sample-report-data";
 import { Suspense, useState, useMemo } from "react";
@@ -319,7 +320,7 @@ function ReportView({
     [size, setSize] = useState(10),
     [sort, setSort] = useState<{ column: number; asc: boolean } | null>(null);
   const rows = useMemo(() => {
-    const periodData = kind === "sitePerformance" && source === "sample" ? sitePeriodDataset(data, applied) : data;
+    const periodData = source !== "sample" ? data : kind === "sitePerformance" ? sitePeriodDataset(data, applied) : kind === "tenantUptime" ? uptimePeriodDataset(data, applied) : data;
     const filtered = scopeReportRows(filterRows(periodData, config, applied, search), context);
     if (sort)
       filtered.sort((a, b) => {

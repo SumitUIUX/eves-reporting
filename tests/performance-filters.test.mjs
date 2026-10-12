@@ -309,3 +309,18 @@ test('site report period totals reconcile with overview and update when dates or
   assert.equal(Number(result[0][6]),Number(oneDay[6])*2);
   assert.equal(sitePeriodDataset(snapshot,{...filters,from:'2027-01-01',to:'2027-01-02'},now).rows.length,0);
 });
+
+test('Uptime date ranges aggregate daily sample records and combine with Site/EVSE filters', async () => {
+  const {uptimePeriodDataset}=await vite.ssrLoadModule('/lib/eves/uptime-period-data.ts');
+  const snapshot={headers:[],rows:[['A','SITE-A','EVSE-A','1','180','90','0','0','Grid Power Loss','Below SLA'],['B','SITE-B','EVSE-B','1','180','100','0','0','—','Meeting SLA']]};
+  const now=new Date('2026-10-12T12:00:00Z');
+  const filters={values:{0:['A'],2:['EVSE-A']},from:'2026-10-11',to:'2026-10-11',errors:false,preset:'custom'};
+  assert.equal(reportConfig.tenantUptime.periodAggregate,true);
+  const one=filterRows(uptimePeriodDataset(snapshot,filters,now),reportConfig.tenantUptime,filters);
+  assert.equal(one.length,1); assert.equal(one[0][6],'02:24:00'); assert.equal(one[0][7],'5');
+  const two=filterRows(uptimePeriodDataset(snapshot,{...filters,from:'2026-10-10'},now),reportConfig.tenantUptime,filters);
+  assert.equal(two[0][6],'04:48:00'); assert.equal(two[0][7],'10'); assert.equal(two[0][5],'90');
+  assert.equal(uptimePeriodDataset(snapshot,{...filters,from:'2027-01-01',to:'2027-01-02'},now).rows.length,0);
+  assert.equal(uptimePeriodDataset(snapshot,{...filters,from:'2026-10-12'},now).rows.length,0);
+  assert.equal(uptimePeriodDataset({headers:[],rows:[]},filters,now).rows.length,0);
+});
