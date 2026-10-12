@@ -34,7 +34,7 @@ export function ReportFilterDrawer({ kind, config, data, applied, defaults, onAp
 }) {
   const [draft, setDraft] = useState(applied);
   const id = useId();
-  const valid = config.dateColumn === undefined || !dateRangeError(draft);
+  const valid = (config.dateColumn === undefined && !config.periodAggregate) || !dateRangeError(draft);
   const updateOpen = (next: boolean) => { if (next) setDraft(applied); onOpenChange(next); };
   // Mount anew when opened externally (e.g. the empty-state action).
   const fields = config.filters;
@@ -54,7 +54,7 @@ export function ReportFilterDrawer({ kind, config, data, applied, defaults, onAp
     <form className={styles.form} onSubmit={event => { event.preventDefault(); if (!valid) return; onApply(draft); onOpenChange(false); }}>
       <div className={styles.fields}>
         {fields.filter(f => f.label === 'Site').map(field)}
-        {config.dateColumn !== undefined && <DateRangeFilter value={draft} onChange={setDraft} />}
+        {(config.dateColumn !== undefined || config.periodAggregate) && <DateRangeFilter value={draft} onChange={setDraft} />}
         {fields.filter(f => f.label !== 'Site').map(field)}
         {kind === 'energyDemand' && <>
           <div className={styles.field}><label htmlFor={`${id}-time`}>Time of Day (UTC)</label><Choice id={`${id}-time`} label="Time of Day" value={draft.timeOfDay ?? 'all'} options={[{ value: 'all', label: 'All day' }, 'Morning', 'Afternoon', 'Evening', 'Night']} onChange={timeOfDay => setDraft(v => ({ ...v, timeOfDay }))} className="w-full" /></div>
@@ -76,7 +76,7 @@ export function ActiveFilterChips({ applied, defaults, config, onChange }: { app
     if (!value || value === 'all' || field.unavailable) continue;
     for (const v of Array.isArray(value) ? value : [value]) chips.push({ key: `${field.column}-${v}`, label: `${field.label}: ${field.label.toLowerCase() === 'error status' ? v === 'Yes' ? 'Errored' : 'No errors' : v}`, remove: () => onChange({ ...applied, values: { ...applied.values, [field.column]: Array.isArray(value) ? value.filter(x => x !== v) : 'all' } }) });
   }
-  if (config.dateColumn !== undefined && dateChanged(applied, defaults)) chips.push({ key: 'date', label: `${datePresets.find(p => p.value === applied.preset)?.label ?? 'Date Range'} · ${periodLabel(applied)}`, remove: () => onChange({ ...applied, from: defaults.from, to: defaults.to, preset: defaults.preset }) });
+  if ((config.dateColumn !== undefined || config.periodAggregate) && dateChanged(applied, defaults)) chips.push({ key: 'date', label: `${datePresets.find(p => p.value === applied.preset)?.label ?? 'Date Range'} · ${periodLabel(applied)}`, remove: () => onChange({ ...applied, from: defaults.from, to: defaults.to, preset: defaults.preset }) });
   for (const key of ['timeOfDay', 'dayOfWeek'] as const) if (applied[key] && applied[key] !== 'all') chips.push({ key, label: key === 'dayOfWeek' ? ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][Number(applied[key])] : applied[key]!, remove: () => onChange({ ...applied, [key]: 'all' }) });
   if (!chips.length) return null;
   return <div className={styles.chips} aria-label="Active filters">{chips.map(chip => <Button variant="outline" size="sm" key={chip.key} onClick={chip.remove} aria-label={`Remove ${chip.label}`}>{chip.label}<X size={12} /></Button>)}<Button variant="ghost" size="sm" onClick={() => onChange(defaults)}>Clear all</Button></div>;

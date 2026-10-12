@@ -273,3 +273,39 @@ test('Connector catalog includes all seven types and matches aliases without sub
     assert.equal(filterRows({headers:[], rows:rows.slice(0,1)}, config, {values:{[field.column]:'NACS'},from:'',to:'',errors:false}).length, 0);
   }
 });
+
+test('report links preserve combined semantic selections and date preset across column layouts', async () => {
+  const {reportLink,readReportContext,contextFilters}=await vite.ssrLoadModule('/lib/eves/report-link-context.ts');
+  const filters={values:{site:['A','B'],charger:['EVSE-A','EVSE-B']},from:'2026-10-01',to:'2026-10-07',preset:'last7',errors:false};
+  const read=url=>readReportContext(new URL(url,'https://test.example').searchParams);
+  const applied=contextFilters(reportConfig.revenueTransaction,{values:{},from:'2026-10-12',to:'2026-10-12',errors:false},read(reportLink('/reports/revenue-transaction',filters)));
+  assert.deepEqual(applied.values,{0:['A','B'],2:['EVSE-A','EVSE-B']});
+  assert.equal(applied.preset,'last7');
+  assert.equal(applied.to,'2026-10-07');
+  const edited={...applied,values:{0:['B'],2:['EVSE-B'],9:'Mobile App'}};
+  const reloaded=contextFilters(reportConfig.revenueTransaction,{values:{},from:'',to:'',errors:false},read(reportLink('/reports/revenue-transaction',edited,undefined,[],[],reportConfig.revenueTransaction)));
+  assert.deepEqual(reloaded,edited);
+  const data={headers:[],rows:[['B','ID','EVSE-B','1','S','2026-10-02T10:00:00Z','','','','Mobile App'],['A','ID','EVSE-A','1','S','2026-10-02T10:00:00Z','','','','Mobile App'],['B','ID','EVSE-B','1','S','2026-10-09T10:00:00Z','','','','Mobile App']]};
+  assert.deepEqual(filterRows(data,reportConfig.revenueTransaction,reloaded),[data.rows[0]]);
+  assert.equal(read(reportLink('/reports/revenue-transaction',edited,undefined,[],[],reportConfig.revenueTransaction)).alert,undefined);
+});
+
+test('site report period totals reconcile with overview and update when dates or sites change', async () => {
+  const {sitePeriodDataset}=await vite.ssrLoadModule('/lib/eves/site-period-data.ts');
+  const {filterExecutiveDashboard}=await vite.ssrLoadModule('/lib/eves/dashboard-filters.ts');
+  const {default:siteRows}=await vite.ssrLoadModule('/data/site-performance.json');
+  const {default:base}=await vite.ssrLoadModule('/data/report-dashboard.json');
+  const keys=['site_name','site_id','city','state','evse_count','port_count','total_sessions','energy_delivered_kwh','average_energy_per_session_kwh','average_session_duration','peak_demand_kw','average_demand_kw','utilization_percent','uptime_percent','total_revenue','total_transaction_amount'];
+  const snapshot={headers:keys,rows:siteRows.map(row=>keys.map(key=>String(row[key])))};
+  const now=new Date('2026-10-12T12:00:00Z');
+  const site=siteRows[0].site_name;
+  const filters={values:{0:[site]},from:'2026-10-10',to:'2026-10-11',errors:false};
+  const result=filterRows(sitePeriodDataset(snapshot,filters,now),reportConfig.sitePerformance,filters);
+  const overview=filterExecutiveDashboard(base,{...filters,values:{site:[site]}},now);
+  assert.equal(result.length,1);
+  assert.equal(Number(result[0][6]),overview.charging.sessions.value);
+  assert.ok(Math.abs(Number(result[0][14])-overview.charging.revenue.value)<0.01);
+  const oneDay=sitePeriodDataset(snapshot,{...filters,from:filters.to},now).rows.find(row=>row[0]===site);
+  assert.equal(Number(result[0][6]),Number(oneDay[6])*2);
+  assert.equal(sitePeriodDataset(snapshot,{...filters,from:'2027-01-01',to:'2027-01-02'},now).rows.length,0);
+});

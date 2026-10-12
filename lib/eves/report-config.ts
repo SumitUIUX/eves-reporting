@@ -11,6 +11,7 @@ export interface ReportConfig {
   short: string;
   defaultColumns: number[];
   filters: FilterDefinition[];
+  periodAggregate?: boolean;
   defaultDayOffset?: number;
   dateColumn?: number;
   dateStyle?: "dmy" | "month";
@@ -121,6 +122,7 @@ export const reportConfig: Record<ReportKind, ReportConfig> = {
     description:
       "Compare charging activity, utilization, uptime, demand, and revenue across sites.",
     short: "Site performance",
+    periodAggregate: true,
     defaultColumns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
     filters: [
       { label: "Site", column: 0 },

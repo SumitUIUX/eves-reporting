@@ -1,7 +1,8 @@
 "use client";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
-import { alertLabels, contextFilters, readReportContext, scopeReportRows, type ReportLinkContext } from "@/lib/eves/report-link-context";
+import { reportLink, alertLabels, contextFilters, readReportContext, scopeReportRows, type ReportLinkContext } from "@/lib/eves/report-link-context";
 import { readableTimestamp } from "@/lib/eves/report-display";
+import { sitePeriodDataset } from "@/lib/eves/site-period-data";
 import { rollingSampleDataset } from "@/lib/eves/sample-report-data";
 import { Suspense, useState, useMemo } from "react";
 import {
@@ -39,7 +40,7 @@ import {
 import { ColumnVisibilityControl } from "./column-visibility-control";
 import { ReportChart } from "./report-chart";
 import { ReportFilterDrawer, ActiveFilterChips } from "./report-filter-drawer";
-import { isPerformanceReport, changeFilter } from "@/lib/eves/performance-filters";
+import { isPerformanceReport } from "@/lib/eves/performance-filters";
 import { ReportFilterControl } from "./report-filter-control";
 import {
   reportConfig,
@@ -284,7 +285,6 @@ function ReportView({
   const { source } = useDataSource();
   const router=useRouter();
   const path=usePathname();
-  const params=useSearchParams();
   const snapshot =
     kind === "chargingPerformance"
       ? chargingPerformanceData
@@ -319,7 +319,8 @@ function ReportView({
     [size, setSize] = useState(10),
     [sort, setSort] = useState<{ column: number; asc: boolean } | null>(null);
   const rows = useMemo(() => {
-    const filtered = scopeReportRows(filterRows(data, config, applied, search), context);
+    const periodData = kind === "sitePerformance" && source === "sample" ? sitePeriodDataset(data, applied) : data;
+    const filtered = scopeReportRows(filterRows(periodData, config, applied, search), context);
     if (sort)
       filtered.sort((a, b) => {
         let result = 0;
@@ -336,17 +337,16 @@ function ReportView({
         return result * (sort.asc ? 1 : -1);
       });
     return filtered;
-  }, [data, config, applied, search, sort, kind, context]);
+  }, [data, config, applied, search, sort, kind, context, source]);
   const stats = metricsFor(kind, rows);
   const current = Math.min(page, Math.max(1, Math.ceil(rows.length / size)));
   function apply(filters: ReportFilters) {
-    let normalized = filters;
-    if (performance) for (const field of config.filters.filter(f => f.label === "Site" || f.label === "EVSE")) normalized = changeFilter(data, config, normalized, field.column, normalized.values[field.column] ?? "all");
+    const normalized = filters;
     setApplied(normalized);
     setPage(1);
-  }
-  function reset() {
-    apply(defaults);
+    // Keep the card scope when reopening/applying unchanged filters; release it when the scope changes.
+    const unchanged = JSON.stringify(normalized) === JSON.stringify(applied);
+    router.replace(reportLink(path, normalized, unchanged ? context.alert : undefined, unchanged ? context.scopeSites : [], unchanged ? context.scopeAssets : [], config), { scroll: false });
   }
   function exportReport(format: "csv" | "xlsx") {
     const d = { headers: data.headers, rows };
@@ -392,8 +392,10 @@ function ReportView({
       </div>
       {performance && <ActiveFilterChips applied={applied} defaults={defaults} config={config} onChange={apply} />}
 
+      {context.from && config.dateColumn === undefined && !config.periodAggregate && <p className="mb-4 text-sm text-muted-foreground">Overview period: {context.from} – {context.to}. This report uses the latest available snapshot; dated records are not available.</p>}
+      {kind === "sitePerformance" && <p className="mb-4 text-sm text-muted-foreground">Activity and revenue reflect the selected period. Inventory, utilization, and uptime use the latest available snapshot.</p>}
       {source === "workspace" && <p role="status" className="mb-4 text-sm text-muted-foreground">Workspace report data is not connected.</p>}
-      {context.alert && <div className="mb-4 flex items-center gap-3 text-sm"><span>{alertLabels[context.alert]}</span><Button size="sm" variant="ghost" onClick={()=>{const next=new URLSearchParams(params.toString());['alert','scopeSite','scopeAsset'].forEach(key=>next.delete(key));router.replace(`${path}?${next}`);}}>Clear alert filter</Button></div>}
+      {context.alert && <div className="mb-4 flex items-center gap-3 text-sm"><span>{alertLabels[context.alert]}</span><Button size="sm" variant="ghost" onClick={()=>{router.replace(reportLink(path, applied, undefined, [], [], config), { scroll: false });}}>Clear alert filter</Button></div>}
       <div className="metrics report-metrics">
         {stats.map((s, i) => (
           <Metric
